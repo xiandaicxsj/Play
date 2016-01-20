@@ -1,0 +1,286 @@
+GDTNUM equ 128
+extern test_print;;;test print 函数
+extern init
+extern idt_dec
+extern current_task
+global _start
+global _gdt
+global _idt
+global idt_base
+global print
+global top_of_stack
+global switch_to
+global switch_to1
+global timer
+global enable_interrupt
+global enable_timer
+global _e820_table
+global _e820_num
+extern g_task
+extern task_size
+.section .data ;_gdt
+.align 32
+_gdt:
+.quard 0
+sys_code	: 
+.quard  0x004f98000000ffff
+sys_data	:	
+.quard  0x004f92000000ffff
+default2:
+.quard  0
+.quard  0
+.quard  0
+.quard  0
+.quard  0
+gdt_len equ $-_gdt;这里不能实验数字直接代替
+gdt_base .long gdt_len
+	 dd 0
+;; 这里为什么不能直接替换GDTNUM
+KERNEL_CODE  equ sys_code-null_data	
+KERNEL_DATA equ sys_data-null_data
+section .data
+screen_num dd 000b8000h
+_e820_table :	times	256	db	0
+_e820_num   :			dd	0
+section .data
+bits 32
+align 32
+_idt:
+	.fill 
+
+idt_len equ $-_idt-1
+idt_base dw idt_len
+	 dd 0
+bss:
+	times 256 dd 0
+top_of_stack:
+
+
+;.globl make func available external
+; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model.
+; kernel: 1.will setup the pagingn 2.others do other basic initialition, kernel asm will setup man one-one map
+.section .text	
+bits 32
+.align 32
+.globl main	; 跳到这里来的时候，我们假设 gs 指向显存
+.type main, @function
+main:
+xorl %eax,%eax
+movw %ax,ds 
+movw %ax,cs 
+jmpl _start
+
+.section .text
+bits 32
+.align 32
+_start:
+	movl $top_of_stack,esp
+	; e820 detect memroy will be later
+	;detect memory
+	;xor eax,eax
+	;mov eax,ds
+	;shl eax,4
+	;add eax,_gdt
+	;mov dword [gdt_base+2],eax
+	;lgdt [gdt_base];this is not true 
+
+	
+	;xor eax,eax
+	;mov eax,ds
+	;shl eax,4
+;	add eax,_idt
+;	mov dword [idt_base+2],eax
+;	lidt [idt_base]
+	;;这里到底是什么问题
+	
+	;xor eax,eax
+	;mov eax,ds
+	;shl eax,4
+	;xor eax,eax	
+	;mov eax,_idt
+	;mov dword [idt_base+2],eax
+	;lidt [idt_base]
+
+	xorl  %eax,%eax
+	xorl  %edi,%edi
+	movl $_gdt,%eax ;$_gdt is the base address of _gdt 
+	movl $gdt_base,%edi
+	movl %eax, 2(%edi)
+	lgdt gdt_base
+	
+	call setup_idt
+;	in al,92h
+;	or al,02h
+;	out 92h,al
+
+; use data below can run into protected model
+	;movl %cr0, %eax
+	;andl 0x0fff,%eax
+	;orl	 %1, %eax;
+	;movl %eax, %cr0; 
+
+	;mov eax,KERNEL_CODE
+	;mov cs,eax
+	;mov eax,KERNEL_DATA
+	;mov ds,eax
+	;mov eax,KERNEL_BSS
+	;mov ss,eax	
+	;mov sp,top_of_stack
+	;call test_print
+	;call setup_idt
+	;xor eax,eax	
+	;mov eax,_idt
+	;mov dword [idt_base+2],eax
+	cli
+	xorl %eax, %eax
+	movl %_idt, %eax
+	movl %idt_base, %edi
+	movl %eax, 2(edi)
+	lidt (idt_base)
+	call init_idt
+	sti
+
+	/* stetup 
+	;sti
+	jmp $
+	
+print:
+	push ebp
+	mov ebp,esp
+	push eax
+	push esi
+	push ebx
+	push ecx
+	xor ecx,ecx
+	mov esi,[ebp+8];这里的[esp+4]代表的是eip 
+	;mov ebx,0b801eh
+	;mov ebx,0b8000h
+	mov ebx,[screen_num]
+
+print.1:	
+	mov al,[esi]
+	cmp al,0
+	jz print.2
+       	mov [ebx],al
+	mov al,4eh
+	mov [ebx+1],al
+	add ebx,2
+	inc esi
+	jmp print.1
+print.2:
+	mov [screen_num],ebx
+	pop ecx
+	pop ebx
+	pop esi
+	pop eax
+	leave;于上面的相反
+	ret
+	
+setup_idt:
+	mov al,11h
+	out 020h,al
+	call delay
+	out 0a0h,al
+	call delay
+	;icw2
+	mov al,20h
+	out 021h,al
+	call delay
+	mov al,28h
+	out 0a1h,al;这里操作的从片
+	call delay
+	;icw3
+	mov al,04h
+	out 021h,al
+	call delay
+	mov al,02h
+	out 0a1h,al
+	call delay
+	;icw4
+	mov al,01h
+	out 021h,al
+	call delay
+	out 0a1h,al
+	call delay
+	
+	;ocw1;这是设置中断屏蔽字段
+	;mov bl,021h
+	mov al,0feh
+	out 021h,al
+	;out bl,al
+	call delay
+	
+	call enable_timer
+	
+	ret
+delay :
+	nop
+	nop 
+	ret
+align 4
+default_handler_label:
+default_handler equ $-$$
+	cli	
+	mov ebx,0b8000h
+	mov al,'a'
+	mov [ebx],al
+	sti
+	iretd
+enable_interrupt:
+	sti
+	ret
+enable_timer:
+	push eax
+	mov al,0x20
+	out 0x20,al
+	pop eax
+	ret
+
+switch_to:;给的参数是gdt中tss的参数
+	push ebp
+	mov ebp,esp
+	mov eax,[esp+12]
+	lldt ax;;这里是加载的局部内存段
+	mov eax,[esp+8]
+	call ax;这里代表的是任务的切换
+	;call eax
+;	ltr ax
+	pop ebp
+	ret
+switch_to1:
+	push ebp
+	mov ebp,esp
+	mov eax,[esp+8]
+	mov ebx,[eax+96]
+	lldt bx;
+	mov ebx,[eax+104];这里加100是个问题
+	ltr bx;
+	mov ebx,[eax+32]
+	push ebx
+	ret
+timer:
+	;call enable_timer
+	;call timer_handler
+	;mov eax,[current_task]
+	;mov ebx,[eax+96]
+	;lldt bx;
+	;mov ebx,[eax+76]
+	;push ebx
+	;mov ebx,[eax+32]
+	;push ebx
+	iretd
+
+outb:
+	push ebp
+	mov esp,ebp
+	push ebx
+	push eax
+	mov dx,[esp+8]
+	mov al,[esp+12]
+	out dx,al
+	pop eax
+	pop ebx
+	leave 
+	ret
+
+

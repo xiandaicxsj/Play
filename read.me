@@ -1,0 +1,4 @@
+.c和.asm的混合编译
+nasm -I include/ -f elf -o kernel.o kernel.asm 
+ld -s -Ttext 0x30400 -o kernel.bin kernel.o  test.o  
+gcc -I include/ -c -fno-builtin -o test.o test.c

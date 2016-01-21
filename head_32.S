@@ -9,7 +9,7 @@
 
 .section .data 
 .align 32
-_gdt:
+gdt:
 .quad 0
 sys_code: 
 .quad  0x004f98000000ffff
@@ -26,15 +26,14 @@ gdt_base:
 .short 0  /* gdt limit */
 .long 0   /* gdt base  */
 
-.section data
-.align 32
-_idt:
+idt:
 .fill 4048, 8, 0 
 
 idt_base: 
 .short 0
 .long 0
-_init_stack:
+
+init_stack:
 .fill 4048, 8, 0
 
 /*;.globl make func available external
@@ -43,21 +42,21 @@ _init_stack:
 .text	
 #include "head_32.h"
 .align 32
-.globl main	
-.type main, @function
-main:
+.globl _start	
+.type _start, @function
+_start:
 	xorl %eax,%eax
 	movw %ax,%ds 
 	movw %ax,%cs 
-	jmp _start
-_start:
-	movl $PHY_ADDR(_init_stack), %esp
+	jmp start
+start:
+	movl $_pa(init_stack), %esp
 	xorl  %eax,%eax
 	xorl  %edi,%edi
-	movl PHY_ADDR($_gdt),%eax  
-	movl PHY_ADDR($gdt_base),%edi
+	movl $_pa(gdt),%eax  
+	movl $_pa(gdt_base),%edi
 	movl %eax, 2(%edi)
-	lgdt PHY_ADDR(gdt_base)
+	lgdt _pa(gdt_base)
 	
 	/*call _setup_idt
 	call _setup_paging*/
@@ -75,10 +74,8 @@ _default_inter_handler:
 .type _setup_idt,@function
 _setup_idt:
 
-	/*pushl %esp
-	movl %esp, %ebp
-	*/
-
+	/* pushl %esp */
+	/* movl %esp, %ebp */
 	cli
 	1:
 	movl $21, %ecx
@@ -88,22 +85,22 @@ _setup_idt:
 	movl $_default_inter_handler,%eax
 	andl 0x0000ffff, %eax
 	movl $0x1, %edx
-	rol %edx, 32 
+	shl  $32, %edx 
 	orl %edx, %eax
 	xorl %edx, %edx
 	movl $_default_inter_handler,%edx
 	andl $0xffff0000, %edx
 	movw $IDT_ATTR, %dx 
-	movl %eax, _idt($0,%edi,$2)
-	movl %edx, _idt($1,%edi,$2)
+	movl %eax, idt(%ecx,%edi,2) /* _idt(1,) */
+	movl %edx, idt(%ecx,%edi,2) /* _idt(2,) */
 	addl $1, %edi
 	subl $1, %ecx
 	jnz 1b
 
 	xorl %eax, %eax
-	movl $_idt, %eax
+	movl $idt, %eax
 	movl $idt_base, %edi
-	movl %eax, 2(edi)
+	movl %eax, 2(%edi)
 	lidt idt_base
 	sti
 
@@ -118,7 +115,7 @@ _setup_paging:
 	pusha
 	movl %esp, %ebp
 	movl %cr0, %eax
-	orl  $CR0_PG, eax
+	orl  $CR0_PG, %eax
 	movl %eax, %cr0
 	movl %ebp, %esp
 	popa

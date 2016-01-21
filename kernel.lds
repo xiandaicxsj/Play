@@ -1,19 +1,17 @@
-ENTRY(LOAD_ADDR)
+ENTRY(_start)
 SECTIONS
 {
-	. = KERNEL_BASE_ADDR + LOAD_ADDR;
-	.text: AT(_pa(ADDR(.text)))
-        {
-		*(.text)
-	}
-	.data: AT(_pa(ADDR(.data)))
+	. = 0xc000000 + 0x9c00;
+	.text : AT(ADDR(.text) - 0xc000000) 
+	{ *(.text) }
+	.data : AT(ADDR(.data) - 0xc000000)
 	{
 		*(.data)
 	}
-	.bss: AT(_pa(ADDR(.bss)))
-	_bss_start = .;
+	.bss : AT(ADDR(.bss) - 0xc000000)
 	{
+		_bss_start = .;
 		*(.bss)
+		_bss_end = .;
 	}
-	_bss_end = .;
 }

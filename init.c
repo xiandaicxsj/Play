@@ -66,7 +66,7 @@ void init_idt()
 	set_idt(TIMER,timer_handler,DA_386IGate);
 	return ;
 }
-void init()
+void start_kernel()
 {
 //	idt_base_dec *i_base=(idt_base_dec *)&idt_base;
 //	i_base->length=(u16)256;

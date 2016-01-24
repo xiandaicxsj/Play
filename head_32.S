@@ -1,11 +1,12 @@
 /*
  * represent the address of certain func
  */
-//#include "head_32.h"
+/* #include "head_32.h" */
 .equ GDTNUM, 128 
 .equ KERNRL_DS, 0x1
 .equ kERNEL_CS, 0x2
 .equ IDT_ATTR, 0x8600
+.extern start_kernel
 
 .section .data 
 .align 32
@@ -37,7 +38,7 @@ init_stack:
 .fill 4048, 8, 0
 
 /*;.globl make func available external
- ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model.
+ ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model. should run into proteced model
  ; kernel: 1.will setup the pagingn 2.others do other basic initialition, kernel asm will setup man one-one map*/
 .text	
 #include "head_32.h"
@@ -58,9 +59,9 @@ start:
 	movl %eax, 2(%edi)
 	lgdt _pa(gdt_base)
 	
-	/*call _setup_idt
-	call _setup_paging*/
-
+	call _setup_idt
+	call _setup_paging
+	call start_kernel
 
 .type _default_inter_handler, @function
 _default_inter_handler:
@@ -70,6 +71,7 @@ _default_inter_handler:
 	movl %ebp, %esp
 	popl %esp
 	*/
+	ret
 
 .type _setup_idt,@function
 _setup_idt:
@@ -108,6 +110,7 @@ _setup_idt:
 	movl %ebp, %esp
 	popl %esp
 	*/
+	ret
 	
 .type _setup_paging,@function
 _setup_paging:

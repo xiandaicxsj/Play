@@ -34,6 +34,7 @@ void general_protection();
 void page_fault();
 void copr_error();
 void timer();
+void init_idt();
 void set_tss(int vector,void *base_addr);
 void set_ldt(int vector,void *base_addr,u32 seg_limit);
 void set_gdt_seg(void *base,int vector,void *base_addr ,u8 _type,u32 seg_limit);

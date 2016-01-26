@@ -36,38 +36,6 @@
 #define SA_TIL 		0x04
 #define SA_TIG		0x00
 
-
-typedef struct 
-gate_dec//这里代表的是idt的处理结构
-{
-	u16 low_off;
-	u16 base_sel;
-	u8 attr;
-	u8 type;
-	u16 high_off;
-}gate_dec; 
-typedef struct seg_dec
-{
-	u16 limit;
-	u16 base_low;
-	u8  base_heigh;
-	u8  type;
-	u8  attr;
-	u8  base_heigh1;
-}seg_dec;
-//seg_dec *gdt_dec;
-typedef struct idt_base_dec
-{
-	u16 length;
-	u32 base;
-}idt_base_dec;
-//gate_dec idt_dec[IDT_NUM];
-void set_tss(int vector, void *base_addr);
-void set_ldt(int vector, void *base_addr, u32 seg_limit);
-void set_gdt_seg(void *gdt_base, int vector, void *base_addr, u8 _type, u32 seg_limit);
-void set_idt(int vector, void (*func)(),u8 type);
-seg_dec *gdt_dec;
-gate_dec *idt_dec;
 #endif
 
 

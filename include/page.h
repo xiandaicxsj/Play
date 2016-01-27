@@ -21,8 +21,6 @@
 #define INDEX(addr, level) (addr >> PAGE_SHIFT(level)) && PE_MASK
 #define PDE_ADDR(entry) (entry & PAGE_MASK)
 #define CR3_ADDR(addr) (addr & PAGE_MASK)
-void set_pte(u32 *pte, u32 phy_addr, u32 atrr);
-void set_pde(u32 *pde, u32 phy_addr, u32 atrr);
 struct page
 {
     u32 dirty; //dirty or not
@@ -31,6 +29,7 @@ struct page
     u32 user;// user or kernel
     struct page *next;
 };
+void page_fault();
 
 #endif
 

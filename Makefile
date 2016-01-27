@@ -1,20 +1,18 @@
 ##################################################
 # Makefile
 ##################################################
-ENTRYPOINT=0x30400
+ASM=gcc
 CC=gcc
-ASM= gcc
-ASMFLAGS= -I include/  -m32
 CCFLAGS= -I include/  -c -fno-builtin -m32 -std=c99  -fno-stack-protector  
 LD=ld
-LDFLAFS = -T kernel.lds
+LDFLAGS = -m elf_i386  -T kernel.lds
 BOOT:=boot.asm
 LDR:=loader.asm
-KERNEL:=kernel
+KERNEL:=kernel.c
 BOOT_BIN:=$(subst .asm,.bin,$(BOOT))
 LDR_BIN:=$(subst .asm,.bin,$(LDR))
-KERNEL_BIN:=$(subst .s,.bin,$(KERNEL))
-OBJECTS = kernel.o 
+KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
+OBJECTS = kernel.o head_32.o
 IMG:=a.img
 FLOPPY:=/mnt/floppy/
 
@@ -39,8 +37,10 @@ $(LDR_BIN) : $(LDR)
 $(KERNEL_BIN) : $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(OBJECTS)
 
-kernel.o: head_32.S
-	$(ASM) $(ASMFLAGS) -o $@ -s $<
+kernel.o:kernel.c
+	$(CC) $(CCFLAGS) -o $@ $<
+head_32.o: head_32.S
+	$(CC)  $(CCFLAGS) -o $@ $<
 	
 	
 	

@@ -1,20 +1,21 @@
 #include"memory.h"
 #include"page.h"
 #include"e820.h"
-/* step only page32
+/*step only page32
  * 1. read e820 from bios
  * 2. init paging of the kernel
  * 3. juest del with 4G
- * now paging and memory is the some, may be split later
  */
-static struct page * free_page_list; //how to get the page_addr in the list
-static struct e820_table_type _e820_table;
-static u32 e820_table_num;
-static u64 memory_size;
-u32 _kernel_end; // this can be get from the link script
+struct page * free_page_list; //how to get the page_addr in the list
+u32 _kernel_end;
 u32 _kernel_start;//this should be in the kernel.lds
 u32 _reserved_start;
 u32 _reserved_end;// reserved_end
+extern u32 _e820_table;
+extern u32 _e820_num;
+struct e820_table_type *head;
+u32 e820_table_num;
+static u64 memory_size;
 void * kmalloc(u32 size)
 {
 	return NULL;
@@ -85,23 +86,6 @@ static void init_mem_bit_map(u32 nr_pages)
 /*
  * map _start + 0xc0000 - _end + 0xc0000 ---> _start + _end
  */
-void paget_fault()
-{
-		
-}
-
-static void set_pte(u32 *pte, u32 phy_addr, u32 attr)
-{
-		*pte = phy_addr;
-		*pte |= attr;
-}
-
-static void set_pde(u32 *pde, u32 phy_addr, u32 attr)
-{
-		*pde = phy_addr;
-		*pde |= attr;
-}
-
 static void mapping_kernel(u32 _start, u32 _end)
 {
 	u32 start = PAGE_ALIGN(_start);	

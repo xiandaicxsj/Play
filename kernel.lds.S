@@ -1,21 +1,17 @@
-#define KERNEL_ADDR 0xc000000
-#define LOAD_ADDR 0x9c00
-ENTRY(LOAD_ADDR)
+ENTRY(_start)
 SECTIONS
 {
-	. = KERNEL_ADDR + LOAD_ADDR;
-	.text: AT(ADDR(.text)-KERNEL_ADDR)
-        {
-		*(.text)
-	}
-	.data: AT(ADDR(.data)-KERNEL_ADDR)
+	. = 0xc000000 + 0x9c00;
+	.text : AT(ADDR(.text) - 0xc000000) 
+	{ *(.text) }
+	.data : AT(ADDR(.data) - 0xc000000)
 	{
 		*(.data)
 	}
-	.bss: AT(ADDR(.bss)-KERNEL_ADDR)
-	_bss_start = .;
+	.bss : AT(ADDR(.bss) - 0xc000000)
 	{
+		_bss_start = .;
 		*(.bss)
+		_bss_end = .;
 	}
-	_bss_end = .;
 }

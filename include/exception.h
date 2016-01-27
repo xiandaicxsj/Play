@@ -7,7 +7,7 @@
 #define BREAKPOINT 3
 #define OVERFLOW 4
 #define BOUND_RANGE_EXCEDD 5
-# define INVALID_OP 6
+#define INVALID_OP 6
 #define DEVICE_NOT_AVAL 7
 #define DOUBL_FAULT 8
 #define COP_SEGMENT 9
@@ -31,11 +31,7 @@ void inval_tss();
 void segment_not_present();
 void stack_exception();
 void general_protection();
-void page_fault();
 void copr_error();
 void timer();
 void init_idt();
-void set_tss(int vector,void *base_addr);
-void set_ldt(int vector,void *base_addr,u32 seg_limit);
-void set_gdt_seg(void *base,int vector,void *base_addr ,u8 _type,u32 seg_limit);
 #endif

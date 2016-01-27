@@ -7,7 +7,7 @@ struct idt_desc {
 	u32 high;
 };
 
-struct idt_desc _idt[256];
+static struct idt_desc _idt[256];
 void default_handler1()
 {
 }
@@ -56,9 +56,6 @@ void stack_exception()
 void general_protection()
 {
 }
-void page_fault()
-{
-}
 void copr_error()
 {
 
@@ -83,10 +80,9 @@ void init_idt()
         set_idt(DOUBL_FAULT,double_fault,DA_386IGate);
         set_idt(COP_SEGMENT,copr_seg_overrun,DA_386IGate);
         set_idt(IVALID_TSS,inval_tss,DA_386IGate);//这里修改了
-        set_idt(SEGMENT_NOT_PRESETNT,segment_not_present,DA_386IGate);
-        set_idt(STACK_FAULT,stack_exception,DA_386IGate);
-        set_idt(GENERAL_FAULT,general_protection,DA_386IGate);
-        set_idt(PAGE_FAULT,page_fault,DA_386IGate);
-        set_idt(TIMER,timer_handler,DA_386IGate);
-		
+        set_idt(SEGMENT_NOT_PRESETNT,segment_not_present, DA_386IGate);
+        set_idt(STACK_FAULT,stack_exception, DA_386IGate);
+        set_idt(GENERAL_FAULT, general_protection, DA_386IGate);
+        set_idt(PAGE_FAULT, page_fault, DA_386IGate);
+        set_idt(TIMER, timer_handler,DA_386IGate);
 }

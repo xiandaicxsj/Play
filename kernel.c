@@ -1,9 +1,11 @@
-
-
+/*#include"exception.h"
+ *#include"memory.h"
+ */
 void start_kernel(void )
 {
-		init_gdt();
+/*		init_gdt();
 		init_idt();
-		setup_paging();
+		init_memory();
+*/
 		return ;
 }

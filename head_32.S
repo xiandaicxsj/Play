@@ -49,6 +49,7 @@ _start:
 	xorl %eax,%eax
 	movw %ax,%ds 
 	movw %ax,%cs 
+	jmp _start
 	jmp start
 start:
 	movl $_pa(init_stack), %esp

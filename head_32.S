@@ -3,8 +3,10 @@
  */
 /* #include "head_32.h" */
 .equ GDTNUM, 128 
-.equ KERNRL_DS, 0x1
-.equ kERNEL_CS, 0x2
+.equ _kernel_ds, 0x1
+.equ _kernel_cs, 0x2
+.equ _kernel_video, 0x3
+.q
 .equ IDT_ATTR, 0x8600
 .extern start_kernel
 
@@ -16,6 +18,8 @@ sys_code:
 .quad  0x004f98000000ffff
 sys_data:	
 .quad  0x004f92000000ffff
+sys_video:
+.quad  
 default2:
 .quad  0
 .quad  0
@@ -47,8 +51,12 @@ init_stack:
 .type _start, @function
 _start:
 	xorl %eax,%eax
+	movw $_kernel_ds, %ax
 	movw %ax,%ds 
+	movw $_kernel_cs, %ax
 	movw %ax,%cs 
+	movw $_kernel_video, %ax
+	movw %ax,%gs
 	jmp _start
 	jmp start
 start:

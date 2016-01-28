@@ -361,8 +361,8 @@ LABEL_PM_START:
 
 	call	InitKernel
 
-	;jmp	$
-
+	
+	xor ax,ax
 	;***************************************************************
 	jmp	SelectorFlatC:KernelEntryPointPhyAddr	; 正式进入内核 *
 	;***************************************************************
@@ -733,7 +733,7 @@ InitKernel:
         add   esi, 020h                   ; esi += pELFHdr->e_phentsize
         dec   ecx
         jnz   .Begin
-
+	jmp $
         ret
 ; InitKernel ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -1,14 +1,14 @@
 ENTRY(_start)
 SECTIONS
 {
-	. = 0xc000000 + 0x30400;
-	.text : AT(ADDR(.text) - 0xc000000) 
+	. =  0x9c000;
+	.text : AT(ADDR(.text) ) 
 	{ *(.text) }
-	.data : AT(ADDR(.data) - 0xc000000)
+	.data : AT(ADDR(.data))
 	{
 		*(.data)
 	}
-	.bss : AT(ADDR(.bss) - 0xc000000)
+	.bss : AT(ADDR(.bss))
 	{
 		_bss_start = .;
 		*(.bss)

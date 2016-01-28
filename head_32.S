@@ -1,12 +1,10 @@
-/*
- * represent the address of certain func
- */
+/* * represent the address of certain funcu */
 /* #include "head_32.h" */
 .equ GDTNUM, 128 
 .equ _kernel_ds, 0x1
 .equ _kernel_cs, 0x2
 .equ _kernel_video, 0x3
-.q
+.equ _video_offset, 0xb8000
 .equ IDT_ATTR, 0x8600
 .extern start_kernel
 
@@ -19,7 +17,7 @@ sys_code:
 sys_data:	
 .quad  0x004f92000000ffff
 sys_video:
-.quad  
+.quad  0x0040920b8000ffff
 default2:
 .quad  0
 .quad  0
@@ -50,15 +48,8 @@ init_stack:
 .globl _start	
 .type _start, @function
 _start:
-	xorl %eax,%eax
-	movw $_kernel_ds, %ax
-	movw %ax,%ds 
-	movw $_kernel_cs, %ax
-	movw %ax,%cs 
-	movw $_kernel_video, %ax
-	movw %ax,%gs
+	xorl %eax, %eax
 	jmp _start
-	jmp start
 start:
 	movl $_pa(init_stack), %esp
 	xorl  %eax,%eax
@@ -66,11 +57,18 @@ start:
 	movl $_pa(gdt),%eax  
 	movl $_pa(gdt_base),%edi
 	movl %eax, 2(%edi)
+1:
+	jmp 1
 	lgdt _pa(gdt_base)
+	xorl %eax,%eax
+	movw $_kernel_ds, %ax
+	movw %ax,%ds 
+	movw $_kernel_cs, %ax
+	movw %ax,%cs 
 	
-	call _setup_idt
-	call _setup_paging
-	call start_kernel
+	//call _setup_idt
+	//call _setup_paging
+	//call start_kernel
 
 .type _default_inter_handler, @function
 _default_inter_handler:
@@ -124,14 +122,25 @@ _setup_idt:
 .type _setup_paging,@function
 _setup_paging:
 	pushl %ebp
-	pusha
 	movl %esp, %ebp
+	pusha
 	movl %cr0, %eax
 	orl  $CR0_PG, %eax
 	movl %eax, %cr0
-	movl %ebp, %esp
 	popa
-	popl %esp
+	movl %ebp, %esp
+	popl %ebp
+	ret
+.type _print, @function
+_print:
+	pushl %ebp
+	movl %esp, %ebp
+	movw $0x1e00,%ax 
+	movb 0x38, %al
+	movl $_video_offset, %edi
+	movw %ax, (%edi)
+	movl %ebp, %esp
+	popl %ebp
 	ret
 
 	

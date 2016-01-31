@@ -1,39 +1,43 @@
 
+; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;                               loader.asm
+; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;                                                     Forrest Yu, 2005
+; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 org  0100h
 
 	jmp	LABEL_START		; Start
 
-; ä¸‹é¢æ˜¯ FAT12 ç£ç›˜çš„å¤´, ä¹‹æ‰€ä»¥åŒ…å«å®ƒæ˜¯å› ä¸ºä¸‹é¢ç”¨åˆ°äº†ç£ç›˜çš„ä¸€äº›ä¿¡æ¯
+; ÏÂÃæÊÇ FAT12 ´ÅÅÌµÄÍ·, Ö®ËùÒÔ°üº¬ËüÊÇÒòÎªÏÂÃæÓÃµ½ÁË´ÅÅÌµÄÒ»Ğ©ĞÅÏ¢
 %include	"fat12hdr.inc"
 %include	"load.inc"
 %include	"pm.inc"
 
 
-global MemChkBuf
-global dwMCRNumber 
 ; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
-;                                                æ®µåŸºå€            æ®µç•Œé™     , å±æ€§
-LABEL_GDT:			Descriptor             0,                    0, 0						; ç©ºæè¿°ç¬¦
+;                                                ¶Î»ùÖ·            ¶Î½çÏŞ     , ÊôĞÔ
+LABEL_GDT:			Descriptor             0,                    0, 0						; ¿ÕÃèÊö·û
 LABEL_DESC_FLAT_C:		Descriptor             0,              0fffffh, DA_CR  | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_FLAT_RW:		Descriptor             0,              0fffffh, DA_DRW | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
-LABEL_DESC_VIDEO:		Descriptor	 0B8000h,               0ffffh, DA_DRW                         | DA_DPL3	; æ˜¾å­˜é¦–åœ°å€
+LABEL_DESC_VIDEO:		Descriptor	 0B8000h,               0ffffh, DA_DRW                         | DA_DPL3	; ÏÔ´æÊ×µØÖ·
 ; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 GdtLen		equ	$ - LABEL_GDT
-GdtPtr		dw	GdtLen - 1				; æ®µç•Œé™
-		dd	BaseOfLoaderPhyAddr + LABEL_GDT		; åŸºåœ°å€
+GdtPtr		dw	GdtLen - 1				; ¶Î½çÏŞ
+		dd	BaseOfLoaderPhyAddr + LABEL_GDT		; »ùµØÖ·
 
-; GDT é€‰æ‹©å­ ----------------------------------------------------------------------------------
+; GDT Ñ¡Ôñ×Ó ----------------------------------------------------------------------------------
 SelectorFlatC		equ	LABEL_DESC_FLAT_C	- LABEL_GDT
 SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	- LABEL_GDT
 SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT + SA_RPL3
-; GDT é€‰æ‹©å­ ----------------------------------------------------------------------------------
+; GDT Ñ¡Ôñ×Ó ----------------------------------------------------------------------------------
 
 
 BaseOfStack	equ	0100h
 
 
-LABEL_START:			; <--- ä»è¿™é‡Œå¼€å§‹ *************
+LABEL_START:			; <--- ´ÓÕâÀï¿ªÊ¼ *************
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
@@ -41,19 +45,19 @@ LABEL_START:			; <--- ä»è¿™é‡Œå¼€å§‹ *************
 	mov	sp, BaseOfStack
 
 	mov	dh, 0			; "Loading  "
-	call	DispStrRealMode		; æ˜¾ç¤ºå­—ç¬¦ä¸²
+	call	DispStrRealMode		; ÏÔÊ¾×Ö·û´®
 
-	; å¾—åˆ°å†…å­˜æ•°
-	mov	ebx, 0			; ebx = åç»­å€¼, å¼€å§‹æ—¶éœ€ä¸º 0
-	mov	di, _MemChkBuf		; es:di æŒ‡å‘ä¸€ä¸ªåœ°å€èŒƒå›´æè¿°ç¬¦ç»“æ„ï¼ˆAddress Range Descriptor Structureï¼‰
+	; µÃµ½ÄÚ´æÊı
+	mov	ebx, 0			; ebx = ºóĞøÖµ, ¿ªÊ¼Ê±ĞèÎª 0
+	mov	di, _MemChkBuf		; es:di Ö¸ÏòÒ»¸öµØÖ··¶Î§ÃèÊö·û½á¹¹£¨Address Range Descriptor Structure£©
 .MemChkLoop:
 	mov	eax, 0E820h		; eax = 0000E820h
-	mov	ecx, 20			; ecx = åœ°å€èŒƒå›´æè¿°ç¬¦ç»“æ„çš„å¤§å°
+	mov	ecx, 20			; ecx = µØÖ··¶Î§ÃèÊö·û½á¹¹µÄ´óĞ¡
 	mov	edx, 0534D4150h		; edx = 'SMAP'
 	int	15h			; int 15h
 	jc	.MemChkFail
 	add	di, 20
-	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS çš„ä¸ªæ•°
+	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS µÄ¸öÊı
 	cmp	ebx, 0
 	jne	.MemChkLoop
 	jmp	.MemChkOK
@@ -61,19 +65,19 @@ LABEL_START:			; <--- ä»è¿™é‡Œå¼€å§‹ *************
 	mov	dword [_dwMCRNumber], 0
 .MemChkOK:
 
-	; ä¸‹é¢åœ¨ A ç›˜çš„æ ¹ç›®å½•å¯»æ‰¾ KERNEL.BIN
+	; ÏÂÃæÔÚ A ÅÌµÄ¸ùÄ¿Â¼Ñ°ÕÒ KERNEL.BIN
 	mov	word [wSectorNo], SectorNoOfRootDirectory	
-	xor	ah, ah	; â”“
-	xor	dl, dl	; â”£ è½¯é©±å¤ä½
-	int	13h	; â”›
+	xor	ah, ah	; ©·
+	xor	dl, dl	; ©Ç ÈíÇı¸´Î»
+	int	13h	; ©¿
 LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
-	cmp	word [wRootDirSizeForLoop], 0	; â”“
-	jz	LABEL_NO_KERNELBIN		; â”£ åˆ¤æ–­æ ¹ç›®å½•åŒºæ˜¯ä¸æ˜¯å·²ç»è¯»å®Œ, å¦‚æœè¯»å®Œè¡¨ç¤ºæ²¡æœ‰æ‰¾åˆ° KERNEL.BIN
-	dec	word [wRootDirSizeForLoop]	; â”›
+	cmp	word [wRootDirSizeForLoop], 0	; ©·
+	jz	LABEL_NO_KERNELBIN		; ©Ç ÅĞ¶Ï¸ùÄ¿Â¼ÇøÊÇ²»ÊÇÒÑ¾­¶ÁÍê, Èç¹û¶ÁÍê±íÊ¾Ã»ÓĞÕÒµ½ KERNEL.BIN
+	dec	word [wRootDirSizeForLoop]	; ©¿
 	mov	ax, BaseOfKernelFile
 	mov	es, ax			; es <- BaseOfKernelFile
-	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	äºæ˜¯, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
-	mov	ax, [wSectorNo]		; ax <- Root Directory ä¸­çš„æŸ Sector å·
+	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	ÓÚÊÇ, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
+	mov	ax, [wSectorNo]		; ax <- Root Directory ÖĞµÄÄ³ Sector ºÅ
 	mov	cl, 1
 	call	ReadSector
 
@@ -82,27 +86,27 @@ LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
 	cld
 	mov	dx, 10h
 LABEL_SEARCH_FOR_KERNELBIN:
-	cmp	dx, 0					; â”“
-	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR	; â”£ å¾ªç¯æ¬¡æ•°æ§åˆ¶, å¦‚æœå·²ç»è¯»å®Œäº†ä¸€ä¸ª Sector, å°±è·³åˆ°ä¸‹ä¸€ä¸ª Sector
-	dec	dx					; â”›
+	cmp	dx, 0					; ©·
+	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR	; ©Ç Ñ­»·´ÎÊı¿ØÖÆ, Èç¹ûÒÑ¾­¶ÁÍêÁËÒ»¸ö Sector, ¾ÍÌøµ½ÏÂÒ»¸ö Sector
+	dec	dx					; ©¿
 	mov	cx, 11
 LABEL_CMP_FILENAME:
-	cmp	cx, 0			; â”“
-	jz	LABEL_FILENAME_FOUND	; â”£ å¾ªç¯æ¬¡æ•°æ§åˆ¶, å¦‚æœæ¯”è¾ƒäº† 11 ä¸ªå­—ç¬¦éƒ½ç›¸ç­‰, è¡¨ç¤ºæ‰¾åˆ°
-	dec	cx			; â”›
+	cmp	cx, 0			; ©·
+	jz	LABEL_FILENAME_FOUND	; ©Ç Ñ­»·´ÎÊı¿ØÖÆ, Èç¹û±È½ÏÁË 11 ¸ö×Ö·û¶¼ÏàµÈ, ±íÊ¾ÕÒµ½
+	dec	cx			; ©¿
 	lodsb				; ds:si -> al
 	cmp	al, byte [es:di]	; if al == es:di
 	jz	LABEL_GO_ON
 	jmp	LABEL_DIFFERENT
 LABEL_GO_ON:
 	inc	di
-	jmp	LABEL_CMP_FILENAME	;	ç»§ç»­å¾ªç¯
+	jmp	LABEL_CMP_FILENAME	;	¼ÌĞøÑ­»·
 
 LABEL_DIFFERENT:
-	and	di, 0FFE0h		; elseâ”“	è¿™æ—¶diçš„å€¼ä¸çŸ¥é“æ˜¯ä»€ä¹ˆ, di &= e0 ä¸ºäº†è®©å®ƒæ˜¯ 20h çš„å€æ•°
-	add	di, 20h			;     â”ƒ
-	mov	si, KernelFileName	;     â”£ di += 20h  ä¸‹ä¸€ä¸ªç›®å½•æ¡ç›®
-	jmp	LABEL_SEARCH_FOR_KERNELBIN;   â”›
+	and	di, 0FFE0h		; else©·	ÕâÊ±diµÄÖµ²»ÖªµÀÊÇÊ²Ã´, di &= e0 ÎªÁËÈÃËüÊÇ 20h µÄ±¶Êı
+	add	di, 20h			;     ©§
+	mov	si, KernelFileName	;     ©Ç di += 20h  ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	jmp	LABEL_SEARCH_FOR_KERNELBIN;   ©¿
 
 LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
 	add	word [wSectorNo], 1
@@ -110,45 +114,45 @@ LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
 
 LABEL_NO_KERNELBIN:
 	mov	dh, 2			; "No KERNEL."
-	call	DispStrRealMode		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	jmp	$			; æ²¡æœ‰æ‰¾åˆ° KERNEL.BIN, æ­»å¾ªç¯åœ¨è¿™é‡Œ
+	call	DispStrRealMode		; ÏÔÊ¾×Ö·û´®
+	jmp	$			; Ã»ÓĞÕÒµ½ KERNEL.BIN, ËÀÑ­»·ÔÚÕâÀï
 
-LABEL_FILENAME_FOUND:			; æ‰¾åˆ° KERNEL.BIN åä¾¿æ¥åˆ°è¿™é‡Œç»§ç»­
+LABEL_FILENAME_FOUND:			; ÕÒµ½ KERNEL.BIN ºó±ãÀ´µ½ÕâÀï¼ÌĞø
 	mov	ax, RootDirSectors
-	and	di, 0FFF0h		; di -> å½“å‰æ¡ç›®çš„å¼€å§‹
+	and	di, 0FFF0h		; di -> µ±Ç°ÌõÄ¿µÄ¿ªÊ¼
 
 	push	eax
-	mov	eax, [es : di + 01Ch]		; â”“
-	mov	dword [dwKernelSize], eax	; â”›ä¿å­˜ KERNEL.BIN æ–‡ä»¶å¤§å°
+	mov	eax, [es : di + 01Ch]		; ©·
+	mov	dword [dwKernelSize], eax	; ©¿±£´æ KERNEL.BIN ÎÄ¼ş´óĞ¡
 	pop	eax
 
-	add	di, 01Ah		; di -> é¦– Sector
+	add	di, 01Ah		; di -> Ê× Sector
 	mov	cx, word [es:di]
-	push	cx			; ä¿å­˜æ­¤ Sector åœ¨ FAT ä¸­çš„åºå·
+	push	cx			; ±£´æ´Ë Sector ÔÚ FAT ÖĞµÄĞòºÅ
 	add	cx, ax
-	add	cx, DeltaSectorNo	; è¿™æ—¶ cl é‡Œé¢æ˜¯ LOADER.BIN çš„èµ·å§‹æ‰‡åŒºå· (ä» 0 å¼€å§‹æ•°çš„åºå·)
+	add	cx, DeltaSectorNo	; ÕâÊ± cl ÀïÃæÊÇ LOADER.BIN µÄÆğÊ¼ÉÈÇøºÅ (´Ó 0 ¿ªÊ¼ÊıµÄĞòºÅ)
 	mov	ax, BaseOfKernelFile
 	mov	es, ax			; es <- BaseOfKernelFile
-	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	äºæ˜¯, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
-	mov	ax, cx			; ax <- Sector å·
+	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	ÓÚÊÇ, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
+	mov	ax, cx			; ax <- Sector ºÅ
 
 LABEL_GOON_LOADING_FILE:
-	push	ax			; â”“
-	push	bx			; â”ƒ
-	mov	ah, 0Eh			; â”ƒ æ¯è¯»ä¸€ä¸ªæ‰‡åŒºå°±åœ¨ "Loading  " åé¢æ‰“ä¸€ä¸ªç‚¹, å½¢æˆè¿™æ ·çš„æ•ˆæœ:
-	mov	al, '.'			; â”ƒ
-	mov	bl, 0Fh			; â”ƒ Loading ......
-	int	10h			; â”ƒ
-	pop	bx			; â”ƒ
-	pop	ax			; â”›
+	push	ax			; ©·
+	push	bx			; ©§
+	mov	ah, 0Eh			; ©§ Ã¿¶ÁÒ»¸öÉÈÇø¾ÍÔÚ "Loading  " ºóÃæ´òÒ»¸öµã, ĞÎ³ÉÕâÑùµÄĞ§¹û:
+	mov	al, '.'			; ©§
+	mov	bl, 0Fh			; ©§ Loading ......
+	int	10h			; ©§
+	pop	bx			; ©§
+	pop	ax			; ©¿
 
 	mov	cl, 1
 	call	ReadSector
-	pop	ax			; å–å‡ºæ­¤ Sector åœ¨ FAT ä¸­çš„åºå·
+	pop	ax			; È¡³ö´Ë Sector ÔÚ FAT ÖĞµÄĞòºÅ
 	call	GetFATEntry
 	cmp	ax, 0FFFh
 	jz	LABEL_FILE_LOADED
-	push	ax			; ä¿å­˜ Sector åœ¨ FAT ä¸­çš„åºå·
+	push	ax			; ±£´æ Sector ÔÚ FAT ÖĞµÄĞòºÅ
 	mov	dx, RootDirSectors
 	add	ax, dx
 	add	ax, DeltaSectorNo
@@ -156,47 +160,46 @@ LABEL_GOON_LOADING_FILE:
 	jmp	LABEL_GOON_LOADING_FILE
 LABEL_FILE_LOADED:
 
-	call	KillMotor		; å…³é—­è½¯é©±é©¬è¾¾
+	call	KillMotor		; ¹Ø±ÕÈíÇıÂí´ï
 
 	mov	dh, 1			; "Ready."
-	call	DispStrRealMode		; æ˜¾ç¤ºå­—ç¬¦ä¸²
+	call	DispStrRealMode		; ÏÔÊ¾×Ö·û´®
 	
-; ä¸‹é¢å‡†å¤‡è·³å…¥ä¿æŠ¤æ¨¡å¼ -------------------------------------------
+; ÏÂÃæ×¼±¸ÌøÈë±£»¤Ä£Ê½ -------------------------------------------
 
-; åŠ è½½ GDTR
+; ¼ÓÔØ GDTR
 	lgdt	[GdtPtr]
 
-; å…³ä¸­æ–­
+; ¹ØÖĞ¶Ï
 	cli
 
-; æ‰“å¼€åœ°å€çº¿A20
+; ´ò¿ªµØÖ·ÏßA20
 	in	al, 92h
 	or	al, 00000010b
 	out	92h, al
 
-; å‡†å¤‡åˆ‡æ¢åˆ°ä¿æŠ¤æ¨¡å¼
+; ×¼±¸ÇĞ»»µ½±£»¤Ä£Ê½
 	mov	eax, cr0
 	or	eax, 1
 	mov	cr0, eax
 
-; çœŸæ­£è¿›å…¥ä¿æŠ¤æ¨¡å¼
-	jmp $
+; ÕæÕı½øÈë±£»¤Ä£Ê½
 	jmp	dword SelectorFlatC:(BaseOfLoaderPhyAddr+LABEL_PM_START)
 
 
 ;============================================================================
-;å˜é‡
+;±äÁ¿
 ;----------------------------------------------------------------------------
-wRootDirSizeForLoop	dw	RootDirSectors	; Root Directory å ç”¨çš„æ‰‡åŒºæ•°
-wSectorNo		dw	0		; è¦è¯»å–çš„æ‰‡åŒºå·
-bOdd			db	0		; å¥‡æ•°è¿˜æ˜¯å¶æ•°
-dwKernelSize		dd	0		; KERNEL.BIN æ–‡ä»¶å¤§å°
+wRootDirSizeForLoop	dw	RootDirSectors	; Root Directory Õ¼ÓÃµÄÉÈÇøÊı
+wSectorNo		dw	0		; Òª¶ÁÈ¡µÄÉÈÇøºÅ
+bOdd			db	0		; ÆæÊı»¹ÊÇÅ¼Êı
+dwKernelSize		dd	0		; KERNEL.BIN ÎÄ¼ş´óĞ¡
 
 ;============================================================================
-;å­—ç¬¦ä¸²
+;×Ö·û´®
 ;----------------------------------------------------------------------------
-KernelFileName		db	"KERNEL  BIN", 0	; KERNEL.BIN ä¹‹æ–‡ä»¶å
-; ä¸ºç®€åŒ–ä»£ç , ä¸‹é¢æ¯ä¸ªå­—ç¬¦ä¸²çš„é•¿åº¦å‡ä¸º MessageLength
+KernelFileName		db	"KERNEL  BIN", 0	; KERNEL.BIN Ö®ÎÄ¼şÃû
+; Îª¼ò»¯´úÂë, ÏÂÃæÃ¿¸ö×Ö·û´®µÄ³¤¶È¾ùÎª MessageLength
 MessageLength		equ	9
 LoadMessage:		db	"Loading  "
 Message1		db	"Ready.   "
@@ -204,63 +207,63 @@ Message2		db	"No KERNEL"
 ;============================================================================
 
 ;----------------------------------------------------------------------------
-; å‡½æ•°å: DispStrRealMode
+; º¯ÊıÃû: DispStrRealMode
 ;----------------------------------------------------------------------------
-; è¿è¡Œç¯å¢ƒ:
-;	å®æ¨¡å¼ï¼ˆä¿æŠ¤æ¨¡å¼ä¸‹æ˜¾ç¤ºå­—ç¬¦ä¸²ç”±å‡½æ•° DispStr å®Œæˆï¼‰
-; ä½œç”¨:
-;	æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦ä¸², å‡½æ•°å¼€å§‹æ—¶ dh ä¸­åº”è¯¥æ˜¯å­—ç¬¦ä¸²åºå·(0-based)
+; ÔËĞĞ»·¾³:
+;	ÊµÄ£Ê½£¨±£»¤Ä£Ê½ÏÂÏÔÊ¾×Ö·û´®ÓÉº¯Êı DispStr Íê³É£©
+; ×÷ÓÃ:
+;	ÏÔÊ¾Ò»¸ö×Ö·û´®, º¯Êı¿ªÊ¼Ê± dh ÖĞÓ¦¸ÃÊÇ×Ö·û´®ĞòºÅ(0-based)
 DispStrRealMode:
 	mov	ax, MessageLength
 	mul	dh
 	add	ax, LoadMessage
-	mov	bp, ax			; â”“
-	mov	ax, ds			; â”£ ES:BP = ä¸²åœ°å€
-	mov	es, ax			; â”›
-	mov	cx, MessageLength	; CX = ä¸²é•¿åº¦
+	mov	bp, ax			; ©·
+	mov	ax, ds			; ©Ç ES:BP = ´®µØÖ·
+	mov	es, ax			; ©¿
+	mov	cx, MessageLength	; CX = ´®³¤¶È
 	mov	ax, 01301h		; AH = 13,  AL = 01h
-	mov	bx, 0007h		; é¡µå·ä¸º0(BH = 0) é»‘åº•ç™½å­—(BL = 07h)
+	mov	bx, 0007h		; Ò³ºÅÎª0(BH = 0) ºÚµ×°××Ö(BL = 07h)
 	mov	dl, 0
-	add	dh, 3			; ä»ç¬¬ 3 è¡Œå¾€ä¸‹æ˜¾ç¤º
+	add	dh, 3			; ´ÓµÚ 3 ĞĞÍùÏÂÏÔÊ¾
 	int	10h			; int 10h
 	ret
 ;----------------------------------------------------------------------------
-; å‡½æ•°å: ReadSector
+; º¯ÊıÃû: ReadSector
 ;----------------------------------------------------------------------------
-; ä½œç”¨:
-;	ä»åºå·(Directory Entry ä¸­çš„ Sector å·)ä¸º ax çš„çš„ Sector å¼€å§‹, å°† cl ä¸ª Sector è¯»å…¥ es:bx ä¸­
+; ×÷ÓÃ:
+;	´ÓĞòºÅ(Directory Entry ÖĞµÄ Sector ºÅ)Îª ax µÄµÄ Sector ¿ªÊ¼, ½« cl ¸ö Sector ¶ÁÈë es:bx ÖĞ
 ReadSector:
 	; -----------------------------------------------------------------------
-	; æ€æ ·ç”±æ‰‡åŒºå·æ±‚æ‰‡åŒºåœ¨ç£ç›˜ä¸­çš„ä½ç½® (æ‰‡åŒºå· -> æŸ±é¢å·, èµ·å§‹æ‰‡åŒº, ç£å¤´å·)
+	; ÔõÑùÓÉÉÈÇøºÅÇóÉÈÇøÔÚ´ÅÅÌÖĞµÄÎ»ÖÃ (ÉÈÇøºÅ -> ÖùÃæºÅ, ÆğÊ¼ÉÈÇø, ´ÅÍ·ºÅ)
 	; -----------------------------------------------------------------------
-	; è®¾æ‰‡åŒºå·ä¸º x
-	;                           â”Œ æŸ±é¢å· = y >> 1
-	;       x           â”Œ å•† y â”¤
-	; -------------- => â”¤      â”” ç£å¤´å· = y & 1
-	;  æ¯ç£é“æ‰‡åŒºæ•°     â”‚
-	;                   â”” ä½™ z => èµ·å§‹æ‰‡åŒºå· = z + 1
+	; ÉèÉÈÇøºÅÎª x
+	;                           ©° ÖùÃæºÅ = y >> 1
+	;       x           ©° ÉÌ y ©È
+	; -------------- => ©È      ©¸ ´ÅÍ·ºÅ = y & 1
+	;  Ã¿´ÅµÀÉÈÇøÊı     ©¦
+	;                   ©¸ Óà z => ÆğÊ¼ÉÈÇøºÅ = z + 1
 	push	bp
 	mov	bp, sp
-	sub	esp, 2			; è¾Ÿå‡ºä¸¤ä¸ªå­—èŠ‚çš„å †æ ˆåŒºåŸŸä¿å­˜è¦è¯»çš„æ‰‡åŒºæ•°: byte [bp-2]
+	sub	esp, 2			; ±Ù³öÁ½¸ö×Ö½ÚµÄ¶ÑÕ»ÇøÓò±£´æÒª¶ÁµÄÉÈÇøÊı: byte [bp-2]
 
 	mov	byte [bp-2], cl
-	push	bx			; ä¿å­˜ bx
-	mov	bl, [BPB_SecPerTrk]	; bl: é™¤æ•°
-	div	bl			; y åœ¨ al ä¸­, z åœ¨ ah ä¸­
+	push	bx			; ±£´æ bx
+	mov	bl, [BPB_SecPerTrk]	; bl: ³ıÊı
+	div	bl			; y ÔÚ al ÖĞ, z ÔÚ ah ÖĞ
 	inc	ah			; z ++
-	mov	cl, ah			; cl <- èµ·å§‹æ‰‡åŒºå·
+	mov	cl, ah			; cl <- ÆğÊ¼ÉÈÇøºÅ
 	mov	dh, al			; dh <- y
-	shr	al, 1			; y >> 1 (å…¶å®æ˜¯ y/BPB_NumHeads, è¿™é‡ŒBPB_NumHeads=2)
-	mov	ch, al			; ch <- æŸ±é¢å·
-	and	dh, 1			; dh & 1 = ç£å¤´å·
-	pop	bx			; æ¢å¤ bx
-	; è‡³æ­¤, "æŸ±é¢å·, èµ·å§‹æ‰‡åŒº, ç£å¤´å·" å…¨éƒ¨å¾—åˆ° ^^^^^^^^^^^^^^^^^^^^^^^^
-	mov	dl, [BS_DrvNum]		; é©±åŠ¨å™¨å· (0 è¡¨ç¤º A ç›˜)
+	shr	al, 1			; y >> 1 (ÆäÊµÊÇ y/BPB_NumHeads, ÕâÀïBPB_NumHeads=2)
+	mov	ch, al			; ch <- ÖùÃæºÅ
+	and	dh, 1			; dh & 1 = ´ÅÍ·ºÅ
+	pop	bx			; »Ö¸´ bx
+	; ÖÁ´Ë, "ÖùÃæºÅ, ÆğÊ¼ÉÈÇø, ´ÅÍ·ºÅ" È«²¿µÃµ½ ^^^^^^^^^^^^^^^^^^^^^^^^
+	mov	dl, [BS_DrvNum]		; Çı¶¯Æ÷ºÅ (0 ±íÊ¾ A ÅÌ)
 .GoOnReading:
-	mov	ah, 2			; è¯»
-	mov	al, byte [bp-2]		; è¯» al ä¸ªæ‰‡åŒº
+	mov	ah, 2			; ¶Á
+	mov	al, byte [bp-2]		; ¶Á al ¸öÉÈÇø
 	int	13h
-	jc	.GoOnReading		; å¦‚æœè¯»å–é”™è¯¯ CF ä¼šè¢«ç½®ä¸º 1, è¿™æ—¶å°±ä¸åœåœ°è¯», ç›´åˆ°æ­£ç¡®ä¸ºæ­¢
+	jc	.GoOnReading		; Èç¹û¶ÁÈ¡´íÎó CF »á±»ÖÃÎª 1, ÕâÊ±¾Í²»Í£µØ¶Á, Ö±µ½ÕıÈ·ÎªÖ¹
 
 	add	esp, 2
 	pop	bp
@@ -268,37 +271,37 @@ ReadSector:
 	ret
 
 ;----------------------------------------------------------------------------
-; å‡½æ•°å: GetFATEntry
+; º¯ÊıÃû: GetFATEntry
 ;----------------------------------------------------------------------------
-; ä½œç”¨:
-;	æ‰¾åˆ°åºå·ä¸º ax çš„ Sector åœ¨ FAT ä¸­çš„æ¡ç›®, ç»“æœæ”¾åœ¨ ax ä¸­
-;	éœ€è¦æ³¨æ„çš„æ˜¯, ä¸­é—´éœ€è¦è¯» FAT çš„æ‰‡åŒºåˆ° es:bx å¤„, æ‰€ä»¥å‡½æ•°ä¸€å¼€å§‹ä¿å­˜äº† es å’Œ bx
+; ×÷ÓÃ:
+;	ÕÒµ½ĞòºÅÎª ax µÄ Sector ÔÚ FAT ÖĞµÄÌõÄ¿, ½á¹û·ÅÔÚ ax ÖĞ
+;	ĞèÒª×¢ÒâµÄÊÇ, ÖĞ¼äĞèÒª¶Á FAT µÄÉÈÇøµ½ es:bx ´¦, ËùÒÔº¯ÊıÒ»¿ªÊ¼±£´æÁË es ºÍ bx
 GetFATEntry:
 	push	es
 	push	bx
 	push	ax
-	mov	ax, BaseOfKernelFile	; â”“
-	sub	ax, 0100h		; â”£ åœ¨ BaseOfKernelFile åé¢ç•™å‡º 4K ç©ºé—´ç”¨äºå­˜æ”¾ FAT
-	mov	es, ax			; â”›
+	mov	ax, BaseOfKernelFile	; ©·
+	sub	ax, 0100h		; ©Ç ÔÚ BaseOfKernelFile ºóÃæÁô³ö 4K ¿Õ¼äÓÃÓÚ´æ·Å FAT
+	mov	es, ax			; ©¿
 	pop	ax
 	mov	byte [bOdd], 0
 	mov	bx, 3
 	mul	bx			; dx:ax = ax * 3
 	mov	bx, 2
-	div	bx			; dx:ax / 2  ==>  ax <- å•†, dx <- ä½™æ•°
+	div	bx			; dx:ax / 2  ==>  ax <- ÉÌ, dx <- ÓàÊı
 	cmp	dx, 0
 	jz	LABEL_EVEN
 	mov	byte [bOdd], 1
-LABEL_EVEN:;å¶æ•°
-	xor	dx, dx			; ç°åœ¨ ax ä¸­æ˜¯ FATEntry åœ¨ FAT ä¸­çš„åç§»é‡. ä¸‹é¢æ¥è®¡ç®— FATEntry åœ¨å“ªä¸ªæ‰‡åŒºä¸­(FATå ç”¨ä¸æ­¢ä¸€ä¸ªæ‰‡åŒº)
+LABEL_EVEN:;Å¼Êı
+	xor	dx, dx			; ÏÖÔÚ ax ÖĞÊÇ FATEntry ÔÚ FAT ÖĞµÄÆ«ÒÆÁ¿. ÏÂÃæÀ´¼ÆËã FATEntry ÔÚÄÄ¸öÉÈÇøÖĞ(FATÕ¼ÓÃ²»Ö¹Ò»¸öÉÈÇø)
 	mov	bx, [BPB_BytsPerSec]
-	div	bx			; dx:ax / BPB_BytsPerSec  ==>	ax <- å•†   (FATEntry æ‰€åœ¨çš„æ‰‡åŒºç›¸å¯¹äº FAT æ¥è¯´çš„æ‰‡åŒºå·)
-					;				dx <- ä½™æ•° (FATEntry åœ¨æ‰‡åŒºå†…çš„åç§»)ã€‚
+	div	bx			; dx:ax / BPB_BytsPerSec  ==>	ax <- ÉÌ   (FATEntry ËùÔÚµÄÉÈÇøÏà¶ÔÓÚ FAT À´ËµµÄÉÈÇøºÅ)
+					;				dx <- ÓàÊı (FATEntry ÔÚÉÈÇøÄÚµÄÆ«ÒÆ)¡£
 	push	dx
-	mov	bx, 0			; bx <- 0	äºæ˜¯, es:bx = (BaseOfKernelFile - 100):00 = (BaseOfKernelFile - 100) * 10h
-	add	ax, SectorNoOfFAT1	; æ­¤å¥æ‰§è¡Œä¹‹åçš„ ax å°±æ˜¯ FATEntry æ‰€åœ¨çš„æ‰‡åŒºå·
+	mov	bx, 0			; bx <- 0	ÓÚÊÇ, es:bx = (BaseOfKernelFile - 100):00 = (BaseOfKernelFile - 100) * 10h
+	add	ax, SectorNoOfFAT1	; ´Ë¾äÖ´ĞĞÖ®ºóµÄ ax ¾ÍÊÇ FATEntry ËùÔÚµÄÉÈÇøºÅ
 	mov	cl, 2
-	call	ReadSector		; è¯»å– FATEntry æ‰€åœ¨çš„æ‰‡åŒº, ä¸€æ¬¡è¯»ä¸¤ä¸ª, é¿å…åœ¨è¾¹ç•Œå‘ç”Ÿé”™è¯¯, å› ä¸ºä¸€ä¸ª FATEntry å¯èƒ½è·¨è¶Šä¸¤ä¸ªæ‰‡åŒº
+	call	ReadSector		; ¶ÁÈ¡ FATEntry ËùÔÚµÄÉÈÇø, Ò»´Î¶ÁÁ½¸ö, ±ÜÃâÔÚ±ß½ç·¢Éú´íÎó, ÒòÎªÒ»¸ö FATEntry ¿ÉÄÜ¿çÔ½Á½¸öÉÈÇø
 	pop	dx
 	add	bx, dx
 	mov	ax, [es:bx]
@@ -317,10 +320,10 @@ LABEL_GET_FAT_ENRY_OK:
 
 
 ;----------------------------------------------------------------------------
-; å‡½æ•°å: KillMotor
+; º¯ÊıÃû: KillMotor
 ;----------------------------------------------------------------------------
-; ä½œç”¨:
-;	å…³é—­è½¯é©±é©¬è¾¾
+; ×÷ÓÃ:
+;	¹Ø±ÕÈíÇıÂí´ï
 KillMotor:
 	push	dx
 	mov	dx, 03F2h
@@ -331,8 +334,8 @@ KillMotor:
 ;----------------------------------------------------------------------------
 
 
-; ä»æ­¤ä»¥åçš„ä»£ç åœ¨ä¿æŠ¤æ¨¡å¼ä¸‹æ‰§è¡Œ ----------------------------------------------------
-; 32 ä½ä»£ç æ®µ. ç”±å®æ¨¡å¼è·³å…¥ ---------------------------------------------------------
+; ´Ó´ËÒÔºóµÄ´úÂëÔÚ±£»¤Ä£Ê½ÏÂÖ´ĞĞ ----------------------------------------------------
+; 32 Î»´úÂë¶Î. ÓÉÊµÄ£Ê½ÌøÈë ---------------------------------------------------------
 [SECTION .s32]
 
 ALIGN	32
@@ -353,93 +356,91 @@ LABEL_PM_START:
 	call	DispStr
 	add	esp, 4
 
-	;call	DispMemInfo
-	;call	SetupPaging
+	call	DispMemInfo
+	call	SetupPaging
+
+	;mov	ah, 0Fh				; 0000: ºÚµ×    1111: °××Ö
+	;mov	al, 'P'
+	;mov	[gs:((80 * 0 + 39) * 2)], ax	; ÆÁÄ»µÚ 0 ĞĞ, µÚ 39 ÁĞ¡£
 
 	call	InitKernel
 
-	mov	ah, 0Fh				; 0000: é»‘åº•    1111: ç™½å­—
-	mov	al, 'X'
-	mov	[gs:((80 * 0 + 39) * 2)], ax	; å±å¹•ç¬¬ 0 è¡Œ, ç¬¬ 39 åˆ—ã€‚
+	;jmp	$
 
-	
-	xor ax,ax
 	;***************************************************************
-	jmp	SelectorFlatC:KernelEntryPointPhyAddr	; æ­£å¼è¿›å…¥å†…æ ¸ *
+	jmp	SelectorFlatC:KernelEntryPointPhyAddr	; ÕıÊ½½øÈëÄÚºË *
 	;***************************************************************
-	; å†…å­˜çœ‹ä¸Šå»æ˜¯è¿™æ ·çš„ï¼š
-	;              â”ƒ                                    â”ƒ
-	;              â”ƒ                 .                  â”ƒ
-	;              â”ƒ                 .                  â”ƒ
-	;              â”ƒ                 .                  â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;              â”ƒâ– â– â– â– â– â– Page  Tablesâ– â– â– â– â– â– â”ƒ
-	;              â”ƒâ– â– â– â– â– (å¤§å°ç”±LOADERå†³å®š)â– â– â– â– â”ƒ
-	;    00101000h â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ PageTblBase
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;    00100000h â”ƒâ– â– â– â– Page Directory Tableâ– â– â– â– â”ƒ PageDirBase  <- 1M
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;       F0000h â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡System ROMâ–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;       E0000h â”ƒâ–¡â–¡â–¡â–¡Expansion of system ROM â–¡â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;       C0000h â”ƒâ–¡â–¡â–¡Reserved for ROM expansionâ–¡â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ B8000h â† gs
-	;       A0000h â”ƒâ–¡â–¡â–¡Display adapter reservedâ–¡â–¡â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;       9FC00h â”ƒâ–¡â–¡extended BIOS data area (EBDA)â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;       90000h â”ƒâ– â– â– â– â– â– â– LOADER.BINâ– â– â– â– â– â– â”ƒ somewhere in LOADER â† esp
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;       80000h â”ƒâ– â– â– â– â– â– â– KERNEL.BINâ– â– â– â– â– â– â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;       30000h â”ƒâ– â– â– â– â– â– â– â– KERNELâ– â– â– â– â– â– â– â”ƒ 30400h â† KERNEL å…¥å£ (KernelEntryPointPhyAddr)
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒ                                    â”ƒ
-	;        7E00h â”ƒ              F  R  E  E            â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â– â”ƒ
-	;        7C00h â”ƒâ– â– â– â– â– â– BOOT  SECTORâ– â– â– â– â– â– â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒ                                    â”ƒ
-	;         500h â”ƒ              F  R  E  E            â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â–¡â”ƒ
-	;         400h â”ƒâ–¡â–¡â–¡â–¡ROM BIOS parameter area â–¡â–¡â”ƒ
-	;              â”£â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”«
-	;              â”ƒâ—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â—‡â”ƒ
-	;           0h â”ƒâ—‡â—‡â—‡â—‡â—‡â—‡Int  Vectorsâ—‡â—‡â—‡â—‡â—‡â—‡â”ƒ
-	;              â”—â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”› â† cs, ds, es, fs, ss
+	; ÄÚ´æ¿´ÉÏÈ¥ÊÇÕâÑùµÄ£º
+	;              ©§                                    ©§
+	;              ©§                 .                  ©§
+	;              ©§                 .                  ©§
+	;              ©§                 .                  ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡öPage  Tables¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;              ©§¡ö¡ö¡ö¡ö¡ö(´óĞ¡ÓÉLOADER¾ö¶¨)¡ö¡ö¡ö¡ö©§
+	;    00101000h ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§ PageTblBase
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;    00100000h ©§¡ö¡ö¡ö¡öPage Directory Table¡ö¡ö¡ö¡ö©§ PageDirBase  <- 1M
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;       F0000h ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õSystem ROM¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;       E0000h ©§¡õ¡õ¡õ¡õExpansion of system ROM ¡õ¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;       C0000h ©§¡õ¡õ¡õReserved for ROM expansion¡õ¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§ B8000h ¡û gs
+	;       A0000h ©§¡õ¡õ¡õDisplay adapter reserved¡õ¡õ¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;       9FC00h ©§¡õ¡õextended BIOS data area (EBDA)¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;       90000h ©§¡ö¡ö¡ö¡ö¡ö¡ö¡öLOADER.BIN¡ö¡ö¡ö¡ö¡ö¡ö©§ somewhere in LOADER ¡û esp
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;       80000h ©§¡ö¡ö¡ö¡ö¡ö¡ö¡öKERNEL.BIN¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;       30000h ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡öKERNEL¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§ 30400h ¡û KERNEL Èë¿Ú (KernelEntryPointPhyAddr)
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§                                    ©§
+	;        7E00h ©§              F  R  E  E            ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;        7C00h ©§¡ö¡ö¡ö¡ö¡ö¡öBOOT  SECTOR¡ö¡ö¡ö¡ö¡ö¡ö©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§                                    ©§
+	;         500h ©§              F  R  E  E            ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ©§
+	;         400h ©§¡õ¡õ¡õ¡õROM BIOS parameter area ¡õ¡õ©§
+	;              ©Ç©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+	;              ©§¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó¡ó©§
+	;           0h ©§¡ó¡ó¡ó¡ó¡ó¡óInt  Vectors¡ó¡ó¡ó¡ó¡ó¡ó©§
+	;              ©»©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¿ ¡û cs, ds, es, fs, ss
 	;
 	;
-	;		â”â”â”â”â”“		â”â”â”â”â”“
-	;		â”ƒâ– â– â– â”ƒ æˆ‘ä»¬ä½¿ç”¨ 	â”ƒâ–¡â–¡â–¡â”ƒ ä¸èƒ½ä½¿ç”¨çš„å†…å­˜
-	;		â”—â”â”â”â”›		â”—â”â”â”â”›
-	;		â”â”â”â”â”“		â”â”â”â”â”“
-	;		â”ƒ      â”ƒ æœªä½¿ç”¨ç©ºé—´	â”ƒâ—‡â—‡â—‡â”ƒ å¯ä»¥è¦†ç›–çš„å†…å­˜
-	;		â”—â”â”â”â”›		â”—â”â”â”â”›
+	;		©³©¥©¥©¥©·		©³©¥©¥©¥©·
+	;		©§¡ö¡ö¡ö©§ TinixÊ¹ÓÃ	©§¡õ¡õ¡õ©§ ²»ÄÜÊ¹ÓÃµÄÄÚ´æ
+	;		©»©¥©¥©¥©¿		©»©¥©¥©¥©¿
+	;		©³©¥©¥©¥©·		©³©¥©¥©¥©·
+	;		©§      ©§ Î´Ê¹ÓÃ¿Õ¼ä	©§¡ó¡ó¡ó©§ ¿ÉÒÔ¸²¸ÇµÄÄÚ´æ
+	;		©»©¥©¥©¥©¿		©»©¥©¥©¥©¿
 	;
-	; æ³¨ï¼šKERNEL çš„ä½ç½®å®é™…ä¸Šæ˜¯å¾ˆçµæ´»çš„ï¼Œå¯ä»¥é€šè¿‡åŒæ—¶æ”¹å˜ LOAD.INC ä¸­çš„
-	;     KernelEntryPointPhyAddr å’Œ MAKEFILE ä¸­å‚æ•° -Ttext çš„å€¼æ¥æ”¹å˜ã€‚
-	;     æ¯”å¦‚æŠŠ KernelEntryPointPhyAddr å’Œ -Ttext çš„å€¼éƒ½æ”¹ä¸º 0x400400ï¼Œ
-	;     åˆ™ KERNEL å°±ä¼šè¢«åŠ è½½åˆ°å†…å­˜ 0x400000(4M) å¤„ï¼Œå…¥å£åœ¨ 0x400400ã€‚
+	; ×¢£ºKERNEL µÄÎ»ÖÃÊµ¼ÊÉÏÊÇºÜÁé»îµÄ£¬¿ÉÒÔÍ¨¹ıÍ¬Ê±¸Ä±ä LOAD.INC ÖĞµÄ KernelEntryPointPhyAddr ºÍ MAKEFILE ÖĞ²ÎÊı -Ttext µÄÖµÀ´¸Ä±ä¡£
+	;     ±ÈÈç£¬Èç¹û°Ñ KernelEntryPointPhyAddr ºÍ -Ttext µÄÖµ¶¼¸ÄÎª 0x400400£¬Ôò KERNEL ¾Í»á±»¼ÓÔØµ½ÄÚ´æ 0x400000(4M) ´¦£¬Èë¿ÚÔÚ 0x400400¡£
 	;
 
 
 
 
 ; ------------------------------------------------------------------------
-; æ˜¾ç¤º AL ä¸­çš„æ•°å­—
+; ÏÔÊ¾ AL ÖĞµÄÊı×Ö
 ; ------------------------------------------------------------------------
 DispAL:
 	push	ecx
@@ -448,7 +449,7 @@ DispAL:
 
 	mov	edi, [dwDispPos]
 
-	mov	ah, 0Fh			; 0000b: é»‘åº•    1111b: ç™½å­—
+	mov	ah, 0Fh			; 0000b: ºÚµ×    1111b: °××Ö
 	mov	dl, al
 	shr	al, 4
 	mov	ecx, 2
@@ -467,6 +468,7 @@ DispAL:
 
 	mov	al, dl
 	loop	.begin
+	;add	edi, 2
 
 	mov	[dwDispPos], edi
 
@@ -475,11 +477,11 @@ DispAL:
 	pop	ecx
 
 	ret
-; DispAL ç»“æŸ-------------------------------------------------------------
+; DispAL ½áÊø-------------------------------------------------------------
 
 
 ; ------------------------------------------------------------------------
-; æ˜¾ç¤ºä¸€ä¸ªæ•´å½¢æ•°
+; ÏÔÊ¾Ò»¸öÕûĞÎÊı
 ; ------------------------------------------------------------------------
 DispInt:
 	mov	eax, [esp + 4]
@@ -497,7 +499,7 @@ DispInt:
 	mov	eax, [esp + 4]
 	call	DispAL
 
-	mov	ah, 07h			; 0000b: é»‘åº•    0111b: ç°å­—
+	mov	ah, 07h			; 0000b: ºÚµ×    0111b: »Ò×Ö
 	mov	al, 'h'
 	push	edi
 	mov	edi, [dwDispPos]
@@ -507,10 +509,10 @@ DispInt:
 	pop	edi
 
 	ret
-; DispInt ç»“æŸ------------------------------------------------------------
+; DispInt ½áÊø------------------------------------------------------------
 
 ; ------------------------------------------------------------------------
-; æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦ä¸²
+; ÏÔÊ¾Ò»¸ö×Ö·û´®
 ; ------------------------------------------------------------------------
 DispStr:
 	push	ebp
@@ -526,7 +528,7 @@ DispStr:
 	lodsb
 	test	al, al
 	jz	.2
-	cmp	al, 0Ah	; æ˜¯å›è½¦å—?
+	cmp	al, 0Ah	; ÊÇ»Ø³µÂğ?
 	jnz	.3
 	push	eax
 	mov	eax, edi
@@ -552,10 +554,10 @@ DispStr:
 	pop	ebx
 	pop	ebp
 	ret
-; DispStr ç»“æŸ------------------------------------------------------------
+; DispStr ½áÊø------------------------------------------------------------
 
 ; ------------------------------------------------------------------------
-; æ¢è¡Œ
+; »»ĞĞ
 ; ------------------------------------------------------------------------
 DispReturn:
 	push	szReturn
@@ -563,11 +565,11 @@ DispReturn:
 	add	esp, 4
 
 	ret
-; DispReturn ç»“æŸ---------------------------------------------------------
+; DispReturn ½áÊø---------------------------------------------------------
 
 
 ; ------------------------------------------------------------------------
-; å†…å­˜æ‹·è´ï¼Œä»¿ memcpy
+; ÄÚ´æ¿½±´£¬·Â memcpy
 ; ------------------------------------------------------------------------
 ; void* MemCpy(void* es:pDest, void* ds:pSrc, int iSize);
 ; ------------------------------------------------------------------------
@@ -583,19 +585,19 @@ MemCpy:
 	mov	esi, [ebp + 12]	; Source
 	mov	ecx, [ebp + 16]	; Counter
 .1:
-	cmp	ecx, 0		; åˆ¤æ–­è®¡æ•°å™¨
-	jz	.2		; è®¡æ•°å™¨ä¸ºé›¶æ—¶è·³å‡º
+	cmp	ecx, 0		; ÅĞ¶Ï¼ÆÊıÆ÷
+	jz	.2		; ¼ÆÊıÆ÷ÎªÁãÊ±Ìø³ö
 
-	mov	al, [ds:esi]		; â”“
-	inc	esi			; â”ƒ
-					; â”£ é€å­—èŠ‚ç§»åŠ¨
-	mov	byte [es:edi], al	; â”ƒ
-	inc	edi			; â”›
+	mov	al, [ds:esi]		; ©·
+	inc	esi			; ©§
+					; ©Ç Öğ×Ö½ÚÒÆ¶¯
+	mov	byte [es:edi], al	; ©§
+	inc	edi			; ©¿
 
-	dec	ecx		; è®¡æ•°å™¨å‡ä¸€
-	jmp	.1		; å¾ªç¯
+	dec	ecx		; ¼ÆÊıÆ÷¼õÒ»
+	jmp	.1		; Ñ­»·
 .2:
-	mov	eax, [ebp + 8]	; è¿”å›å€¼
+	mov	eax, [ebp + 8]	; ·µ»ØÖµ
 
 	pop	ecx
 	pop	edi
@@ -603,26 +605,26 @@ MemCpy:
 	mov	esp, ebp
 	pop	ebp
 
-	ret			; å‡½æ•°ç»“æŸï¼Œè¿”å›
-; MemCpy ç»“æŸ-------------------------------------------------------------
+	ret			; º¯Êı½áÊø£¬·µ»Ø
+; MemCpy ½áÊø-------------------------------------------------------------
 
 
 
 
-; æ˜¾ç¤ºå†…å­˜ä¿¡æ¯ --------------------------------------------------------------
+; ÏÔÊ¾ÄÚ´æĞÅÏ¢ --------------------------------------------------------------
 DispMemInfo:
 	push	esi
 	push	edi
 	push	ecx
 
 	mov	esi, MemChkBuf
-	mov	ecx, [dwMCRNumber]	;for(int i=0;i<[MCRNumber];i++) // æ¯æ¬¡å¾—åˆ°ä¸€ä¸ªARDS(Address Range Descriptor Structure)ç»“æ„
+	mov	ecx, [dwMCRNumber]	;for(int i=0;i<[MCRNumber];i++) // Ã¿´ÎµÃµ½Ò»¸öARDS(Address Range Descriptor Structure)½á¹¹
 .loop:					;{
-	mov	edx, 5			;	for(int j=0;j<5;j++)	// æ¯æ¬¡å¾—åˆ°ä¸€ä¸ªARDSä¸­çš„æˆå‘˜ï¼Œå…±5ä¸ªæˆå‘˜
-	mov	edi, ARDStruct		;	{			// ä¾æ¬¡æ˜¾ç¤ºï¼šBaseAddrLowï¼ŒBaseAddrHighï¼ŒLengthLowï¼ŒLengthHighï¼ŒType
+	mov	edx, 5			;	for(int j=0;j<5;j++)	// Ã¿´ÎµÃµ½Ò»¸öARDSÖĞµÄ³ÉÔ±£¬¹²5¸ö³ÉÔ±
+	mov	edi, ARDStruct		;	{			// ÒÀ´ÎÏÔÊ¾£ºBaseAddrLow£¬BaseAddrHigh£¬LengthLow£¬LengthHigh£¬Type
 .1:					;
 	push	dword [esi]		;
-	call	DispInt			;		DispInt(MemChkBuf[j*4]); // æ˜¾ç¤ºä¸€ä¸ªæˆå‘˜
+	call	DispInt			;		DispInt(MemChkBuf[j*4]); // ÏÔÊ¾Ò»¸ö³ÉÔ±
 	pop	eax			;
 	stosd				;		ARDStruct[j*4] = MemChkBuf[j*4];
 	add	esi, 4			;
@@ -655,44 +657,44 @@ DispMemInfo:
 	ret
 ; ---------------------------------------------------------------------------
 
-; å¯åŠ¨åˆ†é¡µæœºåˆ¶ --------------------------------------------------------------
+; Æô¶¯·ÖÒ³»úÖÆ --------------------------------------------------------------
 SetupPaging:
-	; æ ¹æ®å†…å­˜å¤§å°è®¡ç®—åº”åˆå§‹åŒ–å¤šå°‘PDEä»¥åŠå¤šå°‘é¡µè¡¨
+	; ¸ù¾İÄÚ´æ´óĞ¡¼ÆËãÓ¦³õÊ¼»¯¶àÉÙPDEÒÔ¼°¶àÉÙÒ³±í
 	xor	edx, edx
 	mov	eax, [dwMemSize]
-	mov	ebx, 400000h	; 400000h = 4M = 4096 * 1024, ä¸€ä¸ªé¡µè¡¨å¯¹åº”çš„å†…å­˜å¤§å°
+	mov	ebx, 400000h	; 400000h = 4M = 4096 * 1024, Ò»¸öÒ³±í¶ÔÓ¦µÄÄÚ´æ´óĞ¡
 	div	ebx
-	mov	ecx, eax	; æ­¤æ—¶ ecx ä¸ºé¡µè¡¨çš„ä¸ªæ•°ï¼Œä¹Ÿå³ PDE åº”è¯¥çš„ä¸ªæ•°
+	mov	ecx, eax	; ´ËÊ± ecx ÎªÒ³±íµÄ¸öÊı£¬Ò²¼´ PDE Ó¦¸ÃµÄ¸öÊı
 	test	edx, edx
 	jz	.no_remainder
-	inc	ecx		; å¦‚æœä½™æ•°ä¸ä¸º 0 å°±éœ€å¢åŠ ä¸€ä¸ªé¡µè¡¨
+	inc	ecx		; Èç¹ûÓàÊı²»Îª 0 ¾ÍĞèÔö¼ÓÒ»¸öÒ³±í
 .no_remainder:
-	push	ecx		; æš‚å­˜é¡µè¡¨ä¸ªæ•°
+	push	ecx		; Ôİ´æÒ³±í¸öÊı
 
-	; ä¸ºç®€åŒ–å¤„ç†, æ‰€æœ‰çº¿æ€§åœ°å€å¯¹åº”ç›¸ç­‰çš„ç‰©ç†åœ°å€. å¹¶ä¸”ä¸è€ƒè™‘å†…å­˜ç©ºæ´.
+	; Îª¼ò»¯´¦Àí, ËùÓĞÏßĞÔµØÖ·¶ÔÓ¦ÏàµÈµÄÎïÀíµØÖ·. ²¢ÇÒ²»¿¼ÂÇÄÚ´æ¿Õ¶´.
 
-	; é¦–å…ˆåˆå§‹åŒ–é¡µç›®å½•
+	; Ê×ÏÈ³õÊ¼»¯Ò³Ä¿Â¼
 	mov	ax, SelectorFlatRW
 	mov	es, ax
-	mov	edi, PageDirBase	; æ­¤æ®µé¦–åœ°å€ä¸º PageDirBase
+	mov	edi, PageDirBase	; ´Ë¶ÎÊ×µØÖ·Îª PageDirBase
 	xor	eax, eax
 	mov	eax, PageTblBase | PG_P  | PG_USU | PG_RWW
 .1:
 	stosd
-	add	eax, 4096		; ä¸ºäº†ç®€åŒ–, æ‰€æœ‰é¡µè¡¨åœ¨å†…å­˜ä¸­æ˜¯è¿ç»­çš„.
+	add	eax, 4096		; ÎªÁË¼ò»¯, ËùÓĞÒ³±íÔÚÄÚ´æÖĞÊÇÁ¬ĞøµÄ.
 	loop	.1
 
-	; å†åˆå§‹åŒ–æ‰€æœ‰é¡µè¡¨
-	pop	eax			; é¡µè¡¨ä¸ªæ•°
-	mov	ebx, 1024		; æ¯ä¸ªé¡µè¡¨ 1024 ä¸ª PTE
+	; ÔÙ³õÊ¼»¯ËùÓĞÒ³±í
+	pop	eax			; Ò³±í¸öÊı
+	mov	ebx, 1024		; Ã¿¸öÒ³±í 1024 ¸ö PTE
 	mul	ebx
-	mov	ecx, eax		; PTEä¸ªæ•° = é¡µè¡¨ä¸ªæ•° * 1024
-	mov	edi, PageTblBase	; æ­¤æ®µé¦–åœ°å€ä¸º PageTblBase
+	mov	ecx, eax		; PTE¸öÊı = Ò³±í¸öÊı * 1024
+	mov	edi, PageTblBase	; ´Ë¶ÎÊ×µØÖ·Îª PageTblBase
 	xor	eax, eax
 	mov	eax, PG_P  | PG_USU | PG_RWW
 .2:
 	stosd
-	add	eax, 4096		; æ¯ä¸€é¡µæŒ‡å‘ 4K çš„ç©ºé—´
+	add	eax, 4096		; Ã¿Ò»Ò³Ö¸Ïò 4K µÄ¿Õ¼ä
 	loop	.2
 
 	mov	eax, PageDirBase
@@ -705,56 +707,53 @@ SetupPaging:
 	nop
 
 	ret
-; åˆ†é¡µæœºåˆ¶å¯åŠ¨å®Œæ¯• ----------------------------------------------------------
+; ·ÖÒ³»úÖÆÆô¶¯Íê±Ï ----------------------------------------------------------
 
 
 
 ; InitKernel ---------------------------------------------------------------------------------
-; å°† KERNEL.BIN çš„å†…å®¹ç»è¿‡æ•´ç†å¯¹é½åæ”¾åˆ°æ–°çš„ä½ç½®
-; éå†æ¯ä¸€ä¸ª Program Headerï¼Œæ ¹æ® Program Header ä¸­çš„ä¿¡æ¯æ¥ç¡®å®šæŠŠä»€ä¹ˆæ”¾è¿›å†…å­˜ï¼Œæ”¾åˆ°ä»€ä¹ˆä½ç½®ï¼Œä»¥åŠæ”¾å¤šå°‘ã€‚
+; ½« KERNEL.BIN µÄÄÚÈİ¾­¹ıÕûÀí¶ÔÆëºó·Åµ½ĞÂµÄÎ»ÖÃ
 ; --------------------------------------------------------------------------------------------
-InitKernel:
-        xor   esi, esi
-        mov   cx, word [BaseOfKernelFilePhyAddr+2Ch];`. ecx <- pELFHdr->e_phnum
-        movzx ecx, cx                               ;/
-        mov   esi, [BaseOfKernelFilePhyAddr + 1Ch]  ; esi <- pELFHdr->e_phoff
-        add   esi, BaseOfKernelFilePhyAddr;esi<-OffsetOfKernel+pELFHdr->e_phoff
+InitKernel:	; ±éÀúÃ¿Ò»¸ö Program Header£¬¸ù¾İ Program Header ÖĞµÄĞÅÏ¢À´È·¶¨°ÑÊ²Ã´·Å½øÄÚ´æ£¬·Åµ½Ê²Ã´Î»ÖÃ£¬ÒÔ¼°·Å¶àÉÙ¡£
+	xor	esi, esi
+	mov	cx, word [BaseOfKernelFilePhyAddr + 2Ch]; ©· ecx <- pELFHdr->e_phnum
+	movzx	ecx, cx					; ©¿
+	mov	esi, [BaseOfKernelFilePhyAddr + 1Ch]	; esi <- pELFHdr->e_phoff
+	add	esi, BaseOfKernelFilePhyAddr		; esi <- OffsetOfKernel + pELFHdr->e_phoff
 .Begin:
-        mov   eax, [esi + 0]
-        cmp   eax, 0                      ; PT_NULL
-        ;jz    .NoAction
-				push dword [esi + 010h]
-				call DispInt
-				pop eax
-        push  dword [esi + 010h]    ;size ;`.
-        mov   eax, [esi + 04h]            ; |
-        add   eax, BaseOfKernelFilePhyAddr; | memcpy((void*)(pPHdr->p_vaddr),
-        push  eax		    ;src  ; |      uchCode + pPHdr->p_offset,
-        push  dword [esi + 08h]     ;dst  ; |      pPHdr->p_filesz;
-        call  MemCpy                      ; |
-        add   esp, 12                     ;/
+	mov	eax, [esi + 0]
+	cmp	eax, 0				; PT_NULL
+	jz	.NoAction
+	push	dword [esi + 010h]		; size	©·
+	mov	eax, [esi + 04h]		;	©§
+	add	eax, BaseOfKernelFilePhyAddr	;	©Ç ::memcpy(	(void*)(pPHdr->p_vaddr),
+	push	eax				; src	©§		uchCode + pPHdr->p_offset,
+	push	dword [esi + 08h]		; dst	©§		pPHdr->p_filesz;
+	call	MemCpy				;	©§
+	add	esp, 12				;	©¿
 .NoAction:
-        add   esi, 020h                   ; esi += pELFHdr->e_phentsize
-        dec   ecx
-;jnz   .Begin
-        ret
+	add	esi, 020h			; esi += pELFHdr->e_phentsize
+	dec	ecx
+	jnz	.Begin
+
+	ret
 ; InitKernel ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-; SECTION .data1 ä¹‹å¼€å§‹ ---------------------------------------------------------------------------------------------
+; SECTION .data1 Ö®¿ªÊ¼ ---------------------------------------------------------------------------------------------
 [SECTION .data1]
 
 ALIGN	32
 
 LABEL_DATA:
-; å®æ¨¡å¼ä¸‹ä½¿ç”¨è¿™äº›ç¬¦å·
-; å­—ç¬¦ä¸²
+; ÊµÄ£Ê½ÏÂÊ¹ÓÃÕâĞ©·ûºÅ
+; ×Ö·û´®
 _szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0
 _szRAMSize:			db	"RAM size:", 0
 _szReturn:			db	0Ah, 0
-;; å˜é‡
+;; ±äÁ¿
 _dwMCRNumber:			dd	0	; Memory Check Result
-_dwDispPos:			dd	(80 * 6 + 0) * 2	; å±å¹•ç¬¬ 6 è¡Œ, ç¬¬ 0 åˆ—ã€‚
+_dwDispPos:			dd	(80 * 6 + 0) * 2	; ÆÁÄ»µÚ 6 ĞĞ, µÚ 0 ÁĞ¡£
 _dwMemSize:			dd	0
 _ARDStruct:			; Address Range Descriptor Structure
 	_dwBaseAddrLow:		dd	0
@@ -764,7 +763,7 @@ _ARDStruct:			; Address Range Descriptor Structure
 	_dwType:		dd	0
 _MemChkBuf:	times	256	db	0
 ;
-;; ä¿æŠ¤æ¨¡å¼ä¸‹ä½¿ç”¨è¿™äº›ç¬¦å·
+;; ±£»¤Ä£Ê½ÏÂÊ¹ÓÃÕâĞ©·ûºÅ
 szMemChkTitle		equ	BaseOfLoaderPhyAddr + _szMemChkTitle
 szRAMSize		equ	BaseOfLoaderPhyAddr + _szRAMSize
 szReturn		equ	BaseOfLoaderPhyAddr + _szReturn
@@ -780,8 +779,8 @@ ARDStruct		equ	BaseOfLoaderPhyAddr + _ARDStruct
 MemChkBuf		equ	BaseOfLoaderPhyAddr + _MemChkBuf
 
 
-; å †æ ˆå°±åœ¨æ•°æ®æ®µçš„æœ«å°¾
+; ¶ÑÕ»¾ÍÔÚÊı¾İ¶ÎµÄÄ©Î²
 StackSpace:	times	1000h	db	0
-TopOfStack	equ	BaseOfLoaderPhyAddr + $	; æ ˆé¡¶
-; SECTION .data1 ä¹‹ç»“æŸ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TopOfStack	equ	BaseOfLoaderPhyAddr + $	; Õ»¶¥
+; SECTION .data1 Ö®½áÊø ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

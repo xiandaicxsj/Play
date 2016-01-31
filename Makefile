@@ -26,6 +26,7 @@ everything : $(BOOT_BIN) $(LDR_BIN) $(KERNEL_BIN)
 	sudo umount $(FLOPPY)
 
 clean :
+	sudo umount $(FLOPPY)
 	rm -f $(BOOT_BIN) $(LDR_BIN) $(KERNEL_BIN) *.o
 
 $(BOOT_BIN) : $(BOOT)

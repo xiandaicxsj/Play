@@ -3,6 +3,10 @@
  */
 void start_kernel(void )
 {
+		while(1)
+		{
+
+		}
 /*		init_gdt();
 		init_idt();
 		init_memory();

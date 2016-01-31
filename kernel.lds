@@ -1,7 +1,7 @@
 ENTRY(_start)
 SECTIONS
 {
-	. =  0x9c000;
+	. =  0x30400;
 	.text : AT(ADDR(.text) ) 
 	{ *(.text) }
 	.data : AT(ADDR(.data))

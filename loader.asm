@@ -180,6 +180,7 @@ LABEL_FILE_LOADED:
 	mov	cr0, eax
 
 ; 真正进入保护模式
+	jmp $
 	jmp	dword SelectorFlatC:(BaseOfLoaderPhyAddr+LABEL_PM_START)
 
 
@@ -352,14 +353,14 @@ LABEL_PM_START:
 	call	DispStr
 	add	esp, 4
 
-	call	DispMemInfo
+	;call	DispMemInfo
 	;call	SetupPaging
 
-	mov	ah, 0Fh				; 0000: 黑底    1111: 白字
-	mov	al, 'P'
-	mov	[gs:((80 * 0 + 39) * 2)], ax	; 屏幕第 0 行, 第 39 列。
-
 	call	InitKernel
+
+	mov	ah, 0Fh				; 0000: 黑底    1111: 白字
+	mov	al, 'X'
+	mov	[gs:((80 * 0 + 39) * 2)], ax	; 屏幕第 0 行, 第 39 列。
 
 	
 	xor ax,ax
@@ -721,7 +722,10 @@ InitKernel:
 .Begin:
         mov   eax, [esi + 0]
         cmp   eax, 0                      ; PT_NULL
-        jz    .NoAction
+        ;jz    .NoAction
+				push dword [esi + 010h]
+				call DispInt
+				pop eax
         push  dword [esi + 010h]    ;size ;`.
         mov   eax, [esi + 04h]            ; |
         add   eax, BaseOfKernelFilePhyAddr; | memcpy((void*)(pPHdr->p_vaddr),
@@ -732,8 +736,7 @@ InitKernel:
 .NoAction:
         add   esi, 020h                   ; esi += pELFHdr->e_phentsize
         dec   ecx
-        jnz   .Begin
-	jmp $
+;jnz   .Begin
         ret
 ; InitKernel ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

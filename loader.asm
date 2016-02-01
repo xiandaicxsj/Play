@@ -357,13 +357,17 @@ LABEL_PM_START:
 	add	esp, 4
 
 	call	DispMemInfo
-	call	SetupPaging
+	;call	SetupPaging
 
 	;mov	ah, 0Fh				; 0000: 黑底    1111: 白字
 	;mov	al, 'P'
 	;mov	[gs:((80 * 0 + 39) * 2)], ax	; 屏幕第 0 行, 第 39 列。
 
 	call	InitKernel
+	
+	mov	ah, 0Fh				; 0000: 黑底    1111: 白字
+	mov	al, 'X'
+	mov	[gs:((80 * 0 + 39) * 2)], ax	; 屏幕第 0 行, 第 39 列。
 
 	;jmp	$
 

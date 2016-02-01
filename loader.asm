@@ -369,7 +369,6 @@ LABEL_PM_START:
 	mov	al, 'X'
 	mov	[gs:((80 * 0 + 39) * 2)], ax	; ÆÁÄ»µÚ 0 ÐÐ, µÚ 39 ÁÐ¡£
 
-	;jmp	$
 
 	;***************************************************************
 	jmp	SelectorFlatC:KernelEntryPointPhyAddr	; ÕýÊ½½øÈëÄÚºË *
@@ -732,7 +731,9 @@ InitKernel:	; ±éÀúÃ¿Ò»¸ö Program Header£¬¸ù¾Ý Program Header ÖÐµÄÐÅÏ¢À´È·¶¨°ÑÊ²Ã
 	mov	eax, [esi + 04h]		;	©§
 	add	eax, BaseOfKernelFilePhyAddr	;	©Ç ::memcpy(	(void*)(pPHdr->p_vaddr),
 	push	eax				; src	©§		uchCode + pPHdr->p_offset,
-	push	dword [esi + 08h]		; dst	©§		pPHdr->p_filesz;
+	mov eax,dword [esi + 08h]		; dst	©§		pPHdr->p_filesz;
+	;sub eax, KernelOffset; copy to phyaddr
+	push eax
 	call	MemCpy				;	©§
 	add	esp, 12				;	©¿
 .NoAction:

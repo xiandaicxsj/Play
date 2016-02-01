@@ -34,9 +34,12 @@ idt:
 .fill 255, 8, 0 
 
 idt_base: 
-.short 0
-.long 0
+.short 255*8 - 1
+.long idt
 
+init_page_dir:
+.fill 4048, 1, 0
+	
 init_stack:
 .fill 4048, 1, 0
 
@@ -50,14 +53,10 @@ init_stack:
 .type _start, @function
 _start:
 	xorl %eax, %eax
-start:
 	movl $_pa(init_stack), %esp
 	xorl  %eax,%eax
 	xorl  %edi,%edi
-	//movl $gdt, %eax  
-	//movl $gdt_base, %edi
-	//movl %eax, 2(%edi)
-	lgdt (gdt_base)
+	lgdt _pa(gdt_base)
 	xorl %eax,%eax
 	movw $_kernel_ds, %ax
 	movw %ax, %ds 
@@ -65,9 +64,10 @@ start:
 	movw %ax, %gs 
 	movw %ax, %fs 
 	movw %ax, %ss 
+	xorl %eax, %eax
+	//call _setup_paging
 	ljmp $_kernel_cs,$1f
 1:
-	//movw %ax, %cs 
 	//call _setup_idt
 	//call _setup_paging
 	call start_kernel

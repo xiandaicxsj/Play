@@ -1,0 +1,19 @@
+ENTRY(_start)
+SECTIONS
+{
+	. = 0xc000000 + 0x30400;
+	.text : AT(ADDR(.text) - 0xc000000) 
+	{ *(.text) }
+	.rodata : AT(ADDR(.rodata) - 0xc000000)
+	{ *(.rodata) }
+	.data : AT(ADDR(.data) - 0xc000000)
+	{
+		*(.data)
+	}
+	.bss : AT(ADDR(.bss) - 0xc000000)
+	{
+		_bss_start = .;
+		*(.bss)
+		_bss_end = .;
+	}
+}

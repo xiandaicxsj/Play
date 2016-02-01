@@ -1,21 +1,18 @@
 /* * represent the address of certain funcu */
 /* #include "head_32.h" */
-.equ GDTNUM, 128 
-.equ _kernel_ds, 0x1
-.equ _kernel_cs, 0x2
-.equ _kernel_video, 0x3
+.equ GDTNUM, 0x10
 .equ _video_offset, 0xb8000
 .equ IDT_ATTR, 0x8600
 .extern start_kernel
 
 .section .data 
-.align 32
+.align 64
 gdt:
-.quad 0
+.fill 2, 8, 0
 sys_code: 
-.quad  0x004f98000000ffff
+.quad  0x00cf9a000000ffff
 sys_data:	
-.quad  0x004f92000000ffff
+.quad  0x00cf92000000ffff
 sys_video:
 .quad  0x0040920b8000ffff
 default2:
@@ -26,18 +23,22 @@ default2:
 .quad  0
 
 gdt_base:
-.short 0  /* gdt limit */
-.long 0   /* gdt base  */
+.word 16*8-1  /* gdt limit */
+.long gdt  /* gdt base  */
+
+/* #include "head_32.h" */
+.equ _kernel_cs, sys_code - gdt
+.equ _kernel_ds, sys_data - gdt
 
 idt:
-.fill 4048, 8, 0 
+.fill 255, 8, 0 
 
 idt_base: 
 .short 0
 .long 0
 
 init_stack:
-.fill 4048, 8, 0
+.fill 4048, 1, 0
 
 /*;.globl make func available external
  ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model. should run into proteced model
@@ -49,26 +50,27 @@ init_stack:
 .type _start, @function
 _start:
 	xorl %eax, %eax
-	jmp _start
 start:
 	movl $_pa(init_stack), %esp
 	xorl  %eax,%eax
 	xorl  %edi,%edi
-	movl $_pa(gdt),%eax  
-	movl $_pa(gdt_base),%edi
-	movl %eax, 2(%edi)
-1:
-	jmp 1
-	lgdt _pa(gdt_base)
+	//movl $gdt, %eax  
+	//movl $gdt_base, %edi
+	//movl %eax, 2(%edi)
+	lgdt (gdt_base)
 	xorl %eax,%eax
 	movw $_kernel_ds, %ax
-	movw %ax,%ds 
-	movw $_kernel_cs, %ax
-	movw %ax,%cs 
-	
+	movw %ax, %ds 
+	movw %ax, %es 
+	movw %ax, %gs 
+	movw %ax, %fs 
+	movw %ax, %ss 
+	ljmp $_kernel_cs,$1f
+1:
+	//movw %ax, %cs 
 	//call _setup_idt
 	//call _setup_paging
-	//call start_kernel
+	call start_kernel
 
 .type _default_inter_handler, @function
 _default_inter_handler:

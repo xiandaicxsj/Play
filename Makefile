@@ -6,13 +6,14 @@ CC=gcc
 CCFLAGS= -I include/  -c -fno-builtin -m32 -std=c99  -fno-stack-protector  
 LD=ld
 LDFLAGS = -m elf_i386  -T kernel.lds
+#LDFLAGS = -m elf_i386  -Ttext 0x30400
 BOOT:=boot.asm
 LDR:=loader.asm
 KERNEL:=kernel.c
 BOOT_BIN:=$(subst .asm,.bin,$(BOOT))
 LDR_BIN:=$(subst .asm,.bin,$(LDR))
 KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
-OBJECTS = kernel.o head_32.o
+OBJECTS = head_32.o kernel.o
 IMG:=a.img
 FLOPPY:=/mnt/floppy/
 
@@ -26,7 +27,6 @@ everything : $(BOOT_BIN) $(LDR_BIN) $(KERNEL_BIN)
 	sudo umount $(FLOPPY)
 
 clean :
-	sudo umount $(FLOPPY)
 	rm -f $(BOOT_BIN) $(LDR_BIN) $(KERNEL_BIN) *.o
 
 $(BOOT_BIN) : $(BOOT)

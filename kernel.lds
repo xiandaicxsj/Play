@@ -1,16 +1,20 @@
 ENTRY(_start)
 SECTIONS
 {
-	. = 0xc000000 + 0x30400;
-	.text : AT(ADDR(.text) - 0xc000000) 
-	{ *(.text) }
-	.rodata : AT(ADDR(.rodata) - 0xc000000)
+	. = 0xc0000000;
+	.text : AT(ADDR(.text) - 0xc0000000) 
+	{
+		_text_start = .;
+	 	*(.text) 
+		_text_end = .;
+	}
+	.rodata : AT(ADDR(.rodata) - 0xc0000000)
 	{ *(.rodata) }
-	.data : AT(ADDR(.data) - 0xc000000)
+	.data : AT(ADDR(.data) - 0xc0000000)
 	{
 		*(.data)
 	}
-	.bss : AT(ADDR(.bss) - 0xc000000)
+	.bss : AT(ADDR(.bss) - 0xc0000000)
 	{
 		_bss_start = .;
 		*(.bss)

@@ -136,37 +136,15 @@ _setup_paging:
 	/* ecx is the size of kernel */
 	movl $_pa(_bss_end), %ecx
 	subl $_pa(_text_start), %ecx
-	pushl %ecx
-	movl %ecx, %eax
 	shrl $22, %ecx
+	jmp .
+	/*mov init_page_dir
+	 mov init_page_tbl
+	*/
+	
+	
 
-	andl $0x003fffff, %eax
-	cmp %eax, 0
-	je 3f
-	incl %ecx
-3.
-	movl $init_page_tbl, %eax
-	movl $init_page_dir, %edi
-1.
-	movl %eax, (%edi + 0xc000)
-	stopsl
-	addl $4048, %eax
-	decl %ecx
-	jnz 1b
-
-	popl %ecx
-	andl $0x003fffff, %ecx
-	shrl $12, %ecx
-	xorl %eax, %eax
-	movl $init_page_tbl, %edi
-2.
-	stopsl
-	addl $4048, %eax
-	decl %ecx
-	jnz 2b
-
-	movl $init_page_dir, %eax
-	movl %eax, %cr3
+	
 	movl %cr0, %eax
 	orl  $CR0_PG, %eax
 	movl %eax, %cr0

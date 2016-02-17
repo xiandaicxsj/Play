@@ -357,7 +357,7 @@ LABEL_PM_START:
 	add	esp, 4
 
 	call	DispMemInfo
-	call	SetupPaging
+	;call	SetupPaging
 
 	;mov	ah, 0Fh				; 0000: ºÚµ×    1111: °××Ö
 	;mov	al, 'P'
@@ -366,12 +366,12 @@ LABEL_PM_START:
 	call	InitKernel
 	
 	mov	ah, 0Fh				; 0000: ºÚµ×    1111: °××Ö
-	mov	al, 'B'
+	mov	al, 'X'
 	mov	[gs:((80 * 0 + 39) * 2)], ax	; ÆÁÄ»µÚ 0 ÐÐ, µÚ 39 ÁÐ¡£
 
 
 	;***************************************************************
-	jmp	SelectorFlatC:KernelOffset	; ÕýÊ½½øÈëÄÚºË *
+	jmp	SelectorFlatC:KernelEntryPointPhyAddr	; ÕýÊ½½øÈëÄÚºË *
 	;***************************************************************
 	; ÄÚ´æ¿´ÉÏÈ¥ÊÇÕâÑùµÄ£º
 	;              ©§                                    ©§
@@ -683,7 +683,6 @@ SetupPaging:
 	xor	eax, eax
 	mov	eax, PageTblBase | PG_P  | PG_USU | PG_RWW
 .1:
-	mov 	dword [edi + KernelPdeOffset], eax
 	stosd
 	add	eax, 4096		; ÎªÁË¼ò»¯, ËùÓÐÒ³±íÔÚÄÚ´æÖÐÊÇÁ¬ÐøµÄ.
 	loop	.1
@@ -733,7 +732,7 @@ InitKernel:	; ±éÀúÃ¿Ò»¸ö Program Header£¬¸ù¾Ý Program Header ÖÐµÄÐÅÏ¢À´È·¶¨°ÑÊ²Ã
 	add	eax, BaseOfKernelFilePhyAddr	;	©Ç ::memcpy(	(void*)(pPHdr->p_vaddr),
 	push	eax				; src	©§		uchCode + pPHdr->p_offset,
 	mov eax,dword [esi + 08h]		; dst	©§		pPHdr->p_filesz;
-	sub eax, KernelOffset; copy to phyaddr
+	;sub eax, KernelOffset; copy to phyaddr
 	push eax
 	call	MemCpy				;	©§
 	add	esp, 12				;	©¿

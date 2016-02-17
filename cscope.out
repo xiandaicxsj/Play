@@ -1,4 +1,4 @@
-cscope 15 $HOME/Documents/SourceCode/OOOS -q 0000003180 0000337034
+cscope 15 $HOME/Documents/SourceCode/OOOS -q 0000003185 0000337143
 	@exception.c
 
 1 
@@ -1173,9 +1173,7 @@ _H_HEAD_32
 	#_·
 (
 addr
-è×dd¸- 
-KERNEL_OFFSET
-)
+è×ddr)
 
 	)
 
@@ -3944,6 +3942,34 @@ a
 11 
 	}
 }
+
+	@vmlds.h
+
+1 #iâdeà
+_H_VMLDS
+
+
+2 
+	#_H_VMLDS
+
+
+	)
+
+3 
+_bss_’d
+[];
+
+4 
+_bss_¡¬t
+[];
+
+5 
+_‹xt_¡¬t
+[];
+
+6 
+_‹xt_’d
+[];
 
 	@/usr/include/memory.h
 
@@ -59394,8 +59420,8 @@ STA_CLK
 .
 1
 /usr/include
-86
-1980
+87
+1988
 exception.c
 gate.c
 include/e820.h
@@ -59418,6 +59444,7 @@ test/a.c
 test/b.c
 test/b.h
 test/test.c
+vmlds.h
 /usr/include/memory.h
 /usr/include/stdio.h
 /usr/include/bits/stdio-ldbl.h

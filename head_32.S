@@ -24,7 +24,7 @@ default2:
 
 gdt_base:
 .word 16*8-1  /* gdt limit */
-.long gdt  /* gdt base  */
+.long 0  /* gdt base  */
 
 /* #include "head_32.h" */
 .equ _kernel_cs, sys_code - gdt
@@ -64,22 +64,22 @@ _start:
 	xorl %eax, %eax
 	xorl %edi, %edi
 	xorl %esi, %esi
-	//lgdt _pa(gdt_base)
-	xorl %eax,%eax
+	movl $gdt_base, %edi 
+	movl $_pa(gdt), %eax
+	movl %eax, 2(%edi)
 	/* ecx is the size of kernel */
 	lgdt _pa(gdt_base)
 
 	/*jmp $_kernel_cs, $1f
 1:      */
 	
-/*	movw $_kernel_ds, %ax
-	jmp .
+	movw $_kernel_ds, %ax
 	movw %ax, %ds 
 	movw %ax, %es 
 	movw %ax, %gs 
 	movw %ax, %fs 
 	movw %ax, %ss 
-	*/
+	
 	movl $_pa(_bss_end), %ecx
 	subl $_pa(_text_start), %ecx
 

@@ -59,78 +59,29 @@ init_page_tbl:
 .globl _start	
 .type _start, @function
 _start:
-	//movl $_pa(init_stack), %esp
-	//movl %esp, %ebp
+	xorl %eax, %eax
+	xorl %ebx, %ebx
+	jmp .
+	movl $init_stack, %esp
+	movl %esp, %ebp
 	xorl %eax, %eax
 	xorl %edi, %edi
 	xorl %esi, %esi
-	//lgdt _pa(gdt_base)
+	lgdt gdt_base
 	xorl %eax,%eax
-	/* ecx is the size of kernel */
-	lgdt _pa(gdt_base)
-
-	/*jmp $_kernel_cs, $1f
-1:      */
-	
-/*	movw $_kernel_ds, %ax
-	jmp .
+	movw $_kernel_ds, %ax
 	movw %ax, %ds 
 	movw %ax, %es 
 	movw %ax, %gs 
 	movw %ax, %fs 
 	movw %ax, %ss 
-	*/
-	movl $_pa(_bss_end), %ecx
-	subl $_pa(_text_start), %ecx
-
-	movl %ecx, %edx
-	movl %ecx, %eax
-	shrl $22, %ecx
-
-	andl $0x003fffff, %eax
-	cmp %eax, 0
-	je 3f
-	incl %ecx
-3:
-	movl $0x201000, %eax
-	//movl $_pa(init_page_tbl), %eax
-	orl  $PGT_P, %eax
-	orl  $PGT_S, %eax
-	orl  $PGT_W, %eax
-	movl $_pa(init_page_dir), %edi
-1:
-	movl %eax, 0xc000(%edi)
-	stosl
-	addl $4096, %eax
-	decl %ecx
-	jnz 1b
-
-
-	movl %edx, %ecx
-	andl $0x003fffff, %ecx
-	shrl $12, %ecx
 	xorl %eax, %eax
-	orl  $PGT_P, %eax
-	orl  $PGT_S, %eax
-	orl  $PGT_W, %eax
-	movl $_pa(init_page_tbl), %edi
-2: 
-	stosl
-	addl $4096, %eax
-	decl %ecx
-	jnz 2b
-
-
-	movl $_pa(init_page_dir), %eax
-	movl %eax, %cr3
-	movl %cr0, %eax
-	orl  $CR0_PG, %eax
-	jmp .
-	movl %eax, %cr0
 	//call _setup_paging
 	ljmp $_kernel_cs,$1f
 1:
 	//call _setup_idt
+	xorl %eax, %eax
+	call _setup_paging
 	call start_kernel
 
 .type _default_inter_handler, @function
@@ -182,7 +133,64 @@ _setup_idt:
 	*/
 	ret
 	
+.type _setup_paging,@function
+_setup_paging:
+	pushl %ebp
+	movl %esp, %ebp
+	pusha
+	
+	/* ecx is the size of kernel */
+	movl $_pa(_bss_end), %ecx
+	subl $_pa(_text_start), %ecx
+	pushl %ecx
+	movl %ecx, %eax
+	shrl $22, %ecx
 
+	andl $0x003fffff, %eax
+	cmp %eax, 0
+	je 3f
+	incl %ecx
+3:
+	movl $0x201000, %eax
+	//movl $_pa(init_page_tbl), %eax
+	orl  $PGT_P, %eax
+	orl  $PGT_S, %eax
+	orl  $PGT_W, %eax
+	movl $init_page_dir, %edi
+1:
+	movl %eax, 0xc000(%edi)
+	stosl
+	addl $4096, %eax
+	decl %ecx
+	jnz 1b
+
+/*
+	popl %ecx
+	andl $0x003fffff, %ecx
+	shrl $12, %ecx
+	xorl %eax, %eax
+	orl  $PGT_P, %eax
+	orl  $PGT_U, %eax
+	orl  $PGT_W, %eax
+	movl $init_page_tbl, %edi
+2: 
+	stosl
+	addl $4096, %eax
+	decl %ecx
+	jnz 2b
+
+*/
+	movl $_pa(init_page_dir), %eax
+	jmp .
+	movl %eax, %cr3
+	movl %cr0, %eax
+	orl  $CR0_PG, %eax
+	movl %eax, %cr0
+	popa
+	jmp .
+	movl %ebp, %esp
+	popl %ebp
+	ret
 .type _print, @function
 _print:
 	pushl %ebp

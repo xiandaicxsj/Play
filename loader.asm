@@ -357,7 +357,7 @@ LABEL_PM_START:
 	add	esp, 4
 
 	call	DispMemInfo
-	call	SetupPaging
+	;call	SetupPaging
 
 	;mov	ah, 0Fh				; 0000: 黑底    1111: 白字
 	;mov	al, 'P'
@@ -371,7 +371,7 @@ LABEL_PM_START:
 
 
 	;***************************************************************
-	jmp	SelectorFlatC:KernelOffset	; 正式进入内核 *
+	jmp	SelectorFlatC:0	; 正式进入内核 *
 	;***************************************************************
 	; 内存看上去是这样的：
 	;              ┃                                    ┃

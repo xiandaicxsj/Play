@@ -61,10 +61,11 @@ init_page_tbl:
 _start:
 	//movl $_pa(init_stack), %esp
 	//movl %esp, %ebp
+	cli
 	xorl %eax, %eax
 	xorl %edi, %edi
 	xorl %esi, %esi
-	movl $gdt_base, %edi 
+	movl $_pa(gdt_base), %edi 
 	movl $_pa(gdt), %eax
 	movl %eax, 2(%edi)
 	/* ecx is the size of kernel */
@@ -72,13 +73,14 @@ _start:
 
 	/*jmp $_kernel_cs, $1f
 1:      */
-	
 	movw $_kernel_ds, %ax
 	movw %ax, %ds 
 	movw %ax, %es 
 	movw %ax, %gs 
 	movw %ax, %fs 
 	movw %ax, %ss 
+	ljmp $_kernel_cs, $_pa(setup_paging)
+setup_paging:
 	
 	movl $_pa(_bss_end), %ecx
 	subl $_pa(_text_start), %ecx
@@ -92,14 +94,13 @@ _start:
 	je 3f
 	incl %ecx
 3:
-	movl $0x201000, %eax
-	//movl $_pa(init_page_tbl), %eax
+	movl $_pa(init_page_tbl), %eax
 	orl  $PGT_P, %eax
 	orl  $PGT_S, %eax
 	orl  $PGT_W, %eax
 	movl $_pa(init_page_dir), %edi
 1:
-	movl %eax, 0xc000(%edi)
+	movl %eax, 0xc00(%edi)
 	stosl
 	addl $4096, %eax
 	decl %ecx
@@ -124,15 +125,14 @@ _start:
 	movl $_pa(init_page_dir), %eax
 	movl %eax, %cr3
 	movl %cr0, %eax
-	orl  $CR0_PG, %eax
-	jmp .
+	movl %cr4, %edx
+	orl  $0x80000000, %eax
 	movl %eax, %cr0
-	//call _setup_paging
-	ljmp $_kernel_cs,$1f
+	movl $init_stack, %esp
+	movl %esp, %ebp
+	ljmp $_kernel_cs, $1f	
 1:
-	//call _setup_idt
 	call start_kernel
-
 .type _default_inter_handler, @function
 _default_inter_handler:
 	/*pushl %esp

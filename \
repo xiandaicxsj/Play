@@ -41,10 +41,8 @@ void* kmalloc(u32 size, u32 align)// virtual addr
 	return _kmalloc(u32 size, u32 align);
 }
 
-/* now the memory is not set properily */
 void setup_memory()
 {
-	return ;
 	setup_low_memory();
 	mem_size = get_mem_size();
 	init_buddy();

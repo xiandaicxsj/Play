@@ -1,13 +1,18 @@
 #include "exception.h"
 #include "schdule.h"
 #include "gate.h"
-
+#include "page.h"
 struct idt_desc {
 	u32 low;
 	u32 high;
 };
+struct idt_base {
+	u8 limit;
+	u32 idt_addr;
+};
 
-static struct idt_desc _idt[256];
+static struct idt_desc idt[256];
+static struct idt_base idt_base;
 void default_handler1()
 {
 }
@@ -63,13 +68,13 @@ void copr_error()
 void set_idt(u32 index,  void (* func)(), u8 type)
 {
 	u32 func_addr = (u32) func;
-	_idt[index].low = (func_addr & 0xffff) || ((u32 KERN_CODE) << 16);
-	_idt[index].high = ((u32) type) << 8 || ((func_addr >> 16) & 0xffff) <<16;
+	idt[index].low = (func_addr & 0xffff) || ((u32 KERN_CODE) << 16);
+	idt[index].high = ((u32) type) << 8 || ((func_addr >> 16) & 0xffff) <<16;
 	return ;
 }
-void init_idt()
+void setup_idt()
 {
-	set_idt(DIEVIDE_ERROR, divide_error, DA_386IGate);
+				set_idt(DIEVIDE_ERROR, divide_error, DA_386IGate);
         set_idt(DEBUG, single_step_exception, DA_386IGate);
         set_idt(NMI, nmi, DA_386IGate);
         set_idt(BREAKPOINT, breakpoint_exception,DA_386IGate);

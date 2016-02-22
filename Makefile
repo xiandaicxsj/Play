@@ -13,7 +13,7 @@ KERNEL:=kernel.c
 BOOT_BIN:=$(subst .asm,.bin,$(BOOT))
 LDR_BIN:=$(subst .asm,.bin,$(LDR))
 KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
-OBJECTS = head_32.o kernel.o
+OBJECTS = head_32.o kernel.o tty.o
 IMG:=a.img
 FLOPPY:=/mnt/floppy/
 
@@ -42,6 +42,8 @@ kernel.o:kernel.c
 	$(CC) $(CCFLAGS) -o $@ $<
 head_32.o: head_32.S
 	$(CC)  $(CCFLAGS) -o $@ $<
+tty.o:tty.c
+	$(CC) $(CCFLAGS) -o $@ $<
 	
 	
 	

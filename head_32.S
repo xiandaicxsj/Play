@@ -35,7 +35,7 @@ idt:
 
 idt_base: 
 .short 255*8 - 1
-.long idt
+.long 0
 
 init_stack:
 .fill 4096, 1, 0

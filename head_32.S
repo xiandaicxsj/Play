@@ -37,13 +37,13 @@ sys_ds:
 .equ _kernel_cs, sys_code - gdt
 .equ _kernel_ds, sys_data - gdt
 
-idt:
+/*idt:
 .fill 255, 8, 0 
 
 idt_base: 
 .short 255*8 - 1
 .long 0
-
+*/
 init_stack:
 .fill 4096, 1, 0
 
@@ -154,11 +154,9 @@ _default_inter_handler:
 	*/
 	ret
 
-.type _setup_idt,@function
+/*.type _setup_idt,@function
 _setup_idt:
 
-	/* pushl %esp */
-	/* movl %esp, %ebp */
 	cli
 	1:
 	movl $21, %ecx
@@ -174,8 +172,8 @@ _setup_idt:
 	movl $_default_inter_handler,%edx
 	andl $0xffff0000, %edx
 	movw $IDT_ATTR, %dx 
-	movl %eax, idt(%ecx,%edi,2) /* _idt(1,) */
-	movl %edx, idt(%ecx,%edi,2) /* _idt(2,) */
+	movl %eax, idt(%ecx,%edi,2)
+	movl %edx, idt(%ecx,%edi,2) 
 	addl $1, %edi
 	subl $1, %ecx
 	jnz 1b
@@ -187,11 +185,8 @@ _setup_idt:
 	lidt idt_base
 	sti
 
-	/*
-	movl %ebp, %esp
-	popl %esp
-	*/
 	ret
+*/
 	
 
 .type _print, @function

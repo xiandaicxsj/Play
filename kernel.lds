@@ -2,11 +2,10 @@ ENTRY(_start)
 SECTIONS
 {
 	. = 0xc0000000;
+	_text_start = .;
 	.text : AT(ADDR(.text) - 0xc0000000) 
 	{
-		_text_start = .;
 	 	*(.text) 
-		_text_end = .;
 	}
 	.rodata : AT(ADDR(.rodata) - 0xc0000000)
 	{ *(.rodata) }
@@ -18,6 +17,6 @@ SECTIONS
 	{
 		_bss_start = .;
 		*(.bss)
-		_bss_end = .;
 	}
+		_bss_end = .;
 }

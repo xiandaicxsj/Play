@@ -1,5 +1,5 @@
 #include "exception.h"
-#include "schdule.h"
+//#include "schdule.h"
 #include "gate.h"
 #include "page.h"
 struct idt_desc {
@@ -10,9 +10,9 @@ struct idt_base {
 	u8 limit;
 	u32 idt_addr;
 };
-
-static struct idt_desc idt[256];
-static struct idt_base idt_base;
+extern u32 sys_cs;
+struct idt_desc idt[256] = {0};
+struct idt_base idt_base = {0};
 void default_handler1()
 {
 }
@@ -37,7 +37,7 @@ void timer_handler()
 void bounds_check()
 {
 }
-static void inval_opcode()
+void inval_opcode()
 {
 }
 void copr_not_available()
@@ -67,14 +67,14 @@ void copr_error()
 }
 void set_idt(u32 index,  void (* func)(), u8 type)
 {
+	u32 _sys_cs = sys_cs;
 	u32 func_addr = (u32) func;
-	idt[index].low = (func_addr & 0xffff) || ((u32 KERN_CODE) << 16);
-	idt[index].high = ((u32) type) << 8 || ((func_addr >> 16) & 0xffff) <<16;
+	idt[index].low = 16;
+	idt[index].high = 16;
 	return ;
 }
 void setup_idt()
 {
-				set_idt(DIEVIDE_ERROR, divide_error, DA_386IGate);
         set_idt(DEBUG, single_step_exception, DA_386IGate);
         set_idt(NMI, nmi, DA_386IGate);
         set_idt(BREAKPOINT, breakpoint_exception,DA_386IGate);
@@ -90,4 +90,5 @@ void setup_idt()
         set_idt(GENERAL_FAULT, general_protection, DA_386IGate);
         set_idt(PAGE_FAULT, page_fault, DA_386IGate);
         set_idt(TIMER, timer_handler,DA_386IGate);
+	while(1);
 }

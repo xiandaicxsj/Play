@@ -5,6 +5,7 @@
 .equ IDT_ATTR, 0x8600
 .extern start_kernel
 
+#include "head_32.h"
 .section .data 
 .align 64
 gdt:
@@ -27,6 +28,12 @@ gdt_base:
 .long 0  /* gdt base  */
 
 /* #include "head_32.h" */
+.global sys_cs
+.global sys_ds
+sys_cs:
+.word 0
+sys_ds:
+.word 0
 .equ _kernel_cs, sys_code - gdt
 .equ _kernel_ds, sys_data - gdt
 
@@ -40,6 +47,7 @@ idt_base:
 init_stack:
 .fill 4096, 1, 0
 
+.global init_page_dir
 .align 4096
 init_page_dir:
 /* 4k */
@@ -52,7 +60,6 @@ init_page_tbl:
  ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model. should run into proteced model
  ; kernel: 1.will setup the pagingn 2.others do other basic initialition, kernel asm will setup man one-one map*/
 .text	
-#include "head_32.h"
 #include "kernel.lds.h"
 #include "asm/page_type.h"
 .align 32
@@ -82,8 +89,12 @@ _start:
 	ljmp $_kernel_cs, $_pa(setup_paging)
 setup_paging:
 	
+	movw $_kernel_ds, sys_ds 
+	movw $_kernel_cs, sys_cs 
 	movl $_pa(_bss_end), %ecx
-	subl $_pa(_text_start), %ecx
+	jmp .
+	//subl $_pa(_text_start), %ecx
+	//movl $0x00300000, %ecx
 
 	movl %ecx, %edx
 	movl %ecx, %eax

@@ -11,7 +11,7 @@ struct idt_base {
 	u32 idt_addr;
 };
 extern u32 sys_cs;
-struct idt_desc idt[256] ;
+static struct idt_desc idt[256] ;
 u32 array[200]={0};
 static struct idt_base idt_base ;
 void default_handler1()
@@ -77,7 +77,6 @@ void set_idt(u32 index,  void (* func)(), u8 type)
 void setup_idt()
 {
         set_idt(DEBUG, single_step_exception, DA_386IGate);
-	while(1);
         set_idt(NMI, nmi, DA_386IGate);
         set_idt(BREAKPOINT, breakpoint_exception,DA_386IGate);
         set_idt(OVERFLOW, overflow, DA_386IGate);

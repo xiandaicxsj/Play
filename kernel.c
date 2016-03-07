@@ -3,7 +3,7 @@
 #include"exception.h"
 void start_kernel(void )
 {
-	//	setup_memory();
+		setup_memory();
 		init_console();
                 setup_idt();
 		while(1)

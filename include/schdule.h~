@@ -1,5 +1,6 @@
-#ifndef _H_PROCESS
-#define _H_PROCESS
+#ifndef _H_SCHDULE
+#define _H_SCHDULE
+extern task *current;
 #include"type.h"
 #include"gate.h"
 typedef struct tss_reg

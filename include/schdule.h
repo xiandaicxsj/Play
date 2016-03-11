@@ -1,6 +1,5 @@
 #ifndef _H_SCHDULE
 #define _H_SCHDULE
-extern task *current;
 #include"type.h"
 #include"gate.h"
 typedef struct tss_reg
@@ -37,10 +36,11 @@ typedef struct tss_reg
 struct task
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
-	seg_dec ldt[2];//这里对应的是任务的ldt需要重新进行处理
+	struct seg_desc ldt[2];//这里对应的是任务的ldt需要重新进行处理
 	u32 pid;
 	u8 status;
 	u32 cr3;
 };
+extern struct task *current;
 void init_task(struct task *);
 #endif

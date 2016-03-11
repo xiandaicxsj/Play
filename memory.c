@@ -53,6 +53,6 @@ void setup_memory()
 {
 	setup_low_memory();
 	mem_size = get_mem_size();
-	init_buddy();
+	//init_buddy();
 	return ;
 }

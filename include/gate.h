@@ -36,6 +36,18 @@
 #define SA_TIL 		0x04
 #define SA_TIG		0x00
 
+struct seg_desc {
+	u32 lo;
+	u32 hi;
+};
+
+struct gate_desc {
+	u32 lo;
+	u32 hi;
+};
+void load_idt();
+void set_idt(int vector, void (*func)(), u16 type);
 #endif
+
 
 

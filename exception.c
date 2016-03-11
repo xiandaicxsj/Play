@@ -14,9 +14,11 @@ extern u32 sys_cs;
 static struct idt_desc idt[256] ;
 u32 array[200]={0};
 static struct idt_base idt_base ;
+
 void default_handler1()
 {
 }
+
 void divide_error()
 {
 }
@@ -66,14 +68,7 @@ void copr_error()
 {
 
 }
-void set_idt(u32 index,  void (* func)(), u8 type)
-{
-	u32 _sys_cs = sys_cs;
-	u32 func_addr = (u32) func;
-	idt[index].low = 16;
-	idt[index].high = 16;
-	return ;
-}
+
 void setup_idt()
 {
         set_idt(DEBUG, single_step_exception, DA_386IGate);
@@ -91,4 +86,5 @@ void setup_idt()
         set_idt(GENERAL_FAULT, general_protection, DA_386IGate);
         set_idt(PAGE_FAULT, page_fault, DA_386IGate);
         set_idt(TIMER, timer_handler,DA_386IGate);
+	load_idt();
 }

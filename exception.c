@@ -1,19 +1,14 @@
 #include "exception.h"
-//#include "schdule.h"
 #include "gate.h"
 #include "page.h"
-struct idt_desc {
-	u32 low;
-	u32 high;
-};
-struct idt_base {
-	u8 limit;
+struct idt_base_t {
+	u16 limit;
 	u32 idt_addr;
 };
+u32 array[200]={0};
 extern u32 sys_cs;
 static struct idt_desc idt[256] ;
-u32 array[200]={0};
-static struct idt_base idt_base ;
+static struct idt_base_t idt_base ;
 
 void default_handler1()
 {
@@ -63,28 +58,39 @@ void stack_exception()
 }
 void general_protection()
 {
+
 }
 void copr_error()
 {
 
 }
 
+static void load_idt()
+{
+	idt_base.idt_addr = (u32) &idt[0];
+	idt_base.limit = 0xffff;
+	int i;
+	u32 eax = (u32) (&idt_base);
+	/* %%regiter should be used */
+	asm volatile ( "lidt (%%eax)" :"=a"(eax) );
+	asm volatile ( "sti" );
+}
 void setup_idt()
 {
-        set_idt(DEBUG, single_step_exception, DA_386IGate);
-        set_idt(NMI, nmi, DA_386IGate);
-        set_idt(BREAKPOINT, breakpoint_exception,DA_386IGate);
-        set_idt(OVERFLOW, overflow, DA_386IGate);
-        set_idt(BOUND_RANGE_EXCEDD,bounds_check,DA_386IGate);
-        set_idt(INVALID_OP,inval_opcode,DA_386IGate);
-        set_idt(DEVICE_NOT_AVAL,copr_not_available,DA_386IGate);
-        set_idt(DOUBL_FAULT,double_fault,DA_386IGate);
-        set_idt(COP_SEGMENT,copr_seg_overrun,DA_386IGate);
-        set_idt(IVALID_TSS,inval_tss,DA_386IGate);//这里修改了
-        set_idt(SEGMENT_NOT_PRESETNT,segment_not_present, DA_386IGate);
-        set_idt(STACK_FAULT,stack_exception, DA_386IGate);
-        set_idt(GENERAL_FAULT, general_protection, DA_386IGate);
-        set_idt(PAGE_FAULT, page_fault, DA_386IGate);
-        set_idt(TIMER, timer_handler,DA_386IGate);
+        set_idt(idt, DEBUG, single_step_exception, DA_386IGate);
+        set_idt(idt, NMI, nmi, DA_386IGate);
+        set_idt(idt, BREAKPOINT, breakpoint_exception,DA_386IGate);
+        set_idt(idt, OVERFLOW, overflow, DA_386IGate);
+        set_idt(idt, BOUND_RANGE_EXCEDD,bounds_check,DA_386IGate);
+        set_idt(idt, INVALID_OP,inval_opcode,DA_386IGate);
+        set_idt(idt, DEVICE_NOT_AVAL,copr_not_available,DA_386IGate);
+        set_idt(idt, DOUBL_FAULT,double_fault,DA_386IGate);
+        set_idt(idt, COP_SEGMENT,copr_seg_overrun,DA_386IGate);
+        set_idt(idt, IVALID_TSS,inval_tss,DA_386IGate);//这里修改了
+        set_idt(idt, SEGMENT_NOT_PRESETNT,segment_not_present, DA_386IGate);
+        set_idt(idt, STACK_FAULT,stack_exception, DA_386IGate);
+        set_idt(idt, GENERAL_FAULT, general_protection, DA_386IGate);
+        set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
+        set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
 }

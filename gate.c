@@ -1,15 +1,5 @@
 #include"gate.h"
 #include"global.h"
-extern u32 _gdt;
-extern u32 __sys_code;
-struct idt_base {
-        u8 limit;
-        u32 idt_addr;
-};
-static struct gate_desc idt[256] ;
-static struct idt_base idt_base ;
-extern u32 sys_cs;
-
 static void set_gdt_seg(void *gdt_base, int vector, void * _base_addr ,u8 type, u8 attr, u32 seg_limit)
 {
 	struct seg_desc * gdt_desc;
@@ -26,19 +16,19 @@ static void set_gdt_seg(void *gdt_base, int vector, void * _base_addr ,u8 type, 
 
 }
 
-void set_idt(int vector,void (*func)(), u16 type)
+void set_idt(struct idt_desc *idt, int vector,void (*func)(), u16 type)
 {
 	u32 handler=(u32)func;
-	idt[vector].lo = (((u32) __sys_code) << 16)  | (handler & 0xffff);
+	idt[vector].lo = (((u32) sys_cs) << 16)  | (handler & 0xffff);
 	idt[vector].hi = ((u32)func & 0xffff0000 ) | (type << 8);
 }
 
 void set_tss(int vector,void *base_addr)
 {
-	set_gdt_seg((void *)(&_gdt), vector, base_addr, 0x89, 0x104, 0xffff);
+	set_gdt_seg((void *)(&gdt), vector, base_addr, 0x89, 0x104, 0xffff);
 }
 
 void set_ldt(int vector,void* base_addr,u32 seg_limit)
 {
-	set_gdt_seg((void *)(&_gdt),vector,base_addr,0x82,0xffffffff);//这里设置的是默认的这里是在GDT中设置LDT，但是如果其他的设置
+	set_gdt_seg((void *)(&gdt), vector, base_addr, 0x82, 0x104, 0xffffffff);//这里设置的是默认的这里是在GDT中设置LDT，但是如果其他的设置
 }

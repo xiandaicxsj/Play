@@ -45,8 +45,12 @@ struct gate_desc {
 	u32 lo;
 	u32 hi;
 };
-void load_idt();
-void set_idt(int vector, void (*func)(), u16 type);
+struct idt_desc {
+        u32 lo;
+        u32 hi;
+};
+
+void set_idt(struct idt_desc *idt, int vector, void (*func)(), u16 type);
 #endif
 
 

@@ -21,4 +21,7 @@
 #define HARDDISK 0x2e
 #define KERNEL_CODE 0x08
 #define KERNEL_DATA 0x10
+extern void *gdt;
+extern u32 sys_cs;
+extern u32 sys_ds;
 #endif

@@ -3,7 +3,7 @@
 ##################################################
 ASM=gcc
 CC=gcc
-CCFLAGS= -I include/  -c -fno-builtin -m32 -std=c99  -fno-stack-protector  
+CCFLAGS= -I include/  -c -fno-builtin -m32   -fno-stack-protector  
 LD=ld
 LDFLAGS = -m elf_i386  -T kernel.lds
 #LDFLAGS = -m elf_i386  -Ttext 0x30400

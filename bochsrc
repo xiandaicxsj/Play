@@ -7,7 +7,7 @@ megs: 32
 
 # filename of ROM images
 romimage: file=/usr/share/bochs/BIOS-bochs-latest
-vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+vgaromimage: file= /usr/share/bochs/VGABIOS-lgpl-latest
 
 # what disk images will be used
 floppya: 1_44=a.img, status=inserted
@@ -17,6 +17,7 @@ boot: a
 
 # where do we send log messages?
 log: bochsout.txt
+#display_library: sdl
 
 # disable the mouse
 #mouse: enabled=0

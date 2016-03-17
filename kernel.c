@@ -6,6 +6,8 @@ void start_kernel(void )
 {
 		setup_memory();
                 setup_idt();
+
+		while(1);
 		init_console();
 		while(1);
 		return ;

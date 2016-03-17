@@ -2,9 +2,9 @@
 #include "gate.h"
 #include "page.h"
 struct idt_base_t {
-	u16 limit;
-	u32 idt_addr;
-};
+	u16 size;
+	u32 addr;
+}__attribute__((packed));
 u32 array[200]={0};
 extern u32 sys_cs;
 static struct idt_desc idt[256] ;
@@ -31,6 +31,7 @@ void overflow()
 }
 void timer_handler()
 {
+	while(1);
 }
 void bounds_check()
 {
@@ -58,7 +59,7 @@ void stack_exception()
 }
 void general_protection()
 {
-
+	while(1);
 }
 void copr_error()
 {
@@ -67,12 +68,11 @@ void copr_error()
 
 static void load_idt()
 {
-	idt_base.idt_addr = (u32) &idt[0];
-	idt_base.limit = 0xffff;
-	int i;
-	u32 eax = (u32) (&idt_base);
+	idt_base.addr = (u32) &(idt[0]);
+	idt_base.size = 0xffff;
 	/* %%regiter should be used */
-	asm volatile ( "lidt (%%eax)" :"=a"(eax) );
+	asm volatile ( "lidt %0" ::"m"(idt_base) );
+	/* */
 	asm volatile ( "sti" );
 }
 void setup_idt()

@@ -89,9 +89,10 @@ _start:
 	movw %ax, %ss 
 	ljmp $_kernel_cs, $_pa(setup_paging)
 setup_paging:
-	
-	movw $_kernel_ds, sys_ds 
-	movw $_kernel_cs, sys_cs 
+	movw $_kernel_cs, %ax;
+	movw %ax, _pa(sys_cs) 
+	movw $_kernel_ds, %ax;
+	movw %ax, _pa(sys_ds) 
 	//movl $_pa(_bss_end), %ecx
 	//subl $_pa(_text_start), %ecx
 	movl $0x00300000, %ecx

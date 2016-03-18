@@ -19,7 +19,7 @@ static void set_gdt_seg(void *gdt_base, int vector, void * _base_addr ,u8 type, 
 void set_idt(struct idt_desc *idt, int vector,void (*func)(), u16 type)
 {
 	u32 handler=(u32)func;
-	idt[vector].lo = (((u32) sys_cs) << 16)  | (handler & 0xffff);
+	idt[vector].lo = (( 16ul) << 16)  | (handler & 0xffff);
 	idt[vector].hi = ((u32)func & 0xffff0000 ) | (type << 8);
 }
 

@@ -12,13 +12,15 @@ static struct idt_base_t idt_base ;
 
 void default_handler1()
 {
-}
 
+}
 void divide_error()
 {
+
 }
 void single_step_exception()
 {
+
 }
 void nmi()
 {

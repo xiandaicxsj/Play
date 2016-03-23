@@ -30,6 +30,7 @@ struct page
     struct page *next;
 };
 void page_fault();
+void* alloc_page_table();
 
 #endif
 

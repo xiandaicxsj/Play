@@ -40,6 +40,7 @@ struct task
 	u32 pid;
 	u8 status;
 	u32 cr3;
+	struct task *next;
 };
 extern struct task *current;
 void init_task(struct task *);

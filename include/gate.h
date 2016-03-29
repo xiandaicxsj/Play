@@ -19,22 +19,52 @@
 #define DA_CCO		0x9C	//; 存在的只执行一致代码段属性值
 #define DA_CCOR		0x9E	//; 存在的可执行可读一致代码段属性值
 
-#define DA_DPL0		0x00	
-#define DA_DPL1			0x20	//; DPL = 1
-#define DA_DPL2			0x40	//; DPL = 2
-#define DA_DPL3			0x60	//; DPL = 3
+#define X86_DPL0		0x00	
+#define X86_DPL1			0x20	//; DPL = 1
+#define X86_DPL2			0x40	//; DPL = 2
+#define X86_DPL3			0x60	//; DPL = 3
 #define SA_RPL0		0	//; ┓
 #define SA_RPL1		1	//; ┣ RPL
 #define SA_RPL2		2	//; ┃
 #define SA_RPL3		3	
 #define DA_LDT	 	0x82	// 局部描述符表段类型值
 #define DA_TaskGate	0x85	//任务门类型值
-#define DA_386TSS	0x89	//可用 386 任务状态段类型值
+#define X86_GDT_TSS  0x89
 #define DA_386CGate	0x8C	//386 调用门类型值
 #define DA_386IGate	0x8E	//386 中断门类型值
 #define DA_386TGate	0x8F	//386 陷阱门类型值
 #define SA_TIL 		0x04
 #define SA_TIG		0x00
+/* gdt type */
+#define X86_GDT_GRA (1u << 23)
+#define X86_GDT_D (1u << 22) // d = 32-bit seg
+#define X86_GDT_B (0u << 22)
+#define X86_GDT_BIT64 (1u << 21)
+#define X86_GDT_AVL (0u << 20)
+#define X86_GDT_SLH(seg_limit) (((seg_limit >> 16) & 0xf) << 16)
+#define X86_GDT_SLL(seg_limit) (seg_limit & 0xff)
+#define X86_GDT_BAH(base_addr) (((base_addr >> 16) & 0xff) | (base_addr & 0xff000000))
+#define X86_GDT_BAL(base_addr) ((base_addr << 16) && 0x0000)
+#define X86_GDT_SYSTEM (1u <<  11)
+#define X86_GDT_CD (0u <<  11)
+#define X86_GDT_P (1u << 15)
+/*  type */
+#define X86_GDT_DATA_T (0 << 3)
+#define X86_GDT_CODE_T (1 << 3)
+#define X86_GDT_DA (1u << 0) 
+#define X86_GDT_DW (1u << 1)
+#define X86_GDT_DE (1u << 2) 
+#define X86_GDT_CA (1u << 0) 
+#define X86_GDT_CR (1u << 1)
+#define X86_GDT_CC (1u << 2) 
+#define X86_GDT_LDT (0x2 << 8)
+#define X86_GDT_TSS (0x9 << 8)
+#define X86_GDT_CALL_GATE( 0xc << 8)
+#define X86_GDT_DPL0 (x86_DPL0 << 12)
+#define X86_GDT_DATA ( X86_GDT_P | X86_DPL0 << 12 | (X86_GDT_DATA_T | X86_GDT_DW | X86_GDT_DA) << 8 )
+#define X86_GDT_CODE ( X86_GDT_P | X86_DPL0 << 12 | (X86_GDT_CODE_T | X86_GDT_CR | X86_GDT_CA) << 8 )
+#define X86_GDT_LIMIT_FULL  0xfffff
+#define 
 
 struct seg_desc {
 	u32 lo;

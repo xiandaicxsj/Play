@@ -26,11 +26,12 @@ void set_idt(struct idt_desc *idt, int vector,void (*func)(), u16 type)
 	idt[vector].hi = ((u32)func & 0xffff0000 ) | (type << 8);
 }
 
+int get_gdt_vector()
+{
+    vector = find_first_avail_bit(gdt_bit_map, GDT_NUM);
+}
 int set_tss(int vector, void *base_addr)
 {
-	if (vector < 0)
-		vector = find_first_avail_bit(gdt_bit_map, GDT_NUM);
-
 	set_gdt_seg((void *)(&gdt), vector, base_addr, 0x89, 0x104, 0xffff);
 
 	if (!gdt_bit_map)
@@ -53,8 +54,6 @@ void clear_gdt_seg(struct seg_desc *gdt_desc, int vector)
 
 int set_ldt(int vector,void* base_addr,u32 seg_limit)
 {
-	if (vector < 0)
-		vector = find_first_avail_bit(gdt_bit_map, GDT_NUM);
 	set_gdt_seg((void *)(&gdt), vector, base_addr, 0x82, 0x104, 0xffffffff);//这里设置的是默认的这里是在GDT中设置LDT，但是如果其他的设置
 	set_bit(&gdt_bit_map, vector);
 	return 0;

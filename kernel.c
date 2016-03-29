@@ -9,7 +9,7 @@ void start_kernel(void )
 	setup_memory();
 	setup_idt();
 #ifdef TEST_TASK
-	task * init_task = (task *) kmalloc(PAGE_SIZE, PAGE_SIZE);
+	task * init_task = (task *) kmalloc(PAGE_SIZE, PAGE_SIZE); /* should be page align */
 	init_task(init_task);
 #endif
 	init_console();

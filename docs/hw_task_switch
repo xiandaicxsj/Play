@@ -1,0 +1,49 @@
+
+when operating in protected mode, a TSS and TSS descriptor must be created for at least one task, and the
+segment selector for the TSS must be loaded into the task register
+
+static fild not changed
+The processor reads the static fields, but does not normally change them. These fields are set up when a task is
+created. The following are static fields:
+• LDT segment selector field — Contains the segment selector for the task's LDT.
+7-4 Vol. 3ATASK MANAGEMENT
+• CR3 control register field — Contains the base physical address of the page directory to be used by the task.
+Control register CR3 is also known as the page-directory base register (PDBR).
+• Privilege level-0, -1, and -2 stack pointer fields — These stack pointers consist of a logical address made
+up of the segment selector for the stack segment (SS0, SS1, and SS2) and an offset into the stack (ESP0,
+ESP1, and ESP2). Note that the values in these fields are static for a particular task; whereas, the SS and ESP
+values will change if stack switching occurs within the task.
+• T (debug trap) flag (byte 100, bit 0) — When set, the T flag causes the processor to raise a debug exception
+when a task switch to this task occurs (see Section 17.3.1.5, “Task-Switch Exception Condition”).
+• I/O map base address field — Contains a 16-bit offset from the base of the TSS to the I/O permission bit
+map and interrupt redirection bitmap. When present, these maps are stored in the TSS at higher addresses.
+The I/O map base address points to the beginning of the I/O permission bit map and the end of the interrupt redirection bit map. See Chapter 16, “Input/Output,” in the Intel ® 64 and IA-32 Architectures Software
+
+
+
+
+
+If paging is used:
+• Avoid placing a page boundary in the part of the TSS that the processor reads during a task switch (the first 104
+bytes). The processor may not correctly perform address translations if a boundary occurs in this area. During
+a task switch, the processor reads and writes into the first 104 bytes of each TSS (using contiguous physical
+addresses beginning with the physical address of the first byte of the TSS). So, after TSS access begins, if part
+of the 104 bytes is not physically contiguous, the processor will access incorrect information without generating
+a page-fault exception.
+• Pages corresponding to the previous task’s TSS, the current task’s TSS, and the descriptor table entries for
+each all should be marked as read/write.
+• Task switches are carried out faster if the pages containing these structures are present in memory before the
+task switch is initiated
+
+
+tss descriptor
+
+7.2.2
+The TSS, like all other segments, is defined by a segment descriptor. Figure 7-3 shows the format of a TSS
+descriptor. TSS descriptors may only be placed in the GDT;
+
+The LTR instruction loads a segment selector (source operand) into the task register that points to a TSS descriptor
+in the GDT. It then loads the invisible portion of the task register with information from the TSS descriptor. LTR is a
+privileged instruction that may be executed only when the CPL is 0. It’s used during system initialization to put an
+initial value in the task register. Afterwards, the contents of the task register are changed implicitly when a task
+switch occurs.

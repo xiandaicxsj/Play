@@ -32,6 +32,7 @@ struct page
 void page_fault();
 void* alloc_page_table();
 
+extern void* init_page_dir;
 #endif
 
 

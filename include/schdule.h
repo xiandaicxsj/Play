@@ -33,15 +33,16 @@ typedef struct tss_reg
 	u32 tss;
 }tss_reg;
 
-struct task
+struct task_struct
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
 	struct seg_desc ldt[2];//这里对应的是任务的ldt需要重新进行处理
 	u32 pid;
 	u8 status;
 	u32 cr3;
-	struct task *next;
+	u32 status;
+	struct task_struct *next;
 };
-extern struct task *current;
-void init_task(struct task *);
+extern struct task_struct *current;
+void init_task(struct task_struct *);
 #endif

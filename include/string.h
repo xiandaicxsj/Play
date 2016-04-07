@@ -9,3 +9,4 @@ void inline memset(void *addr, u8 value, u32 size)
 			size --;
 	}
 }
+#endif

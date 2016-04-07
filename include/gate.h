@@ -29,7 +29,6 @@
 #define SA_RPL3		3	
 #define DA_LDT	 	0x82	// 局部描述符表段类型值
 #define DA_TaskGate	0x85	//任务门类型值
-#define X86_GDT_TSS  0x89
 #define DA_386CGate	0x8C	//386 调用门类型值
 #define DA_386IGate	0x8E	//386 中断门类型值
 #define DA_386TGate	0x8F	//386 陷阱门类型值
@@ -59,12 +58,11 @@
 #define X86_GDT_CC (1u << 2) 
 #define X86_GDT_LDT (0x2 << 8)
 #define X86_GDT_TSS (0x9 << 8)
-#define X86_GDT_CALL_GATE( 0xc << 8)
-#define X86_GDT_DPL0 (x86_DPL0 << 12)
+#define X86_GDT_CALL_GATE ( 0xc << 8)
+#define X86_GDT_DPL0 ( X86_DPL0 << 12)
 #define X86_GDT_DATA ( X86_GDT_P | X86_DPL0 << 12 | (X86_GDT_DATA_T | X86_GDT_DW | X86_GDT_DA) << 8 )
 #define X86_GDT_CODE ( X86_GDT_P | X86_DPL0 << 12 | (X86_GDT_CODE_T | X86_GDT_CR | X86_GDT_CA) << 8 )
 #define X86_GDT_LIMIT_FULL  0xfffff
-#define 
 
 struct seg_desc {
 	u32 lo;

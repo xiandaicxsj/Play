@@ -16,11 +16,14 @@ struct page_pool
 };
 static void* kmalloc_low_mem(u32 size, u32 align)
 {
+	void * addr;
 	if ( size > mem_size )
 		return NULL;
 	if ( align )
 		low_mem_end = round_up(low_mem_end, align);
+	addr = (void *)low_mem_end;
 	low_mem_end += size;
+	return addr;
 }
 static void setup_low_memory()
 {
@@ -40,13 +43,15 @@ void init_buddy()
 void* kmalloc(u32 size, u32 align)// virtual addr
 {
 	if ( low_mem_used )
+	{
 		return kmalloc_low_mem(size, align);
+	}
 	return _kmalloc(size, align);
 }
 
 u32 static get_mem_size()
 {
-	return 0;
+	return 256*1024*1024;
 }
 /* now the memory is not set properily */
 void setup_memory()

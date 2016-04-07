@@ -29,7 +29,14 @@ void test_process()
 }
 void switch_to_test()
 {
-	asm volatile("ljmp %%eax ":: "a"(TASK_VECTOR):);
+
+	struct tmp{
+	long a;
+	long b;
+	};
+	struct tmp _t;
+	_t.b = TASK_VECTOR;
+	asm volatile(" ljmp %0 ":: "m" (_t.a):);
 }
 void init_task(struct task_struct *task)
 {
@@ -40,6 +47,7 @@ void init_task(struct task_struct *task)
 	task->task_reg.cr3 = PHY_ADDR((u32)init_page_dir);  
 	insert_task(task);
 	set_tss(TASK_VECTOR, &(task->task_reg)); 
+	while(1);
 	switch_to_test();
 }
 

@@ -16,16 +16,14 @@ struct page_pool
 };
 static void* kmalloc_low_mem(u32 size, u32 align)
 {
-	void * addr;
+	u32 addr;
 	if ( size > mem_size )
 		return NULL;
-	asm volatile ("movl %%eax, %%edx"::"a"(low_mem_end):); 
-	while(1);
 	if ( align )
 		low_mem_end = round_up(low_mem_end, align);
-	addr = (void *)low_mem_end;
+	addr = low_mem_end;
 	low_mem_end += size;
-	return phy_to_virt(addr);
+	return (void *)phy_to_virt(addr);
 }
 static void setup_low_memory()
 {

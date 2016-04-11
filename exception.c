@@ -72,10 +72,10 @@ static void load_idt()
 {
 	idt_base.addr = (u32) &(idt[0]);
 	idt_base.size = 0xffff;
-	/* %%regiter should be used */
 	asm volatile ( "lidt %0" ::"m"(idt_base) );
-	/* */
+	/*
 	asm volatile ( "sti" );
+	*/
 }
 void setup_idt()
 {

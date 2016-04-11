@@ -23,7 +23,7 @@ static void* kmalloc_low_mem(u32 size, u32 align)
 		low_mem_end = round_up(low_mem_end, align);
 	addr = (void *)low_mem_end;
 	low_mem_end += size;
-	return addr;
+	return phy_to_virt(addr);
 }
 static void setup_low_memory()
 {
@@ -43,9 +43,7 @@ void init_buddy()
 void* kmalloc(u32 size, u32 align)// virtual addr
 {
 	if ( low_mem_used )
-	{
 		return kmalloc_low_mem(size, align);
-	}
 	return _kmalloc(size, align);
 }
 

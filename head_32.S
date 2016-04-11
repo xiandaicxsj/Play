@@ -3,7 +3,9 @@
 .equ GDTNUM, 0x10
 .equ _video_offset, 0xb8000
 .equ IDT_ATTR, 0x8600
+.equ mem_size, 0x200000 /* 2M */
 .extern start_kernel
+
 
 #include "head_32.h"
 .section .data 
@@ -18,6 +20,8 @@ sys_data:
 sys_video:
 .quad  0x0040920b8000ffff
 default2:
+.quad  0
+.quad  0
 .quad  0
 .quad  0
 .quad  0
@@ -88,14 +92,16 @@ _start:
 	movw %ax, %fs 
 	movw %ax, %ss 
 	ljmp $_kernel_cs, $_pa(setup_paging)
+
 setup_paging:
 	movw $_kernel_cs, %ax;
 	movw %ax, _pa(sys_cs) 
 	movw $_kernel_ds, %ax;
 	movw %ax, _pa(sys_ds) 
-	//movl $_pa(_bss_end), %ecx
-	//subl $_pa(_text_start), %ecx
-	movl $0x00300000, %ecx
+	movl $_pa(_bss_end), %ecx
+	subl $_pa(_text_start), %ecx
+	movl $mem_size, %ecx
+	//movl $0x00300000, %ecx
 
 	movl %ecx, %edx
 	movl %ecx, %eax

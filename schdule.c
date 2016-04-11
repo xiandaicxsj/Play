@@ -27,27 +27,40 @@ void test_process()
 {
 	while(1);
 }
+
 void switch_to_test()
 {
 
 	struct tmp{
-	long a;
-	long b;
+	unsigned int a;
+	unsigned int b;
 	};
+	unsigned int task_vec;
 	struct tmp _t;
-	_t.b = TASK_VECTOR;
-	asm volatile(" ljmp %0 ":: "m" (_t.a):);
+	_t.b = TASK_VECTOR << 3;
+	task_vec = _t.b;
+	asm volatile("  movw %0, %%ax\n\t"
+		     "  movw %1, %%dx\n\t"
+		     "ltr %%ax"::"m"(task_vec), "m" (sys_ds) :);
+
+	asm volatile(" ljmp *%0 ":: "m" (_t.a):);
+
 }
 void init_task(struct task_struct *task)
 {
 	//* task d
-	memset(task, 0, sizeof(*task));
+	//memset(task, 0, sizeof(*task));
 	task->task_reg.eip = (u32) test_process;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 	task->task_reg.cr3 = PHY_ADDR((u32)init_page_dir);  
 	insert_task(task);
-	set_tss(TASK_VECTOR, &(task->task_reg)); 
-	while(1);
+	/*
+	asm volatile ("movl %0, %%eax\n\t"
+		      "jmp ."		
+		      ::"m"(task->task_reg):);
+		      */
+	set_tss(TASK_VECTOR, task); 
+	//set_tss(TASK_VECTOR, &(task->task_reg)); 
 	switch_to_test();
 }
 

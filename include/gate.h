@@ -43,7 +43,7 @@
 #define X86_GDT_SLH(seg_limit) (((seg_limit >> 16) & 0xf) << 16)
 #define X86_GDT_SLL(seg_limit) (seg_limit & 0xffff)
 #define X86_GDT_BAH(base_addr) (((base_addr >> 16) & 0xff) | (base_addr & 0xff000000))
-#define X86_GDT_BAL(base_addr) ((base_addr && 0xffff) << 16)
+#define X86_GDT_BAL(base_addr) ((base_addr & 0xffff) << 16)
 #define X86_GDT_SYSTEM (1u <<  11)
 #define X86_GDT_CD (0u <<  11)
 #define X86_GDT_P (1u << 15)

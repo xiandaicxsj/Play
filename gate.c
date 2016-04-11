@@ -9,7 +9,6 @@ static void set_gdt_seg(struct seg_desc *gdt_desc, int vector, void * _base_addr
 	 *  gdt_desc=(struct seg_desc *)(gdt_base);
 	 */
 	u32 base_addr = (u32) _base_addr;
-	base_addr = 1234556;
 	gdt_desc[vector].lo = X86_GDT_SLL(seg_limit) | X86_GDT_BAL(base_addr);
 	gdt_desc[vector].hi = X86_GDT_SLH(seg_limit) | X86_GDT_BAH(base_addr) | type | attr;
 }

@@ -23,12 +23,11 @@ static void* kmalloc_low_mem(u32 size, u32 align)
 		low_mem_end = round_up(low_mem_end, align);
 	addr = low_mem_end;
 	low_mem_end += size;
-	return (void *)phy_to_virt(addr);
+	return (void *)addr;
 }
 static void setup_low_memory()
 {
 	low_mem_begin = (u32)_bss_end;
-	asm volatile ("movl %%eax, %%edx"::"a"(_bss_end):); 
 	low_mem_end = low_mem_begin;
 	low_mem_used = 1;
 	return ;

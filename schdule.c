@@ -39,31 +39,23 @@ void switch_to_test()
 	struct tmp _t;
 	_t.b = TASK_VECTOR << 3;
 	task_vec = _t.b;
-	asm volatile("  movw %0, %%ax\n\t"
-		     "  movw %1, %%dx\n\t"
-		     "ltr %%ax"::"m"(task_vec), "m" (sys_ds) :);
+	asm volatile(/*"  movw %0, %%ax\n\t"
+		           "  movw %1, %%dx\n\t"*/
+		           "ltr %%ax"::"a"(task_vec), "m" (sys_ds) :);
 
-	asm volatile(" ljmp *%0 ":: "m" (_t.a):);
+	while(1);
+	asm volatile(" ljmp %0 ":: "m" (_t.a):);
 
 }
 void init_task(struct task_struct *task)
 {
 	//* task d
 	//memset(task, 0, sizeof(*task));
-	while(1);
-	asm volatile ("movl %0, %%eax"
-			::"m"(*task));
 	task->task_reg.eip = (u32) test_process;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 	task->task_reg.cr3 = PHY_ADDR((u32)init_page_dir);  
 	insert_task(task);
-	/*
-	asm volatile ("movl %0, %%eax\n\t"
-		      "jmp ."		
-		      ::"m"(task->task_reg):);
-		      */
 	set_tss(TASK_VECTOR, task); 
-	//set_tss(TASK_VECTOR, &(task->task_reg)); 
 	switch_to_test();
 }
 

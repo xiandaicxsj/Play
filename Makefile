@@ -15,7 +15,7 @@ LDR_BIN:=$(subst .asm,.bin,$(LDR))
 KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
 OBJECTS = head_32.o kernel.o tty.o  exception.o page.o memory.o math.o gate.o schdule.o
 IMG:=a.img
-FLOPPY:=/mnt/floppy/
+FLOPPY:=./mnt/
 
 .PHONY : everything
 

@@ -50,6 +50,9 @@ void init_task(struct task_struct *task)
 {
 	//* task d
 	//memset(task, 0, sizeof(*task));
+	while(1);
+	asm volatile ("movl %0, %%eax"
+			::"m"(*task));
 	task->task_reg.eip = (u32) test_process;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 	task->task_reg.cr3 = PHY_ADDR((u32)init_page_dir);  

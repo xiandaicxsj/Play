@@ -1,6 +1,7 @@
 #include"gate.h"
 #include"global.h"
 #include"bitop.h"
+#include"debug.h"
 static void *gdt_bit_map;
 static void set_gdt_seg(struct seg_desc *gdt_desc, int vector, void * _base_addr ,u32 type, u32 attr, u32 seg_limit)
 {
@@ -11,6 +12,9 @@ static void set_gdt_seg(struct seg_desc *gdt_desc, int vector, void * _base_addr
 	u32 base_addr = (u32) _base_addr;
 	gdt_desc[vector].lo = X86_GDT_SLL(seg_limit) | X86_GDT_BAL(base_addr);
 	gdt_desc[vector].hi = X86_GDT_SLH(seg_limit) | X86_GDT_BAH(base_addr) | type | attr;
+//	DEBUG_REGS(gdt_desc[vector].lo, gdt_desc[vector].hi, 0, 0);
+//	while(1);
+
 }
 
 void set_idt(struct idt_desc *idt, int vector,void (*func)(), u16 type)

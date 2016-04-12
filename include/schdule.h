@@ -44,4 +44,5 @@ struct task_struct
 };
 extern struct task_struct *current;
 void init_task(struct task_struct *);
+void pre_init_task(void );
 #endif

@@ -51,7 +51,6 @@ void switch_to_test()
 
 	
 	//asm volatile(" ljmp %0 ":: "m" (ask_vec):);
-	while(1);
 	asm volatile(" ljmp %0 ":: "m" (*&_t.a):);
 	
 
@@ -64,6 +63,11 @@ void pre_init_task(void )
 	while(1);
 	*/
 }
+/*
+ *
+ * ss[0-3] static
+ * ss/cs/ds/eip/should be set.
+ */
 void init_task(struct task_struct *task)
 {
 	u32 sys_ds = (0x18 );
@@ -81,6 +85,7 @@ void init_task(struct task_struct *task)
 	task->task_reg.ds = sys_ds;
 	task->task_reg.fs = sys_ds;
 	task->task_reg.gs = sys_ds;
+	task->task_reg.ss = sys_ds;
 	task->task_reg.ldt = 0;
 	
 	insert_task(task);

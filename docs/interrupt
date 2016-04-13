@@ -1,0 +1,17 @@
+
+stack swtich when interrupt/exception
+privilege-changed
+SDM V3A 6-12
+1.use the ring0 stack of current task
+2.save ss/esp/eflags/cs/eip/error code
+3.iret will change to pre-privilege if necessry
+
+no-privilege-changed
+1.use the current stack
+2.
+2.iret
+
+Flags
+
+When accessing an exception- or interrupt-handling procedure through an interrupt gate, the processor clears the IF flag to prevent other interrupts from interfering with the current interrupt handler. A subsequent IRET instruction restores the IF flag to its value in the saved contents of the EFLAGS register on the stack. Accessing a handler procedure through a trap gate does not affect the IF flag
+

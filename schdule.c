@@ -117,9 +117,8 @@ void switch_to(struct task_struct *pre, struct task_struct *next)
 	asm volatile(" movl $1f, %[next_ip] \n\t"
 		     " ljmp %[task_sec] \n\t"
 		     " 1: "
-		     :[next_ip] "m" (pre->task_reg.eip),
-		     :[task_sec] "m" (*&_t.a)
-		     :);
+		     :[next_ip] "=m" (pre->task_reg.eip)
+		     :[task_sec] "m" (*&_t.a) );
         while(1);
 }
 

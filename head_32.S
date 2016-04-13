@@ -193,10 +193,9 @@ _setup_idt:
 .type interrupt_handler, @function
 interrupt_handler:
 	pushl %ebp
-	movl %esp %ebp
-	call inter_depatcher		
-	pushad
-	popad
+	movl %esp, %ebp
+	pusha
+	popa
 	iret
 
 .type _print, @function

@@ -49,9 +49,10 @@ idt_base:
 .short 255*8 - 1
 .long 0
 */
+.fill 4096, 4, 0
 init_stack:
-.fill 4096, 1, 0
 
+.fill 4096, 1, 0
 .global init_page_dir
 .align 4096
 init_page_dir:

@@ -1,6 +1,7 @@
 #include"memory.h"
 #include"page.h"
 #include"math.h"
+#include"debug.h"
 #include"kernel.lds.h"
 /* now do not think of low memory */
 static u32 kernel_end;

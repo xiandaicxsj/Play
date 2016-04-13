@@ -66,8 +66,6 @@ void pre_init_task(void )
 }
 void init_task(struct task_struct *task)
 {
-	DEBUG_REGS(sys_cs, sys_ds, 0, 0);
-	while(1);
 	u32 sys_ds = (0x18 );
 	u32 sys_cs = (0x10 );
 	memset(task, 0, sizeof(*task));

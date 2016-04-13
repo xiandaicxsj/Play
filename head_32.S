@@ -42,14 +42,7 @@ sys_ds:
 .equ _kernel_cs, sys_code - gdt
 .equ _kernel_ds, sys_data - gdt
 
-/*idt:
-.fill 255, 8, 0 
-
-idt_base: 
-.short 255*8 - 1
-.long 0
-*/
-.fill 4096, 4, 0
+.fill 4096, 1, 0
 init_stack:
 
 .fill 4096, 1, 0
@@ -196,6 +189,15 @@ _setup_idt:
 	ret
 */
 	
+
+.type interrupt_handler, @function
+interrupt_handler:
+	pushl %ebp
+	movl %esp %ebp
+	call inter_depatcher		
+	pushad
+	popad
+	iret
 
 .type _print, @function
 _print:

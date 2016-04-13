@@ -26,7 +26,12 @@ static void insert_task(struct task_struct *_task)
 }
 void test_process()
 {
+	int a=0;		
+	int b=0;
+	int c;
+	c= a+b;
 	while(1);
+
 }
 
 void switch_to_test()
@@ -53,7 +58,6 @@ void switch_to_test()
 	//asm volatile(" ljmp %0 ":: "m" (ask_vec):);
 	asm volatile(" ljmp %0 ":: "m" (*&_t.a):);
 	
-
 }
 void pre_init_task(void )
 {
@@ -70,8 +74,8 @@ void pre_init_task(void )
  */
 void init_task(struct task_struct *task)
 {
-	u32 sys_ds = (0x18 );
-	u32 sys_cs = (0x10 );
+	//u32 sys_ds = (0x18 );
+	//u32 sys_cs = (0x10 );
 	memset(task, 0, sizeof(*task));
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
@@ -95,10 +99,27 @@ void init_task(struct task_struct *task)
 
 void switch_to(struct task_struct *pre, struct task_struct *next)
 {
-	/*  asm volatile ("lgdt \n\t"
-								"\n\t"
-								:[p_esp] =m ""
-			);
-			*/
+	struct tmp{
+	long a;
+	long b;
+	};
+	unsigned int task_vec;
+	struct tmp _t;
+	_t.b = (TASK_VECTOR  << 3);
+	//_t.b = TASK_VECTOR;
+	task_vec = _t.b ;
+	//asm volatile(/*"  movw %0, %%ax\n\t"
+	//	           "  movw %1, %%dx\n\t"*/
+	//	           "ltr %%ax"::"a"(task_vec), "m" (sys_ds) :);
+
+	
+	//asm volatile(" ljmp %0 ":: "m" (ask_vec):);
+	asm volatile(" movl $1f, %[next_ip] \n\t"
+		     " ljmp %[task_sec] \n\t"
+		     " 1: "
+		     :[next_ip] "m" (pre->task_reg.eip),
+		     :[task_sec] "m" (*&_t.a)
+		     :);
+        while(1);
 }
 

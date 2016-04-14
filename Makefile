@@ -13,7 +13,7 @@ KERNEL:=kernel.c
 BOOT_BIN:=$(subst .asm,.bin,$(BOOT))
 LDR_BIN:=$(subst .asm,.bin,$(LDR))
 KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
-OBJECTS = head_32.o kernel.o tty.o  exception.o page.o memory.o math.o gate.o schdule.o
+OBJECTS = head_32.o kernel.o tty.o  exception.o page.o memory.o math.o gate.o schdule.o pic.o
 IMG:=a.img
 FLOPPY:=./mnt/
 
@@ -56,6 +56,8 @@ math.o:math.c
 gate.o:gate.c
 	$(CC) $(CCFLAGS) -o $@ $<
 schdule.o:schdule.c
+	$(CC) $(CCFLAGS) -o $@ $<
+pic.o:pic.c
 	$(CC) $(CCFLAGS) -o $@ $<
 	
 	

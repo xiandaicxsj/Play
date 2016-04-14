@@ -1,6 +1,7 @@
 #include "exception.h"
 #include "gate.h"
 #include "page.h"
+#include "pic.h"
 struct idt_base_t {
 	u16 size;
 	u32 addr;
@@ -75,8 +76,11 @@ static void load_idt()
 	asm volatile ( "lidt %0" ::"m"(idt_base) );
 	asm volatile ( "sti" );
 }
-void setup_idt()
+void setup_interrupt()
 {
+
+	init_pic();
+
 	set_idt(idt, DEBUG, single_step_exception, DA_386IGate);
 	set_idt(idt, NMI, nmi, DA_386IGate);
 	set_idt(idt, BREAKPOINT, breakpoint_exception,DA_386IGate);

@@ -44,7 +44,7 @@ void segment_not_present();
 void stack_exception();
 void general_protection();
 void copr_error();
-void timer();
-void init_idt();
-void setup_idt();
+void time();
+
+void init_interrupt();
 #endif

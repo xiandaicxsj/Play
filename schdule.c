@@ -76,6 +76,7 @@ void init_task(struct task_struct *task)
 {
 	//u32 sys_ds = (0x18 );
 	//u32 sys_cs = (0x10 );
+	return ;
 	memset(task, 0, sizeof(*task));
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;

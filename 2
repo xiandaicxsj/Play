@@ -6,7 +6,7 @@ inline void _outs_8(u8 port, u8 data)
 		              : : "a" (data), "d"(port):);
 }
 
-inline void io_delay()
+inline void  io_delay()
 {
 	asm volatile (
 	"nop \n\t"
@@ -61,24 +61,16 @@ void mask_interrupt(u32 index)
 
 void init_pic()
 {
-
-	while(1);
 	outs_8(PIC_MASTER, 0x11);
 	outs_8(PIC_SLAVE, 0x11);
-
 	outs_8(PIC_MASTER + 1, 0x20);
 	outs_8(PIC_SLAVE + 1, 0x28);
-
 	outs_8(PIC_MASTER + 1, 0x4);
 	outs_8(PIC_SLAVE + 1, 0x2);
-
 	outs_8(PIC_MASTER + 1, 0x1);
 	outs_8(PIC_SLAVE + 1, 0x1);
-
-	outs_8(PIC_SLAVE + 1, 0xfe);
-	outs_8(PIC_MASTER + 1, 0xff);
-
 }
+
 /*
 void init_pic()
 {

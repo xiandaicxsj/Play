@@ -144,7 +144,72 @@ setup_paging:
 	movl %esp, %ebp
 	ljmp $_kernel_cs, $1f	
 1:
+	jmp init_pic_as
+init_pic_as:
+	movb $0x11, %al
+	outb %al, $0x20
+	nop
+	nop
+	nop
+	nop
+	outb %al, $0xa0
+	nop
+	nop
+	nop
+	nop
+	
+	movb $0x20, %al
+	outb %al, $0x21
+	nop
+	nop
+	nop
+	nop
+	movb $0x28, %al
+	outb %al, $0xa1
+	nop
+	nop
+	nop
+	nop
+
+	
+	movb $0x4, %al
+	outb %al, $0x21
+	nop
+	nop
+	nop
+	nop
+	movb $0x2, %al
+	outb %al, $0xa1
+	nop
+	nop
+	nop
+	nop
+	
+	movb $0x1, %al
+	outb %al, $0x21
+	nop
+	nop
+	nop
+	nop
+	outb %al, $0xa1
+	nop
+	nop
+	nop
+	nop
+	movb $0xfe, %al
+	outb  %al, $0x21
+	nop
+	nop
+	nop
+	nop
+	movb $0xff, %al
+	outb  %al, $0xa1
+	nop
+	nop
+	nop
+	nop
 	call start_kernel
+	
 .type _default_inter_handler, @function
 _default_inter_handler:
 	/*pushl %esp

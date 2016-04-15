@@ -11,6 +11,16 @@ extern u32 sys_cs;
 static struct idt_desc idt[256] ;
 static struct idt_base_t idt_base ;
 
+static inline void disable_interrupt()
+{
+	asm volatile ( "cli" );
+}
+
+static inline void enable_interrupt()
+{
+	asm volatile ( "sti" );
+}
+
 void default_handler1()
 {
 
@@ -34,6 +44,7 @@ void overflow()
 }
 void timer_handler()
 {
+	disable_interrupt();
 	while(1);
 }
 void bounds_check()
@@ -74,12 +85,11 @@ static void load_idt()
 	idt_base.addr = (u32) &(idt[0]);
 	idt_base.size = 0xffff;
 	asm volatile ( "lidt %0" ::"m"(idt_base) );
-	asm volatile ( "sti" );
 }
 void setup_interrupt()
 {
 
-	init_pic();
+	//init_pic();
 
 	set_idt(idt, DEBUG, single_step_exception, DA_386IGate);
 	set_idt(idt, NMI, nmi, DA_386IGate);
@@ -97,4 +107,5 @@ void setup_interrupt()
 	set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
 	set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
+	enable_interrupt();
 }

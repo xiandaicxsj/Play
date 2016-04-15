@@ -46,5 +46,5 @@ void general_protection();
 void copr_error();
 void time();
 
-void init_interrupt();
+void setup_interrupt();
 #endif

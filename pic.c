@@ -61,14 +61,79 @@ void mask_interrupt(u32 index)
 
 void init_pic()
 {
-
-	while(1);
+	return ;
+	/*
+	asm volatile(
+  "movb $0x11, %%al \n\t"
+	"outb %%al, $0x20 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"outb %%al, $0xa0\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0x20, %%al\n\t"
+	"outb %%al, $0x21\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0x28, %%al \n\t"
+	"outb %%al, $0xa1 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0x4, %%al \n\t"
+	"outb %%al, $0x21 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0x2, %%al \n\t"
+	"outb %%al, $0xa1 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0x1, %%al\n\t"
+	"outb %%al, $0x21\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"outb %%al, $0xa1\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0xfe, %%al\n\t"
+	"outb  %%al, $0x21 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"movb $0xff, %%al\n\t"
+	"outb  %%al, $0xa1 \n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t"
+	"nop\n\t");
+	*/
 	outs_8(PIC_MASTER, 0x11);
 	outs_8(PIC_SLAVE, 0x11);
 
+	asm volatile ("outb %al, $0x21\n\t"
+								"nop \n\t"
+								"nop \n\t"
+								"nop \n\t");
+	while(1);
 	outs_8(PIC_MASTER + 1, 0x20);
 	outs_8(PIC_SLAVE + 1, 0x28);
-
 	outs_8(PIC_MASTER + 1, 0x4);
 	outs_8(PIC_SLAVE + 1, 0x2);
 
@@ -77,7 +142,7 @@ void init_pic()
 
 	outs_8(PIC_SLAVE + 1, 0xfe);
 	outs_8(PIC_MASTER + 1, 0xff);
-
+	while(1);
 }
 /*
 void init_pic()

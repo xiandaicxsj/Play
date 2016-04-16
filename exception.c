@@ -89,7 +89,7 @@ static void load_idt()
 void setup_interrupt()
 {
 
-	//init_pic();
+	init_pic();
 
 	set_idt(idt, DEBUG, single_step_exception, DA_386IGate);
 	set_idt(idt, NMI, nmi, DA_386IGate);

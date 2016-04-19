@@ -36,7 +36,7 @@ typedef struct tss_reg
 struct task_struct
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
-	struct seg_desc ldt[2];//这里对应的是任务的ldt需要重新进行处理
+	struct seg_desc ldt[3];//这里对应的是任务的ldt需要重新进行处理
 	u32 pid;
 	u32 cr3;
 	u32 status;

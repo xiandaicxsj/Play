@@ -1,0 +1,13 @@
+/* example use gs */
+int main()
+{
+    void* ptr = 0; //0x7fff5c4ff3c0
+    asm volatile
+    (
+        "movq %%gs:0x30, %%rax\n\t"
+        "movq 0x60(%%rax), %%rax\n\t"
+        "movq 0x18(%%rax), %%rax\n\t"
+        "movq %%rax, %0\n"
+        : "=r" (ptr) ::
+    );
+}

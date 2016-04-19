@@ -15,3 +15,70 @@ Flags
 
 When accessing an exception- or interrupt-handling procedure through an interrupt gate, the processor clears the IF flag to prevent other interrupts from interfering with the current interrupt handler. A subsequent IRET instruction restores the IF flag to its value in the saved contents of the EFLAGS register on the stack. Accessing a handler procedure through a trap gate does not affect the IF flag
 
+
+exception / interrupt handle processor
+
+1. swtich stack if necessary
+	1) get new stack/ss seletor from tss of current running task.
+	2) save old 
+	
+	stack with privilige change
+
+	
+	_______________
+	new privilige stack
+	_______________
+	SS
+	ESP
+	EFLAGS
+	CS
+	IP
+	If an exception causes an error code to be saved, it is pushed on the new stack after the EIP value.
+	_______________
+
+
+2. iretd/iret is used to return 
+	The IRET instruction is similar to the RET instruction except that it restores the saved flags into the EFLAGS
+register.
+In Protected Mode, the action of the IRET instruction depends on the settings of the NT (nested task) and VM flags
+in the EFLAGS register and the VM flag in the EFLAGS image stored on the current stack. Depending on the setting
+of these flags, the processor performs the following types of interrupt returns:
+Return from virtual-8086 mode.
+Return to virtual-8086 mode.
+Intra-privilege level return.
+Inter-privilege level return.
+Return from nested task (task switch).
+
+If the NT flag (EFLAGS register) is cleared, the IRET instruction performs a far return from the interrupt procedure,
+without a task switch. The code segment being returned to must be equally or less privileged than the interrupt
+handler routine (as indicated by the RPL field of the code segment selector popped from the stack).
+As with a real-address mode interrupt return, the IRET instruction pops the return instruction pointer, return code
+segment selector, and EFLAGS image from the stack to the EIP, CS, and EFLAGS registers, respectively, and then
+resumes execution of the interrupted program or procedure. If the return is to another privilege level, the IRET
+instruction also pops the stack pointer and SS from the stack, before resuming program execution. If the return is
+to virtual-8086 mode, the processor also pops the data segment registers from the stack.
+
+If the NT flag is set, the IRET instruction performs a task switch (return) from a nested task (a task called with a
+CALL instruction, an interrupt, or an exception) back to the calling or interrupted task. The updated state of the
+task executing the IRET instruction is saved in its TSS. If the task is re-entered later, the code that follows the IRET
+instruction is executed.
+If the NT flag is set and the processor is in IA-32e mode, the IRET instruction causes a general protection excep-
+tion.
+
+3. flags change 
+
+Flag Usage By Exception- or Interrupt-Handler Procedure
+
+When accessing an exception or interrupt handler through either an interrupt gate or a trap gate, the processor
+clears the TF flag in the EFLAGS register after it saves the contents of the EFLAGS register on the stack. (On calls
+to exception and interrupt handlers, the processor also clears the VM, RF, and NT flags in the EFLAGS register, after
+they are saved on the stack.) Clearing the TF flag prevents instruction tracing from affecting interrupt response. A
+subsequent IRET instruction restores the TF (and VM, RF, and NT) flags to the values in the saved contents of the
+
+EFLAGS register on the stack.
+The only difference between an interrupt gate and a trap gate is the way the processor handles the IF flag in the
+EFLAGS register. When accessing an exception- or interrupt-handling procedure through an interrupt gate, the
+processor clears the IF flag to prevent other interrupts from interfering with the current interrupt handler. A subse-
+quent IRET instruction restores the IF flag to its value in the saved contents of the EFLAGS register on the stack.
+Accessing a handler procedure through a trap gate does not affect the IF flag.
+

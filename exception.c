@@ -2,6 +2,7 @@
 #include "gate.h"
 #include "page.h"
 #include "pic.h"
+#include "print.h"
 struct idt_base_t {
 	u16 size;
 	u32 addr;
@@ -73,6 +74,9 @@ void stack_exception()
 }
 void general_protection()
 {
+	print_str("gp fault\n");
+	print_str("a\n");
+	print('b');
 	while(1);
 }
 void copr_error()
@@ -86,6 +90,7 @@ static void load_idt()
 	idt_base.size = 0xffff;
 	asm volatile ( "lidt %0" ::"m"(idt_base) );
 }
+
 void setup_interrupt()
 {
 
@@ -107,5 +112,5 @@ void setup_interrupt()
 	set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
 	set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
-	enable_interrupt();
+	//enable_interrupt();
 }

@@ -22,7 +22,6 @@ The I/O map base address points to the beginning of the I/O permission bit map a
 
 
 
-
 If paging is used:
 • Avoid placing a page boundary in the part of the TSS that the processor reads during a task switch (the first 104
 bytes). The processor may not correctly perform address translations if a boundary occurs in this area. During
@@ -47,3 +46,15 @@ in the GDT. It then loads the invisible portion of the task register with inform
 privileged instruction that may be executed only when the CPL is 0. It’s used during system initialization to put an
 initial value in the task register. Afterwards, the contents of the task register are changed implicitly when a task
 switch occurs.
+
+task switch
+1. jmp/call a tss descriptor in GDT
+2. task-gate in GDT/LDT
+3. interrupt in IDT
+4. iret with NT flags in  EFLAGS
+
+
+
+swtich_from 0->3
+
+

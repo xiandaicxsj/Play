@@ -28,7 +28,7 @@ typedef struct tss_reg
 	u32 ds;
 	u32 fs;
 	u32 gs;
-	u32 ldt;
+	u32 ldt_sel;
 	u32 io;
 	u32 tss;
 }tss_reg;
@@ -41,6 +41,7 @@ struct task_struct
 	u32 cr3;
 	u32 status;
 	struct task_struct *next;
+
 };
 extern struct task_struct *current;
 void init_task(struct task_struct *);

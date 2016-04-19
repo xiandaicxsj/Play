@@ -4,6 +4,8 @@
 #define IDT_NUM 256
 #define GDT_NUM 128
 
+#define TI_GDT (0 << 2)
+#define TI_LDT (1 << 2)
 #define DA_32		0x4000	// 32 位段
 #define DA_LIMIT_4K	0x8000	// 段界限粒度为 4K 字节
 #define DA_DPL0		0x00	//DPL = 0

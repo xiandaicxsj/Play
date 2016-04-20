@@ -12,45 +12,45 @@ extern u32 sys_cs;
 static struct idt_desc idt[256] ;
 static struct idt_base_t idt_base ;
 
-static inline void disable_interrupt()
-{
-	asm volatile ( "cli" );
-}
-
-static inline void enable_interrupt()
-{
-	asm volatile ( "sti" );
-}
-
 void default_handler1()
 {
 
 }
+
 void divide_error()
 {
 
 }
+
 void single_step_exception()
 {
 
 }
+
 void nmi()
 {
 }
+
 void breakpoint_exception()
 {
 }
+
 void overflow()
 {
 }
+
 void timer_handler()
 {
 	disable_interrupt();
 	while(1);
+	asm volatile("iret");
 }
+
 void bounds_check()
 {
+
 }
+
 void inval_opcode()
 {
 }
@@ -66,12 +66,15 @@ void copr_seg_overrun()
 void inval_tss()////
 {
 }
+
 void segment_not_present()
 {
 }
+
 void stack_exception()
 {
 }
+
 void general_protection()
 {
 	print_str("gp fault\n");
@@ -112,5 +115,5 @@ void setup_interrupt()
 	set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
 	set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
-	//enable_interrupt();
+	enable_interrupt();
 }

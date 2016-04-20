@@ -1,7 +1,9 @@
 #include"page.h"
+#include"print.h"
 void page_fault()
 {
-
+	print_str("page fault\n");
+	while(1);
 }
 void * alloc_page_table()
 {

@@ -1,0 +1,31 @@
+helper_ljmp_protected
+raise_exception_err_ra
+switch_tss_ra
+
+helper_lldt
+
+tss_load_seg
+196 
+#0  raise_exception_err_ra (env=0x5555566f1f20, exception_index=10, error_code=12, 
+    retaddr=140736952368795) at /home/rs/Documents/SourceCode/qemu/target-i386/excp_helper.c:124
+#1  0x0000555555840ee8 in tss_load_seg (env=0x5555566f1f20, seg_reg=1, selector=12, cpl=0, 
+    retaddr=140736952368795) at /home/rs/Documents/SourceCode/qemu/target-i386/seg_helper.c:197
+#2  0x0000555555842142 in switch_tss_ra (env=0x5555566f1f20, tss_selector=40, e1=2154627071, 
+    e2=3222241792, source=0, next_eip=3221227621, retaddr=140736952368795)
+    at /home/rs/Documents/SourceCode/qemu/target-i386/seg_helper.c:489
+#3  0x00005555558444b9 in helper_ljmp_protected (env=0x5555566f1f20, new_cs=40, new_eip=3221258240, 
+    next_eip=3221227621) at /home/rs/Documents/SourceCode/qemu/target-i386/seg_helper.c:1645
+#4  0x00007fffe00d7e9d in code_gen_buffer ()
+#5  0x00005555556e475f in cpu_tb_exec (cpu=0x5555566e9ca0, itb=0x7fffe9597710)
+    at /home/rs/Documents/SourceCode/qemu/cpu-exec.c:163
+#6  0x00005555556e5383 in cpu_x86_exec (cpu=0x5555566e9ca0)
+    at /home/rs/Documents/SourceCode/qemu/cpu-exec.c:524
+#7  0x0000555555714dae in tcg_cpu_exec (cpu=0x5555566e9ca0)
+    at /home/rs/Documents/SourceCode/qemu/cpus.c:1495
+#8  0x0000555555714eb4 in tcg_exec_all () at /home/rs/Documents/SourceCode/qemu/cpus.c:1528
+#9  0x00005555557140a3 in qemu_tcg_cpu_thread_fn (arg=0x5555566e9ca0)
+    at /home/rs/Documents/SourceCode/qemu/cpus.c:1152
+#10 0x00007ffff41d8182 in start_thread (arg=0x7fffdfffe700) at pthread_create.c:312
+#11 0x00007ffff3f0547d in clone () at ../sysdeps/unix/sysv/linux/x86_64/clone.S:111
+(gdb) 
+

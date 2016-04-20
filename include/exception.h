@@ -47,4 +47,15 @@ void copr_error();
 void time();
 
 void setup_interrupt();
+
+inline void disable_interrupt()
+{
+	        asm volatile ( "cli" );
+}
+
+inline void enable_interrupt()
+{
+	        asm volatile ( "sti" );
+}
+
 #endif

@@ -12,6 +12,9 @@
 #define DA_DPL1		0x20	// DPL = 1
 #define DA_DPL2		0x40	//DPL = 2
 #define DA_DPL3		0x60	//DPL = 3
+#define RPL3		0x3
+#define RPL1		0x1
+#define RPL0		0x0
 
 #define DA_DR		0x90	//; 存在的只读数据段类型值
 #define DA_DRW		0x92	//; 存在的可读写数据段属性值

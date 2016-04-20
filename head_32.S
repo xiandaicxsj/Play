@@ -108,7 +108,9 @@ setup_paging:
 3:
 	movl $_pa(init_page_tbl), %eax
 	orl  $PGT_P, %eax
-	orl  $PGT_S, %eax
+	orl  $PGT_U, %eax
+/* nowday we use user page to test */
+//	orl  $PGT_S, %eax
 	orl  $PGT_W, %eax
 	movl $_pa(init_page_dir), %edi
 1:
@@ -124,7 +126,8 @@ setup_paging:
 	shrl $12, %ecx
 	xorl %eax, %eax
 	orl  $PGT_P, %eax
-	orl  $PGT_S, %eax
+	//orl  $PGT_S, %eax
+	orl  $PGT_U, %eax
 	orl  $PGT_W, %eax
 	movl $_pa(init_page_tbl), %edi
 2: 

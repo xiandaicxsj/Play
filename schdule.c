@@ -7,15 +7,16 @@
 #include"debug.h"
 #include"print.h"
 #define TASK_SS 4048
-#define LDT_CS 1
-#define LDT_DS 2
+#define LDT_CS 0
+#define LDT_DS 1
 #define HW_TASK_SWITCH
 #define TASK_VECTOR_BASE 5
-#define gdt_tss_vec(n) (n << 1 + TASK_VECTOR_BASE)
-#define gdt_ldt_vec(n) (n << 1 + TASK_VECTOR_BASE + 1)
-#define gdt_tss_sel(n) ((n << 1 + TASK_VECTOR_BASE) << 3)
-#define gdt_ldt_sel(n) ((n << 1 + TASK_VECTOR_BASE + 1) << 3)
+#define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
+#define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
+#define gdt_tss_sel(n) ((((n) << 1) + TASK_VECTOR_BASE) << 3)
+#define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
+#define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 struct task_head_t
 {
 	struct task_struct *task_list;
@@ -35,14 +36,12 @@ static void insert_task(struct task_struct *_task)
 }
 void test_process()
 {
+	enable_interrupt();
 	int a=0;		
 	int b=0;
 	int c;
 	c= a+b+1;
-	asm volatile (" movw $0x1e00,%%ax \n\t"
-	              " movb 0x38, %%al \n\t"
-		      " mov $0xb8000, %%edi\n\t"
-		      " movl %%ax, (%%edi)":::); 
+	print('a');
 	while(1);
 
 }
@@ -61,16 +60,19 @@ void switch_to_test(struct task_struct *t)
 	unsigned int task_vec;
 	struct tmp _t;
 	_t.b = gdt_tss_sel(0);
-	_t.b = (TASK_VECTOR_BASE << 3);
+	//_t.b = (TASK_VECTOR_BASE << 3);
 	//_t.b = TASK_VECTOR;
 	task_vec = _t.b ;
+	u32 ldt_sec = gdt_ldt_sel(t->pid);
 	//asm volatile(/*"  movw %0, %%ax\n\t"
 	//	           "  movw %1, %%dx\n\t"*/
 	//	           "ltr %%ax"::"a"(task_vec), "m" (sys_ds) :);
 
 	
 	//asm volatile(" ljmp %0 ":: "m" (ask_vec):);
-	asm volatile(" ljmp %0 ":: "m" (*&_t.a):);
+	asm volatile( " lldt %%ax\n\t"
+		      " ljmp %0 "
+		     :: "m" (*&_t.a), "a"(ldt_sec):);
 	
 }
 void pre_init_task(void )
@@ -117,14 +119,15 @@ void init_task(struct task_struct *task)
 	task->ldt[LDT_CS].hi = 0x00cffa00;
 	task->ldt[LDT_DS].lo = 0x0000ffff; /* ldt ds */
 	task->ldt[LDT_DS].hi = 0x00cff200;
-	set_ldt(gdt_ldt_sel(pid), task->ldt, X86_GDT_LIMIT_FULL); /* not sure about the limit */ 
+	set_ldt(gdt_ldt_vec(pid), task->ldt, X86_GDT_LIMIT_FULL); /* not sure about the limit */ 
 	
-	task->task_reg.es = LDT_SEL(task_ds); /* index in the ldt */
-	task->task_reg.cs = LDT_SEL(task_cs);
-	task->task_reg.ds = LDT_SEL(task_ds);
-	task->task_reg.fs = LDT_SEL(task_ds);
-	task->task_reg.gs = LDT_SEL(task_ds);
-	task->task_reg.ss = LDT_SEL(task_ds);
+	task->task_reg.es = LDT_SEL_RING3(task_ds); /* index in the ldt */
+	task->task_reg.cs = LDT_SEL_RING3(task_cs);
+	task->task_reg.ds = LDT_SEL_RING3(task_ds);
+	task->task_reg.fs = LDT_SEL_RING3(task_ds);
+	task->task_reg.gs = LDT_SEL_RING3(task_ds);
+	task->task_reg.ss = LDT_SEL_RING3(task_ds);
+	task->task_reg.eflags = 0x200;
 	
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
@@ -159,4 +162,4 @@ void switch_to(struct task_struct *pre, struct task_struct *next)
 		     " iret " \
 		     ::[SS] "m" (task->ss2), [ESP] "m"(task->esp2), \
 		       [EFLAGS] "m" (task->flags), [CS] "m"(task->cs), \
-		       [IP] "m" (task->ip), [LDT] "m"(gdt_tss_sel(task->pid)):);
+		       [IP] "m" (task->ip), [LDT] "m"(gdt_ldt_sel(task->pid)):);

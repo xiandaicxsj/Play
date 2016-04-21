@@ -41,7 +41,7 @@ void overflow()
 
 void timer_handler()
 {
-	disable_interrupt();
+	print_str("timer\n");
 	while(1);
 	asm volatile("iret");
 }

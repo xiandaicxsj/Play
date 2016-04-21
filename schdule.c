@@ -17,11 +17,28 @@
 #define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
+
+#define switch_to_ring3(task) \
+{ \
+	u32 lldt_sel = gdt_ldt_sel(task->pid);\
+	asm volatile(" lldt %%ax\n\t"\
+		     " pushw %[SS] \n\t" \
+		     " pushw %[ESP] \n\t" \
+		     " pushw %[EFLAGS] \n\t" \
+		     " pushw %[CS] \n\t" \
+		     " pushw %[IP] \n\t" \
+		     " iret " \
+		     ::[SS] "m" (task->ss2), [ESP] "m"(task->esp2), \
+		       [EFLAGS] "m" (task->eflags), [CS] "m"(task->cs), \
+		       [IP] "m" (task->ip), [LDT] "a"(lldt_sel):); \
+
+}
 struct task_head_t
 {
 	struct task_struct *task_list;
 	u32  task_num;
 };
+
 static struct task_head_t task_head;
 static void insert_task(struct task_struct *_task)
 {
@@ -121,6 +138,7 @@ void init_task(struct task_struct *task)
 	task->ldt[LDT_DS].hi = 0x00cff200;
 	set_ldt(gdt_ldt_vec(pid), task->ldt, X86_GDT_LIMIT_FULL); /* not sure about the limit */ 
 	
+	task->task_reg.ss2 = LDT_SEL_RING3(task_ds);
 	task->task_reg.es = LDT_SEL_RING3(task_ds); /* index in the ldt */
 	task->task_reg.cs = LDT_SEL_RING3(task_cs);
 	task->task_reg.ds = LDT_SEL_RING3(task_ds);
@@ -132,6 +150,7 @@ void init_task(struct task_struct *task)
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
 	switch_to_test(task);
+	switch_to_ring3(task);
 }
 
 void switch_to(struct task_struct *pre, struct task_struct *next)
@@ -152,14 +171,3 @@ void switch_to(struct task_struct *pre, struct task_struct *next)
 }
 
 /* do we need to setup the NT in eflags here */
-#define switch_to_ring3(task) \
-	asm volatile(" lldt %[LDT]\n\t"\
-		     " pushw %[SS] \n\t" \
-		     " pushw %[ESP] \n\t" \
-		     " pushw %[EFLAGS] \n\t" \
-		     " pushw %[CS] \n\t" \
-		     " pushw %[IP] \n\t" \
-		     " iret " \
-		     ::[SS] "m" (task->ss2), [ESP] "m"(task->esp2), \
-		       [EFLAGS] "m" (task->flags), [CS] "m"(task->cs), \
-		       [IP] "m" (task->ip), [LDT] "m"(gdt_ldt_sel(task->pid)):);

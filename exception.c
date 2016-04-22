@@ -12,6 +12,17 @@ extern u32 sys_cs;
 static struct idt_desc idt[256] ;
 static struct idt_base_t idt_base ;
 
+void disable_interrupt()
+{
+	                asm volatile ( "cli" );
+}
+
+void enable_interrupt()
+{
+	                asm volatile ( "sti" );
+}
+
+
 void default_handler1()
 {
 
@@ -115,5 +126,5 @@ void setup_interrupt()
 	set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
 	set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
-	enable_interrupt();
+	/* enable_interrupt(); */
 }

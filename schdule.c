@@ -6,6 +6,7 @@
 #include"string.h"
 #include"debug.h"
 #include"print.h"
+#include"cpu.h"
 #define TASK_SS 4048
 #define LDT_CS 0
 #define LDT_DS 1
@@ -18,21 +19,33 @@
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 
-#define switch_to_ring3(task) \
-{ \
-	u32 lldt_sel = gdt_ldt_sel(task->pid);\
-	asm volatile(" lldt %%ax\n\t"\
-		     " pushw %[SS] \n\t" \
-		     " pushw %[ESP] \n\t" \
-		     " pushw %[EFLAGS] \n\t" \
-		     " pushw %[CS] \n\t" \
-		     " pushw %[IP] \n\t" \
-		     " iret " \
-		     ::[SS] "m" (task->ss2), [ESP] "m"(task->esp2), \
-		       [EFLAGS] "m" (task->eflags), [CS] "m"(task->cs), \
-		       [IP] "m" (task->ip), [LDT] "a"(lldt_sel):); \
-
+void switch_to_ring3(struct task_struct *task) 
+{ 
+	u32 lldt_sel = gdt_ldt_sel(task->pid);
+	u32 ts_sel = gdt_tss_sel(task->pid);
+	asm volatile("ltr %[TS_SEL]\n\t"
+		     "lldt %[LDT] \n\t"
+		     " pushl %[SS] \n\t" 
+		     " pushl %[ESP] \n\t" 
+		     " pushfl \n\t"
+		     //" pushw %[EFLAGS] \n\t"
+		     " pushl %[CS] \n\t"
+		     " pushl $1f \n\t"
+		     //" pushl %[IP] \n\t"
+		     " iret \n\t" 
+		     " 1: \n\t"
+		     " cli\n\t"
+		     " movl %[DS] ,%%ax\n\t"
+		     " movl %%ax, %%ds\n\t"
+		     " movl %%ax, %%es\n\t"
+		     " movl %%ax, %%fs\n\t"
+		     " movl %%ax, %%gs\n\t"
+		     " jmp ."
+		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
+		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
+		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
 }
+
 struct task_head_t
 {
 	struct task_struct *task_list;
@@ -145,11 +158,11 @@ void init_task(struct task_struct *task)
 	task->task_reg.fs = LDT_SEL_RING3(task_ds);
 	task->task_reg.gs = LDT_SEL_RING3(task_ds);
 	task->task_reg.ss = LDT_SEL_RING3(task_ds);
-	task->task_reg.eflags = 0x200;
+	task->task_reg.eflags = 0 ;
 	
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
-	switch_to_test(task);
+	//switch_to_test(task);
 	switch_to_ring3(task);
 }
 

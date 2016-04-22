@@ -19,11 +19,6 @@
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 
-/* bug
- * when call s_t_r3  whether we need to ltr the task ?
- * if we ltr, the des of the tss > type field will be 11
- * not 9. Then load will error
- */
 void switch_to_ring3(struct task_struct *task) 
 { 
 	u32 lldt_sel = gdt_ldt_sel(task->pid);
@@ -35,8 +30,8 @@ void switch_to_ring3(struct task_struct *task)
 		     " pushfl \n\t"
 		     //" pushw %[EFLAGS] \n\t"
 		     " pushl %[CS] \n\t"
-		     //" pushl $1f \n\t"
-		     " pushl %[IP] \n\t"
+		     " pushl $1f \n\t"
+		     //" pushl %[IP] \n\t"
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"

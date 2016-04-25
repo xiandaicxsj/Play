@@ -6,6 +6,11 @@ static u32 c = 0;
 
 static u32 cal_cur_off()
 {
+	if (r == 30)
+	{
+		r = 0;
+		c = 0;
+	}
 	return VBUFFER + (r * 80 + c)*2;
 }
 
@@ -21,6 +26,12 @@ static update_r_c()
 	{
 		c = 0;
 		r++;
+	}
+
+	if (r >=30)
+	{
+	   r = 0;
+	   c = 0;
 	}
 	else c++;
 }

@@ -28,6 +28,8 @@
 #define MOUSE   0x2c
 #define COMATH  0x2d
 #define HARDDISK 0x2e
+
+#define HW_VC(num) hw##num
 void timer_handler();
 void divide_error();
 void single_step_exception();
@@ -44,11 +46,11 @@ void segment_not_present();
 void stack_exception();
 void general_protection();
 void copr_error();
-void time();
 
 void setup_interrupt();
 
 void disable_interrupt();
 void enable_interrupt();
 
+void interrupt_handler();
 #endif

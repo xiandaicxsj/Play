@@ -24,7 +24,7 @@
  * if we ltr, the des of the tss > type field will be 11
  * not 9. Then load will error
  */
-void switch_to_ring3(struct task_struct *task) 
+static void switch_to_ring3(struct task_struct *task) 
 { 
 	u32 lldt_sel = gdt_ldt_sel(task->pid);
 	u32 ts_sel = gdt_tss_sel(task->pid);
@@ -80,9 +80,20 @@ void test_process()
 	c= a+b+1;
 	print('a');
 	while(1);
-
 }
 
+void test_process1()
+{
+	/* */
+	  //enable_interrupt();
+	 
+	int a=0;		
+	int b=0;
+	int c;
+	c= a+b+1;
+	print('b');
+	while(1);
+}
 void switch_to_test(struct task_struct *t)
 {
 
@@ -96,7 +107,7 @@ void switch_to_test(struct task_struct *t)
 	};
 	unsigned int task_vec;
 	struct tmp _t;
-	_t.b = gdt_tss_sel(0);
+	_t.b = gdt_tss_sel(t->pid);
 	//_t.b = (TASK_VECTOR_BASE << 3);
 	//_t.b = TASK_VECTOR;
 	task_vec = _t.b ;
@@ -139,7 +150,6 @@ void init_task(struct task_struct *task)
 	u32 pid = 0;
 
 	pid = alloc_pid();
-	task->pid = pid;
 
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
@@ -148,7 +158,7 @@ void init_task(struct task_struct *task)
 	task->task_reg.esp = (u32) task + PAGE_SIZE - 1;
 
 	/* just test */
-	task->task_reg.eip = (u32) test_process;
+	task->task_reg.eip = pid == 0? (u32) test_process :(u32) test_process1;
 
 	/* task ldt */
 	task->task_reg.ldt_sel = gdt_ldt_sel(pid);
@@ -169,7 +179,8 @@ void init_task(struct task_struct *task)
 	
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
-	switch_to_test(task);
+	if (!pid)
+		switch_to_test(task);
 	/*
 	asm volatile (" ltr %%ax "
 		      ::"a"(gdt_tss_sel(pid)):);

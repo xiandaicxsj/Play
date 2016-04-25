@@ -7,7 +7,7 @@
 .extern start_kernel
 
 
-#include "head_32.h"
+#include "asm/head_32.h"
 .section .data 
 .align 64
 .global gdt
@@ -256,29 +256,90 @@ _setup_idt:
 
 	ret
 */
-	
+.global hw0
+.global hw1
+.global hw2
+.global hw3
+.global hw4
+.global hw5
+.global hw6
+.global hw7
+.global hw8
+.global hw9
 
-.type interrupt_handler, @function
-interrupt_handler:
-	pushl %ebp
-	movl %esp, %ebp
-	pusha
-	popa
+.type hw0, @function
+hw0:
+	cli
 	iret
 
-.type _print, @function
-_print:
-	pushl %ebp
-	movl %esp, %ebp
-	movw $0x1e00,%ax 
-	movb 0x38, %al
-	movl $_video_offset, %edi
-	movw %ax, (%edi)
-	movl %ebp, %esp
-	popl %ebp
-	ret
+.type hw1, @function
+hw1:
+	cli
+	iret
 
-	
+.type hw2, @function
+hw2:
+	cli
+	iret
 
+.type hw3, @function
+hw3:
+	cli
+	iret
 
+.type hw4, @function
+hw4:
+	cli
+	iret
 
+.type hw5, @function
+hw5:
+	cli
+	iret
+
+.type hw6, @function
+hw6:
+	cli
+	iret
+
+.type hw7, @function
+hw7:
+	cli
+	iret
+
+.type hw8, @function
+hw8:
+	cli
+	iret
+.type hw9, @function
+hw9:
+	cli
+	iret
+.type hw10, @function
+hw10:
+	cli
+	iret
+.type hw11, @function
+hw11:
+	cli
+	iret
+
+.type hw12, @function
+hw12:
+	cli
+	iret
+
+.type hw13, @function
+hw13:
+	cli
+	iret
+
+.type hw14, @function
+hw14:
+	cli
+	iret
+
+.type hw15, @function
+hw15:
+	cli
+	iret

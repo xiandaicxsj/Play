@@ -53,8 +53,8 @@ void overflow()
 void timer_handler()
 {
 	print_str("timer\n");
-	while(1);
-	asm volatile("iret");
+	enable_interrupt();
+	//asm volatile("iret");
 }
 
 void bounds_check()
@@ -126,5 +126,5 @@ void setup_interrupt()
 	set_idt(idt, PAGE_FAULT, page_fault, DA_386IGate);
 	set_idt(idt, TIMER, timer_handler,DA_386IGate);
 	load_idt();
-	/* enable_interrupt(); */
+	enable_interrupt();
 }

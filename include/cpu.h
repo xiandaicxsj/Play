@@ -12,4 +12,6 @@
 #define VIP_MASK                0x00100000
 #define ID_MASK                 0x00200000
 
+#define IOPL_RING3 		0x00003000
+#define IF			0x00000200
 #endif

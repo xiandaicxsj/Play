@@ -71,7 +71,9 @@ static void insert_task(struct task_struct *_task)
 }
 void test_process()
 {
-	enable_interrupt();
+	/* */
+	  //enable_interrupt();
+	 
 	int a=0;		
 	int b=0;
 	int c;
@@ -163,14 +165,16 @@ void init_task(struct task_struct *task)
 	task->task_reg.fs = LDT_SEL_RING3(task_ds);
 	task->task_reg.gs = LDT_SEL_RING3(task_ds);
 	task->task_reg.ss = LDT_SEL_RING3(task_ds);
-	task->task_reg.eflags = 0 ;
+	task->task_reg.eflags = IOPL_RING3 | IF;
 	
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
-	//switch_to_test(task);
+	switch_to_test(task);
+	/*
 	asm volatile (" ltr %%ax "
 		      ::"a"(gdt_tss_sel(pid)):);
 	switch_to_ring3(task);
+	*/
 }
 
 void switch_to(struct task_struct *pre, struct task_struct *next)

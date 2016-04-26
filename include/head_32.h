@@ -16,6 +16,18 @@ void hw12();
 void hw13();
 void hw14();
 void hw15();
+void hw32();
+void hw33();
+void hw34();
+void hw35();
+void hw36();
+void hw37();
+void hw38();
+void hw39();
+void hw40();
+void hw44();
+void hw45();
+void hw46();
 #endif
 
 

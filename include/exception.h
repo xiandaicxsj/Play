@@ -16,18 +16,18 @@
 #define STACK_FAULT 12
 #define GENERAL_FAULT 13
 #define PAGE_FAULT 14
-#define TIMER   0x20
-#define KEYBOARD 0x21
-#define SLAVE   0x22
-#define SERIAL2 0x23
-#define SERIAL1 0x24
-#define PARAL2  0x25
-#define FLOPPY  0x26
-#define PARAL1  0x27
-#define RTC     0x28
-#define MOUSE   0x2c
-#define COMATH  0x2d
-#define HARDDISK 0x2e
+#define TIMER   32
+#define KEYBOARD 33
+#define SLAVE   34
+#define SERIAL2 35
+#define SERIAL1 36
+#define PARAL2  37
+#define FLOPPY  38
+#define PARAL1  39
+#define RTC     40
+#define MOUSE   44
+#define COMATH  45
+#define HARDDISK 46
 
 #define HW_VC(num) hw##num
 void timer_handler();
@@ -43,7 +43,7 @@ void double_fault();
 void copr_seg_overrun();
 void inval_tss();
 void segment_not_present();
-void stack_exception();
+void stack_fault();
 void general_protection();
 void copr_error();
 
@@ -52,5 +52,5 @@ void setup_interrupt();
 void disable_interrupt();
 void enable_interrupt();
 
-void interrupt_handler();
+void send_eoi(u32 vec);
 #endif

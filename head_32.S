@@ -6,6 +6,24 @@
 .equ mem_size, 0x200000 /* 2M */
 .extern start_kernel
 
+.macro push_all
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %edi
+	pushl %esi
+.endm
+ 
+
+.macro pop_all
+	popl %esi
+	popl %edi
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+.endm
 
 #include "asm/head_32.h"
 .section .data 
@@ -266,80 +284,188 @@ _setup_idt:
 .global hw7
 .global hw8
 .global hw9
+.global hw10
+.global hw11
+.global hw12
+.global hw13
+.global hw14
+.global hw15
+.global hw32
+.global hw33
+.global hw34
+.global hw35
+.global hw36
+.global hw37
+.global hw38
+.global hw39
+.global hw40
+.global hw44
+.global hw45
+.global hw46
 
 .type hw0, @function
 hw0:
-	cli
-	iret
-
+	push_all
+	call divide_error
+	pop_all
+ 	iret
+ 
 .type hw1, @function
 hw1:
-	cli
+	push_all
+	call single_step_exception
+	pop_all
 	iret
-
+ 
+	
 .type hw2, @function
 hw2:
-	cli
+	push_all
+	call nmi
+	pop_all
 	iret
-
+ 
 .type hw3, @function
 hw3:
-	cli
+	push_all
+	call breakpoint_exception
+	pop_all
 	iret
 
 .type hw4, @function
 hw4:
-	cli
+	push_all
+	call overflow
+	pop_all
 	iret
 
 .type hw5, @function
 hw5:
-	cli
+	push_all
+	call bounds_check
+	pop_all
 	iret
 
 .type hw6, @function
 hw6:
-	cli
+	push_all
+	call inval_opcode
+	pop_all
 	iret
-
+ 
 .type hw7, @function
 hw7:
-	cli
+	push_all
+	call copr_not_available
+	pop_all
 	iret
-
+ 
 .type hw8, @function
 hw8:
-	cli
+	push_all
+	call double_fault
+	pop_all
 	iret
 .type hw9, @function
 hw9:
-	cli
+	push_all
+	call copr_seg_overrun
+	pop_all
 	iret
+
 .type hw10, @function
 hw10:
-	cli
+	push_all
+	call inval_tss 
+	pop_all
 	iret
+
 .type hw11, @function
 hw11:
-	cli
+	push_all
+	call segment_not_present
+	pop_all
 	iret
 
 .type hw12, @function
 hw12:
-	cli
+	push_all
+	call stack_fault
+	pop_all
 	iret
 
 .type hw13, @function
 hw13:
-	cli
+	push_all
+	call general_protection
+	pop_all
 	iret
 
 .type hw14, @function
 hw14:
-	cli
+	push_all
+	call page_fault
+	pop_all
 	iret
 
 .type hw15, @function
 hw15:
+	push_all
+	iret
+	pop_all
+
+.type hw32, @function
+hw32:
+	push_all
+	call timer_handler
+	pop_all
+	iret
+
+.type hw33, @function
+hw33:
+	cli
+	iret
+
+.type hw34, @function
+hw34:
+	cli
+	iret
+
+.type hw35, @function
+hw35:
+	cli
+	iret
+.type hw36, @function
+hw36:
+	cli
+	iret
+
+.type hw37, @function
+hw37:
+	cli
+	iret
+
+.type hw38, @function
+hw38:
+	cli
+	iret
+
+.type hw39, @function
+hw39:
+	cli
+	iret
+
+.type hw40, @function
+hw40:
+	cli
+	iret
+
+.type hw44, @function
+hw44:
+	cli
+	iret
+
+.type hw45, @function
+hw45:
 	cli
 	iret

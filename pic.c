@@ -59,12 +59,17 @@ void mask_interrupt(u32 index)
 	_mask_interrupt(PIC_MASTER, mask);
 }
 
+void send_eoi(u32 vector)
+{
+	_outs_8(vector, PIC_MASTER);
+}
+
 void init_pic()
 {
 	return ;
 	/*
 	asm volatile(
-  "movb $0x11, %%al \n\t"
+        "movb $0x11, %%al \n\t"
 	"outb %%al, $0x20 \n\t"
 	"nop\n\t"
 	"nop\n\t"

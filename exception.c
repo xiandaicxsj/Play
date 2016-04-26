@@ -78,10 +78,8 @@ void overflow()
 
 void timer_handler()
 {
-	asm volatile("mov $0x20, %%al\n\t"
-		     "out %%al, $0x20":::);
 	print_str("timer\n");
-	//asm volatile("iret");
+	send_eio(TIMER);
 }
 
 void bounds_check()
@@ -113,7 +111,7 @@ void segment_not_present()
 {
 }
 
-void stack_exception()
+void stack_fault()
 {
 }
 
@@ -154,9 +152,7 @@ void setup_interrupt()
 	setup_interrupt_handler(idt, STACK_FAULT);
 	setup_interrupt_handler(idt, GENERAL_FAULT);
 	setup_interrupt_handler(idt, PAGE_FAULT);
-	//set_idt(idt, TIMER, timer_handler,DA_386IGate);
-	//set_idt(idt, TIMER, interrupt_handler, DA_386IGate);
-	set_idt(idt, TIMER, hw0, DA_386IGate);
+	setup_interrupt_handler(idt, TIMER);
 	load_idt();
 	enable_interrupt();
 }

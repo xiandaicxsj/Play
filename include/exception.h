@@ -28,6 +28,7 @@
 #define MOUSE   44
 #define COMATH  45
 #define HARDDISK 46
+#define INT_USER 48
 
 #define HW_VC(num) hw##num
 void timer_handler();
@@ -52,5 +53,4 @@ void setup_interrupt();
 void disable_interrupt();
 void enable_interrupt();
 
-void send_eoi(u32 vec);
 #endif

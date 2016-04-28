@@ -45,6 +45,7 @@ default2:
 .quad  0
 .quad  0
 .quad  0
+.quad  0
 
 gdt_base:
 .word 16*8-1  /* gdt limit */
@@ -302,6 +303,7 @@ _setup_idt:
 .global hw44
 .global hw45
 .global hw46
+.global hw48
 
 .type hw0, @function
 hw0:
@@ -469,3 +471,13 @@ hw44:
 hw45:
 	cli
 	iret
+
+.type hw48, @function
+hw48:
+	cli
+	push_all
+	call handle_user_int
+	pop_all
+	sti
+	iret
+

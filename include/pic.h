@@ -10,4 +10,5 @@
 
 void init_pic();
 void mask_interrupt(u32 index);
+void send_eoi(u32 vector);
 #endif

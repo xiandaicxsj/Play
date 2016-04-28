@@ -28,6 +28,7 @@ void hw40();
 void hw44();
 void hw45();
 void hw46();
+void hw48();
 #endif
 
 

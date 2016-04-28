@@ -83,7 +83,7 @@ struct idt_desc {
         u32 hi;
 };
 
-void set_idt(struct idt_desc *idt, int vector, void (*func)(), u16 type);
+void set_idt(struct idt_desc *idt, int vector, void (*func)(), u16 type, u16 dpl);
 int set_ldt(int vector, void* base_addr, u32 seg_limit);
 void set_tss(int vector, void *base_addr);
 #endif

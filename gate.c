@@ -17,11 +17,11 @@ static void set_gdt_seg(struct seg_desc *gdt_desc, int vector, void * _base_addr
 
 }
 
-void set_idt(struct idt_desc *idt, int vector,void (*func)(), u16 type)
+void set_idt(struct idt_desc *idt, int vector, void (*func)(), u16 type, u16 dpl)
 {
 	u32 handler=(u32)func;
 	idt[vector].lo = (( 16ul) << 16)  | (handler & 0xffff);
-	idt[vector].hi = ((u32)func & 0xffff0000 ) | (type << 8);
+	idt[vector].hi = ((u32)func & 0xffff0000 ) | (type << 8) | ( dpl << 13);
 }
 
 void set_tss(int vector, void *base_addr)

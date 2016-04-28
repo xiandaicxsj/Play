@@ -6,7 +6,7 @@
 #include "head_32.h"
 #define setup_interrupt_handler(idt, index) \
 	do { \
-		set_idt(idt, index, HW_VC(index), DA_386IGate); \
+		set_idt(idt, index, HW_VC(index), DA_386IGate, 0); \
 	} while(0) 	
 struct idt_base_t {
 	u16 size;
@@ -79,7 +79,8 @@ void overflow()
 void timer_handler()
 {
 	print_str("timer\n");
-	send_eio(TIMER);
+	send_eoi(TIMER);
+	test_switch_task();
 }
 
 void bounds_check()
@@ -127,6 +128,11 @@ void copr_error()
 
 }
 
+void handle_user_int(u32 index)
+{
+	print_str("user int\n");
+}
+
 static void load_idt()
 {
 	idt_base.addr = (u32) &(idt[0]);
@@ -153,6 +159,7 @@ void setup_interrupt()
 	setup_interrupt_handler(idt, GENERAL_FAULT);
 	setup_interrupt_handler(idt, PAGE_FAULT);
 	setup_interrupt_handler(idt, TIMER);
+	set_idt(idt, INT_USER, HW_VC(48), DA_386TGate, 3);
 	load_idt();
 	enable_interrupt();
 }

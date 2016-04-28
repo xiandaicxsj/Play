@@ -46,4 +46,6 @@ struct task_struct
 extern struct task_struct *current;
 void init_task(struct task_struct *);
 void pre_init_task(void );
+void test_switch_task(void);
+void switch_to_test(struct task_struct *t);
 #endif

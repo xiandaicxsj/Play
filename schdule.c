@@ -7,17 +7,46 @@
 #include"debug.h"
 #include"print.h"
 #include"cpu.h"
+#define test_proc
+
+#ifdef test_proc
+#include"test_process.h"
+extern test_process();
+extern test_process1();
+#endif
+
 #define TASK_SS 4048
 #define LDT_CS 0
 #define LDT_DS 1
 #define HW_TASK_SWITCH
-#define TASK_VECTOR_BASE 5
+#define TASK_VECTOR_BASE 6
 #define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
 #define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
 #define gdt_tss_sel(n) ((((n) << 1) + TASK_VECTOR_BASE) << 3)
 #define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
+struct task_struct *current;
+static u32 cur_pid = 0;
+
+void switch_to(struct task_struct *pre, struct task_struct *next)
+{
+	u32 ldt_sec = gdt_ldt_sel(next->pid);
+
+	struct tmp{
+	long a;
+	long b;
+	};
+	struct tmp _tmp;
+	_tmp.b = gdt_tss_sel(next->pid);
+
+	asm volatile(" movl $1f, %[next_ip] \n\t"
+		     " lldt %%ax\n\t"
+		     " ljmp %[task_sec] \n\t"
+		     " 1: "
+		     :[next_ip] "=m" (pre->task_reg.eip)
+		     :[task_sec] "m" (*&_tmp.a),  "a" (ldt_sec));
+}
 
 /* bug
  * when call s_t_r3  whether we need to ltr the task ?
@@ -40,11 +69,11 @@ static void switch_to_ring3(struct task_struct *task)
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"
-		     " movl %[DS] ,%%ax\n\t"
-		     " movl %%ax, %%ds\n\t"
-		     " movl %%ax, %%es\n\t"
-		     " movl %%ax, %%fs\n\t"
-		     " movl %%ax, %%gs\n\t"
+		     " movw %[DS] ,%%ax\n\t"
+		     " movw %%ax, %%ds\n\t"
+		     " movw %%ax, %%es\n\t"
+		     " movw %%ax, %%fs\n\t"
+		     " movw %%ax, %%gs\n\t"
 		     " jmp ."
 		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
 		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
@@ -69,31 +98,24 @@ static void insert_task(struct task_struct *_task)
 	task_head.task_list = _task;
 	return; 
 }
-void test_process()
+
+void test_switch_task()
 {
-	/* */
-	  //enable_interrupt();
-	 
-	int a=0;		
-	int b=0;
-	int c;
-	c= a+b+1;
-	print('a');
-	while(1);
+	struct task_struct *t = task_head.task_list;
+	if(!t || !current)
+		return ;
+	while(t)
+	{
+		if (current->pid != t->pid)
+			break;
+		t = t->next;
+	}
+	if (!t)
+		return ;
+	switch_to(current, t);
 }
 
-void test_process1()
-{
-	/* */
-	  //enable_interrupt();
-	 
-	int a=0;		
-	int b=0;
-	int c;
-	c= a+b+1;
-	print('b');
-	while(1);
-}
+
 void switch_to_test(struct task_struct *t)
 {
 
@@ -106,11 +128,10 @@ void switch_to_test(struct task_struct *t)
 	long b;
 	};
 	unsigned int task_vec;
-	struct tmp _t;
-	_t.b = gdt_tss_sel(t->pid);
+	struct tmp _tmp;
+	_tmp.b = gdt_tss_sel(t->pid);
 	//_t.b = (TASK_VECTOR_BASE << 3);
 	//_t.b = TASK_VECTOR;
-	task_vec = _t.b ;
 	u32 ldt_sec = gdt_ldt_sel(t->pid);
 	//asm volatile(/*"  movw %0, %%ax\n\t"
 	//	           "  movw %1, %%dx\n\t"*/
@@ -118,9 +139,12 @@ void switch_to_test(struct task_struct *t)
 
 	
 	//asm volatile(" ljmp %0 ":: "m" (ask_vec):);
+	//
+	current = t;
+
 	asm volatile( " lldt %%ax\n\t"
 		      " ljmp %0 "
-		     :: "m" (*&_t.a), "a"(ldt_sec):);
+		     :: "m" (*&_tmp.a), "a"(ldt_sec):);
 	
 }
 void pre_init_task(void )
@@ -138,8 +162,9 @@ void pre_init_task(void )
  */
 u32 alloc_pid()
 {
-		return 0;
-
+	//return 0;
+	cur_pid ++;
+	return cur_pid;
 }
 void init_task(struct task_struct *task)
 {
@@ -151,6 +176,7 @@ void init_task(struct task_struct *task)
 
 	pid = alloc_pid();
 
+	task->pid = pid;
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
@@ -158,7 +184,12 @@ void init_task(struct task_struct *task)
 	task->task_reg.esp = (u32) task + PAGE_SIZE - 1;
 
 	/* just test */
-	task->task_reg.eip = pid == 0? (u32) test_process :(u32) test_process1;
+#ifdef test_proc
+	if (pid == 1)
+	task->task_reg.eip =  (u32) test_process; 
+	else
+	task->task_reg.eip =  (u32) test_process1; 
+#endif
 
 	/* task ldt */
 	task->task_reg.ldt_sel = gdt_ldt_sel(pid);
@@ -179,8 +210,10 @@ void init_task(struct task_struct *task)
 	
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
-	if (!pid)
-		switch_to_test(task);
+#ifdef test_proc
+	if (pid == 1)
+		current = task;
+#endif
 	/*
 	asm volatile (" ltr %%ax "
 		      ::"a"(gdt_tss_sel(pid)):);
@@ -188,21 +221,3 @@ void init_task(struct task_struct *task)
 	*/
 }
 
-void switch_to(struct task_struct *pre, struct task_struct *next)
-{
-	struct tmp{
-	long a;
-	long b;
-	};
-	unsigned int task_vec;
-	struct tmp _t;
-	_t.b = gdt_tss_sel(next->pid);
-	task_vec = _t.b ;
-	asm volatile(" movl $1f, %[next_ip] \n\t"
-		     " ljmp %[task_sec] \n\t"
-		     " 1: "
-		     :[next_ip] "=m" (pre->task_reg.eip)
-		     :[task_sec] "m" (*&_t.a) );
-}
-
-/* do we need to setup the NT in eflags here */

@@ -368,6 +368,7 @@ hw8:
 	call double_fault
 	pop_all
 	iret
+
 .type hw9, @function
 hw9:
 	push_all
@@ -425,51 +426,41 @@ hw32:
 
 .type hw33, @function
 hw33:
-	cli
 	iret
 
 .type hw34, @function
 hw34:
-	cli
 	iret
 
 .type hw35, @function
 hw35:
-	cli
 	iret
 .type hw36, @function
 hw36:
-	cli
 	iret
 
 .type hw37, @function
 hw37:
-	cli
 	iret
 
 .type hw38, @function
 hw38:
-	cli
 	iret
 
 .type hw39, @function
 hw39:
-	cli
 	iret
 
 .type hw40, @function
 hw40:
-	cli
 	iret
 
 .type hw44, @function
 hw44:
-	cli
 	iret
 
 .type hw45, @function
 hw45:
-	cli
 	iret
 
 .type hw48, @function

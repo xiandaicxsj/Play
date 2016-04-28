@@ -1,4 +1,13 @@
 #include"test_process.h"
+void delay()
+{
+	int c;
+	int i;
+	int j;
+		for(i=0; i<1000; i++)
+			for(j=0; j<1000; j++)
+				c = i+j;
+}
 void test_process()
 {
 	/* */
@@ -6,14 +15,20 @@ void test_process()
 	 
 	int a=0;		
 	int b=0;
-	int c;
-	c= a+b+1;
-	print('a');
+	int c=0;
+	int i;
+	int j=0;
+	while(1)
+	{	
+		for(i=0; i<1000; i++)
+			for(j=0; j<1000; j++)
+				c = i+j;
+		print('a');
+	}
 #ifdef TEST_USER_INT
 	asm volatile ("movw $23, %%ax\n\t"
 		      "INT $48":::);
 #endif
-	while(1);
 }
 
 void test_process1()
@@ -24,7 +39,13 @@ void test_process1()
 	int a=0;		
 	int b=0;
 	int c;
-	c= a+b+1;
-	print('b');
-	while(1);
+	int i,j;
+	while(1)
+	{
+		for(i=0; i<1000; i++)
+			for(j=0; j<1000; j++)
+				c = i+j;
+		delay();
+		print('b');
+	}
 }

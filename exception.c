@@ -78,7 +78,7 @@ void overflow()
 
 void timer_handler()
 {
-	print_str("timer\n");
+//	print_str("timer\n");
 	send_eoi(TIMER);
 	test_switch_task();
 }

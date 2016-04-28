@@ -40,6 +40,7 @@ void switch_to(struct task_struct *pre, struct task_struct *next)
 	struct tmp _tmp;
 	_tmp.b = gdt_tss_sel(next->pid);
 
+	current = next;
 	asm volatile(" movl $1f, %[next_ip] \n\t"
 		     " lldt %%ax\n\t"
 		     " ljmp %[task_sec] \n\t"

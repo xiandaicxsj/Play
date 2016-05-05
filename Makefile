@@ -13,7 +13,11 @@ FLOPPY:=./mnt/
 DIRS = ./mm
 
 subdirs:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir; done
+	@for dir in $(DIRS); do \
+	$(MAKE) -C $$dir; \
+	done
+
+
 
 all:
 $(KERNEL_BIN) : subdirs 

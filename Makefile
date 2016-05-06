@@ -6,6 +6,7 @@ CC=gcc
 LD=ld
 LDFLAGS = -m elf_i386  -T kernel.lds
 SRC_DIR = $(shell pwd)
+ASMFLAGS = -I $(SRC_DIR)/include -m32
 CCFLAGS= -I $(SRC_DIR)/include -c -fno-builtin -m32 -fno-stack-protector  
 CCFLAGS_DEP= -I $(SRC_DIR)/include
 #LDFLAGS = -m elf_i386  -Ttext 0x30400
@@ -49,3 +50,5 @@ export CC
 export CCFLAGS
 export CCFLAGS_DEP
 export OBJS_DIR
+export ASMFLAGS
+export ASM

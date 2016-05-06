@@ -1,5 +1,6 @@
 SRCS := $(wildcard *.c)
 OBJS := $(patsubst %.c, %.o, $(SRCS))
+OBJS += $(patsubst %.S, %.o, $(SRCS))
 DEPS := $(patsubst %.c, %.d, $(SRCS))
 sinclude $(SRCS:.c=.d)
 
@@ -11,7 +12,11 @@ sinclude $(SRCS:.c=.d)
 	rm -f $@.$$$$
 	
 
+%.o: %.S
+	$(ASM) $(ASMFLAGS) -o $@ -s $<
+
 %.o: %.c
+	@echo $(OBJS)
 	@echo compile $< $@
 	$(CC) $(CCFLAGS) $< -o $@
 # &< first prerequisite

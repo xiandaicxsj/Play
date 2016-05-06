@@ -18,10 +18,13 @@ sinclude $(SRCS:.c=.d)
 #all: depend all_1
 # now mak 
 .PHONY: all compile depend
-all: compile depend
+all: compile depend cp
 
 depend: $(DEPS)
 compile: $(OBJS)
+cp:
+	mv *.o  $(OBJS_DIR)/ 
+	
 
 clean:
 	@echo "clean"

@@ -13,8 +13,8 @@ KERNEL_BIN:=$(subst .c,.bin,$(KERNEL))
 
 IMG:=a.img
 FLOPPY:=./mnt/
-DIRS = $(SRC_DIR)/mm $(SRC_DIR)/kernel $(SRC_DIR)/loader
-LINK_IO =; 
+DIRS = $(SRC_DIR)/mm $(SRC_DIR)/kernel $(SRC_DIR)/loader 
+OBJS_DIR= $(SRC_DIR)/objs
 
 subdirs:
 	@for dir in $(DIRS); do \
@@ -22,10 +22,17 @@ subdirs:
 	done
 #all: $(KERNEL_BIN) create_img
 #$(KERNEL_BIN) : subdirs $(OBJECTS)
-#	        $(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(OBJECTS)
+#        $(LD) $(LDFLAGS) -o $(KERNEL_BIN) $(OBJECTS)
 #
-all: $(KERNEL_BIN) 
-$(KERNEL_BIN) : subdirs
+all: subdirs $(KERNEL_BIN) 
+$(KERNEL_BIN) : $(OBJS_DIR)/%.o
+	@echo link
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $@
+
+
+
+
+	
 
 clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir clean; done
@@ -41,3 +48,4 @@ create_img:
 export CC
 export CCFLAGS
 export CCFLAGS_DEP
+export OBJS_DIR

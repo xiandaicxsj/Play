@@ -1,6 +1,6 @@
 SRCS := $(wildcard *.c)
 OBJS := $(patsubst %.c, %.o, $(SRCS))
-OBJS += $(patsubst %.S, %.o, $(SRCS))
+OBJS += head_32.o
 DEPS := $(patsubst %.c, %.d, $(SRCS))
 sinclude $(SRCS:.c=.d)
 

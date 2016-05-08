@@ -13,7 +13,7 @@ sinclude $(SRCS:.c=.d)
 	
 
 %.o: %.S
-	$(ASM) $(ASMFLAGS) -o $@ -s $<
+	$(ASM) $(ASMFLAGS) -o $@ -c $<
 
 %.o: %.c
 	@echo $(OBJS)
@@ -33,9 +33,9 @@ cp:
 
 clean:
 	@echo "clean"
-	rm *.o
-	rm *.d
-	rm *.d*
+	-rm *.o
+	-rm *.d
+	-rm *.d*
 
 	
 

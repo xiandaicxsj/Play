@@ -1,8 +1,11 @@
 SRCS := $(wildcard *.o)
 
+.PHONY: all clean
 all: $(SRCS)
-	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $@
+	@echo ld $(SRCS) 
+	@echo $(KERNEL_BIN)
+	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $^
 clean: 
-	rm *.o
-	rm $(KERNLE_BIN)
+	-rm *.o
+	-rm $(KERNLE_BIN)
 

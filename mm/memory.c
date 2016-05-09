@@ -56,12 +56,14 @@ void init_buddy(u32 mem_size)
 	 * free_low_memory();
 	 */
 }
+
 struct page* _buddy_alloc(int size, u32 align)
 {
+
 }
 
-static struct pgae *adjust_pages(struct page *page, u32 lo, u32 hi,
-																 struct free_area *area) 
+static struct pgae *adjust_pages(struct page *pages, u32 lo, u32 hi,
+				 struct free_area *area) 
 {
 	u32 size = 1 << hi;
 	while(low < hi)
@@ -69,12 +71,18 @@ static struct pgae *adjust_pages(struct page *page, u32 lo, u32 hi,
 		area --;
 		hi --;
 		size >>= 1;
-		page[size].order = hi;  
+		pages[size].order = hi;  
 		index = ((u32) &page[size]) >> hi;
 		set_bit(area->map, index);
 		area->nr_free ++;
 	}
 	return page;
+}
+
+void _buddy_free_page(struct *pages)
+{
+	u32 order = pages->order;
+	while()
 }
 
 struct page * _buddy_alloc_page(u32 num)
@@ -85,7 +93,7 @@ struct page * _buddy_alloc_page(u32 num)
 	struct  free_area *area;
 	while(cur_order < MAX_ORDER)
 	{
-		if (!pgd->free_area[cur_order].free_pagse_num) {
+		if (!pgd->free_area[cur_order].nr_free) {
 				cur_order++;
 				continue
 		}

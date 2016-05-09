@@ -5,6 +5,7 @@ SECTIONS
 	_text_start = .;
 	.text : AT(ADDR(.text) - 0xc0000000) 
 	{
+		*(.head.text)
 	 	*(.text) 
 	}
 	.rodata : AT(ADDR(.rodata) - 0xc0000000)

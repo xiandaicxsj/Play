@@ -1,10 +1,9 @@
 *.o
-*.img
 *~
+*.img
 *.bin
 *.swp
 *.txt
 *.out
 *.bak
-*.sh
 *.d*

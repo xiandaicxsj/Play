@@ -25,11 +25,11 @@
 #define CR3_ADDR(addr) (addr & PAGE_MASK)
 struct page
 {
-    u32 dirty; //dirty or not
     u32 count; // link count
-    u32 phy_addr;
-    u32 user;// user or kernel
+    u32 pfn;
+    u32 order;
     struct page *next;
+    struct page *prev;
 };
 void page_fault();
 void* alloc_page_table();

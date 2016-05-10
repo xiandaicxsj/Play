@@ -77,7 +77,7 @@ init_page_tbl:
 /*;.globl make func available external
  ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model. should run into proteced model
  ; kernel: 1.will setup the pagingn 2.others do other basic initialition, kernel asm will setup man one-one map*/
-.section ".head.text" "ax"
+.section .head.text
 //#include "kernel.lds.h"
 #include "asm/page_type.h"
 .align 32

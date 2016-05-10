@@ -4,8 +4,8 @@ void delay()
 	int c;
 	int i;
 	int j;
-		for(i=0; i<1000; i++)
-			for(j=0; j<1000; j++)
+		for(i=0; i<10; i++)
+			for(j=0; j<10; j++)
 				c = i+j;
 }
 void test_process()
@@ -20,8 +20,8 @@ void test_process()
 	int j=0;
 	while(1)
 	{	
-		for(i=0; i<1000; i++)
-			for(j=0; j<1000; j++)
+		for(i=0; i<10; i++)
+			for(j=0; j<10; j++)
 				c = i+j;
 		print('a');
 	}
@@ -42,10 +42,9 @@ void test_process1()
 	int i,j;
 	while(1)
 	{
-		for(i=0; i<1000; i++)
-			for(j=0; j<1000; j++)
+		for(i=0; i<10; i++)
+			for(j=0; j<10; j++)
 				c = i+j;
-		delay();
 		print('b');
 	}
 }

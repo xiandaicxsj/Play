@@ -3,15 +3,42 @@
 struct list_head
 {
 	struct list_head *next;
-	struct list_head *next;
+	struct list_head *prev;
 }
-static void list_add(struct list_head *prev, struct list_head *next)
+
+/* double rotate list */
+static inline void _list_add(struct list_head *prev, struct list_head *new, struct list_head *next)
 {
-}
+	next->pre= new;
+	new->next = next;
+	prev->next =new;
+	new->prev = prev;
 
-static void list_del(struct list_head *prev, struct list_head *next)
+}
+static inline void list_add(struct list_head *new, struct list_head *head)
 {
-
+	_list_add(head->prev, new, head);
 }
 
+static inline void _list_del(struct list_head *prev, struct list_head *next)
+{
+	prev->next = next;
+	next->prev = prev;
+}
+
+static inline void init_list(struct list_head *new)
+{
+	new->next = new;
+	new->pre = new;
+}
+static inline void list_del(struct list_head *entry)
+{
+	_list_del(entry->prev, entry->next);
+}
+
+/* member -> type */
+#define offsetof(type, member) (((type *)0)->member)
+#define container_of(ptr, type, member) ({ \
+	const typeof( ((type *)0)->member) * _mptr = (ptr); \
+	(type *)( (char *)_mptr - offsetof(type, member))})
 #endif

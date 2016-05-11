@@ -1,6 +1,7 @@
 #ifndef _H_PAGE
 #define _H_PAGE
 #include"type.h"
+#include"list.h"
 #define CR0_PG (1ull << 31)
 
 #define PAGE_OFFSET 12
@@ -28,8 +29,7 @@ struct page
     u32 count; // link count
     u32 pfn;
     u32 order;
-    struct page *next;
-    struct page *prev;
+    struct list_head *list;
 };
 void page_fault();
 void* alloc_page_table();

@@ -26,10 +26,10 @@
 #define CR3_ADDR(addr) (addr & PAGE_MASK)
 struct page
 {
+    struct list_head list;
     u32 count; // link count
     u32 pfn;
     u32 order;
-    struct list_head *list;
 };
 void page_fault();
 void* alloc_page_table();

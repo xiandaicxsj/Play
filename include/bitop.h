@@ -6,7 +6,8 @@
 inline int test_bit(void *addr, int index)
 {
 	u32 *bit_map = (u32 *)addr;
-	return 1 & (bit_map[index/BIT_LONG] >> (index % BIT_LONG));  
+	u32 bit = (bit_map[index/BIT_LONG] >> (index % BIT_LONG));  
+	return 1 & bit;   
 }
 
 inline void set_bit(void *addr, int index)
@@ -18,7 +19,7 @@ inline void set_bit(void *addr, int index)
 inline void clear_bit(void *addr, int index)
 {
 	u32 *bit_map = (u32 *)addr;
-	bit_map[index/BIT_LONG]  &= 0 << (index % BIT_LONG);  
+	bit_map[index/BIT_LONG]  &= ~(1 << (index % BIT_LONG));  
 }
 
 inline int find_first_avail_bit(void *addr, int limit)

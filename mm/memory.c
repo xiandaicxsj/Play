@@ -7,6 +7,7 @@
 
 #ifdef TEST
 	#include<stdio.h>
+	#include<stdlib.h>
 	#define MEM_KERN (1 << 0)
 	#define MEM_USER (1 << 1)
 #else
@@ -101,6 +102,7 @@ void init_buddy(u32 mem_size)
 	{
 		area = &(pgp.free_area[order]);
 		area->nr_free = 0;
+		area->order = order;
 		//pgp->free_area[order].pages_num = pages_num >> (order +1);
 		area->free_pages = NULL;
 		area->map = kmalloc((nr_pages >> (order + 1))/sizeof(char) + 1, 0, MEM_KERN);
@@ -121,7 +123,10 @@ void init_buddy(u32 mem_size)
 		pages = pfn_to_page(pfn);
 		pages->order = order;
 
-		list_add(&(pages->list), &(area->free_pages->list));
+		if (!area->free_pages)
+			area->free_pages = pages;
+		else
+			list_add(&(pages->list), &(area->free_pages->list));
 
 		pages_idx ++;
 		pfn += 1 << order;
@@ -138,9 +143,12 @@ static struct page *adjust_pages(struct page *pages, u32 lo_order, u32 hi_order,
 				 struct free_area_t *area) 
 {
 	u32 size = 1 << hi_order;
-	u32 pages_idx;
 	struct page *page_head;
 	u32 pfn = pages->pfn;
+	u32 pages_idx = pfn >> (hi_order + 1);
+
+	if (lo_order == hi_order)
+		goto out;
 	while(lo_order < hi_order)
 	{
 		area --;
@@ -149,18 +157,24 @@ static struct page *adjust_pages(struct page *pages, u32 lo_order, u32 hi_order,
 
 		/* update pages info */
 		page_head = pfn_to_page(pfn + size);
-		page_head.order = hi_order;  
+		page_head->order = hi_order;  
 
 		/* do we need to list_free */
 		/* update area */
-		pages_idx = page_head->pfn >> hi_order;
+		pages_idx = page_head->pfn >> (hi_order + 1);
+		/* why set_bit here, indicate his buddy is used*/
 		set_bit(area->map, pages_idx);
-		if(!area->free_pages)
-			area->free_pages = pages;
+		if(!area->free_pages) {
+			init_list(&pages->list);
+			area->free_pages = page_head;
+		}
 		else
-			list_add(&(pages_head->list), &(area->free_pages->list));
+			list_add(&(page_head->list), &(area->free_pages->list));
 		area->nr_free ++;
 	}
+	/* very important */
+out:
+	pages->order = lo_order;
 	return pages;
 }
 
@@ -173,7 +187,7 @@ struct page *find_buddy_pages(u32 pfn, u32 order)
  * the order or the size of certain pages is store in 
  * the first page of the pagses.
  */
-void _buddy_free_page(struct page *pages)
+void _buddy_free_pages(struct page *pages)
 {
 	u32 pages_idx;
 	struct  free_area_t *area;
@@ -181,18 +195,19 @@ void _buddy_free_page(struct page *pages)
 	u32 pfn = pages->pfn;
 	u32 order = pages->order;
 
-	area = &(pgp.free_area[order]);
-
 	/* just write this, not sure of the count use */
+	/*
 	pages->count--;
 	if (!pages->count)
 		return ;
+	*/
 
 	while(order < MAX_ORDER)
 	{
+		area = &(pgp.free_area[order]);
 		pages_idx = pfn >> (order + 1);
 		/* 
-		 * if no buddy is found, juest put the page in the free_pages,
+		 * if no buddy is found, just put the page in the free_pages,
 		 * we do not del with the count of struct page
 		 */
 		if (!test_bit(area->map, pages_idx))
@@ -200,7 +215,15 @@ void _buddy_free_page(struct page *pages)
 			set_bit(area->map, pages_idx);
 			area->nr_free ++;
 			/* we need to set pages.. count -> 0 ,same with alloc */
-			list_add(&(pages->list), &(area->free_pages->list));
+			pages->order = order;
+
+			if (!area->free_pages)
+			{
+				init_list(&pages->list);
+				area->free_pages = pages;
+			}
+			else
+			    list_add(&(pages->list), &(area->free_pages->list));
 			break;
 		}
 
@@ -211,9 +234,19 @@ void _buddy_free_page(struct page *pages)
 			return ;
 
 		buddy_pages->order = -1;
-		list_del(&(buddy_pages->list));
-		clear_bit(area->map, pages_idx);
 		area->nr_free--;
+		if (!area->nr_free) {
+			area->free_pages = NULL;
+		} else {
+			if (area->free_pages == buddy_pages)
+				area->free_pages =
+					container_of(buddy_pages->list.next, struct page, list);
+			list_del(&(buddy_pages->list));
+		}
+		/* we need to merge the 2 buddy pages into high pages list */
+		u32 map = *((u32 *)area->map);
+		clear_bit(area->map, pages_idx);
+		map = *((u32 *)area->map);
 
 		/* update pages to be the head of the buddy, merge the pages into high order list*/
 		pages = (pfn >> order) & 0x1 ? buddy_pages : pages;
@@ -241,12 +274,22 @@ struct page * _buddy_alloc_pages(u32 num)
 			cur_order++;
 			continue;
 		}
+
 		if (!area->free_pages)
 			return NULL;
-		tmp = container_of(&area->free_pages->list, struct page, list); 
-		area->free_pages = container_of(tmp->list.next, struct page, list);
-	        /* no del here */
-		/* if we just del the tmp list, then free_pages will poit to 
+		tmp = area->free_pages; 
+
+		area->nr_free --;
+		if (!area->nr_free)
+			area->free_pages = NULL;
+		else
+			area->free_pages = container_of(tmp->list.next, struct page, list);
+		list_del(&tmp->list);
+		/* map is not used for order = MAX_ORDER -1 */
+		if (cur_order != MAX_ORDER -1)
+			clear_bit(area->map, tmp->pfn >> (cur_order + 1));
+		/*
+		 * if we just del the tmp list, then free_pages will poit to 
 		 * an useless place
 		 */
 		return adjust_pages(tmp, order, cur_order, area);
@@ -254,7 +297,7 @@ struct page * _buddy_alloc_pages(u32 num)
 	return NULL;
 }
 
-u32 init_page_struct(struct page *cur, struct page* pre, u32 pfn)
+u32 init_page_struct(struct page *cur, u32 pfn)
 {
 	cur->pfn = pfn;
 	cur->order = -1;
@@ -266,7 +309,6 @@ u32 link_pages(struct page *head, u32 nr_pages)
 {
 	u32 pfn = 0;
 	struct page * cur = head;
-	init_page_struct(next, NULL, pfn);
 	while(nr_pages)
 	{
 		init_page_struct(cur, pfn);
@@ -283,15 +325,81 @@ u32 init_pages_list(u32 mem_size)
 	u32 nr_pages_s = struct_size & PAGE_MASK ? (struct_size >> PAGE_OFFSET) + 1: (struct_size >> PAGE_OFFSET);
 	pages_list = (struct page *)kmalloc_low_mem(nr_pages_s << PAGE_OFFSET, 0, MEM_KERN);
 	/* no need to link page here */
-	//link_pages(pages_list, mem_size >> PAGE_OFFSET);
+	link_pages(pages_list, mem_size >> PAGE_OFFSET);
 }
 
+void show_page(struct page *pages)
+{
+	printf("   pages - order %d, pfn %d\n", pages->order, pages->pfn);
+}
+
+void show_pages(struct list_head *list)
+{
+	struct list_head *head = list;
+	struct list_head *cur;
+	show_page(container_of(head, struct page, list));
+	
+	cur = head->next;
+	while(cur != head)
+	{
+		show_page(container_of(cur, struct page, list));
+		cur = cur->next;
+	}
+}
+
+void show_buddy_area(int order)
+{
+	struct free_area_t *area = &pgp.free_area[order];
+	if (order < 0)
+		return ;
+	printf("area - order: %d size %x\n", order, 1u << order);
+	printf("area - free pages %d\n", area->nr_free);
+	printf("area - map %x\n", *((u32 *)area->map));
+	if (area->nr_free)
+		show_pages(&(area->free_pages->list));
+	printf("\n\n");
+}
+
+void show_buddy_info()
+{
+	int order = MAX_ORDER -1;
+	while(order >= 0)
+	{
+		show_buddy_area(order);
+		order --;
+	}
+}
 #ifdef TEST
 int main()
 {
+	struct page *pages;
+	struct page *pages0;
+	struct page *pages2;
+	struct page *pages3;
+	struct page *pages31;
 	u32 mem_size = 256 *1024*1024;
 	init_pages_list(mem_size);
 	init_buddy(mem_size);
+	//show_buddy_info();
+	pages0 = _buddy_alloc_pages(1);
+	pages2 = _buddy_alloc_pages(2);
+	pages3 = _buddy_alloc_pages(3);
+	show_buddy_info();
+	pages31 = _buddy_alloc_pages(3);
+	show_buddy_info();
+	printf("free page0\n");
+	_buddy_free_pages(pages0);
+	show_buddy_info();
+	printf("free page2\n");
+	_buddy_free_pages(pages2);
+	show_buddy_info();
+	printf("free page3\n");
+	_buddy_free_pages(pages3);
+	show_buddy_info();
+	printf("free page31\n");
+	_buddy_free_pages(pages31);
+	show_buddy_info();
+	//show_buddy_info();
 	return 0;
 }
 #endif

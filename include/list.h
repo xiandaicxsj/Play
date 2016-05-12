@@ -9,7 +9,7 @@ struct list_head
 /* double rotate list */
 static inline void _list_add(struct list_head *prev, struct list_head *new, struct list_head *next)
 {
-	next->pre= new;
+	next->prev= new;
 	new->next = next;
 	prev->next =new;
 	new->prev = prev;
@@ -29,7 +29,7 @@ static inline void _list_del(struct list_head *prev, struct list_head *next)
 static inline void init_list(struct list_head *new)
 {
 	new->next = new;
-	new->pre = new;
+	new->prev = new;
 }
 static inline void list_del(struct list_head *entry)
 {

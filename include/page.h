@@ -33,6 +33,7 @@ struct page
 };
 void page_fault();
 void* alloc_page_table();
+void *copy_page_table(void *old_page_dir);
 
 extern void* init_page_dir;
 #endif

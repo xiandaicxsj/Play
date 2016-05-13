@@ -97,6 +97,8 @@ static void insert_task(struct task_struct *_task)
 	}
 	_task->next = task_head.task_list;
 	task_head.task_list = _task;
+
+	list_add(&_task->list, &task_head->list)
 	return; 
 }
 
@@ -182,6 +184,9 @@ void init_task(struct task_struct *task)
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
+#ifdef ALLOC_COPY_CR3
+	task->task->reg.cr3 = copy_page_table(&init_page_dir);
+#endif
 	task->task_reg.esp = (u32) task + PAGE_SIZE - 1;
 
 	/* just test */

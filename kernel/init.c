@@ -1,4 +1,4 @@
-#include"memory.h"
+#include"mem.h"
 #include"tty.h"
 #include"exception.h"
 #include"schdule.h"
@@ -11,10 +11,10 @@ void start_kernel(void )
 
 	setup_interrupt();
 
-	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, PAGE_SIZE); /* should be page align */
+	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	init_task(task0);
 
-	struct task_struct * task1 = (struct task_struct *) kmalloc(PAGE_SIZE, PAGE_SIZE); /* should be page align */
+	struct task_struct * task1 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	init_task(task1);
 	switch_to_test(task0);
 

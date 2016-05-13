@@ -1,5 +1,5 @@
-#ifndef H_MEMORY
-#define H_MEMORY
+#ifndef H_MEM
+#define H_MEM
 #include"type.h"
 #include"page.h"
 #define MEM_KERN (1 << 0)

@@ -8,8 +8,8 @@
 #define KERNEL_OFFSET 0xc0000000
 #define KERNEL_ADDR(addr) (KERNEL_OFFSET + addr)
 #define PHY_ADDR(addr) (addr - KERNEL_OFFSET)
-#define phy_to_virt(addr) (addr + KERNEL_OFFSET)
-#define virt_to_phy(addr) (addr - KERNEL_OFFSET)
+#define phy_to_virt(addr) ((addr) + KERNEL_OFFSET)
+#define virt_to_phy(addr) ((addr) - KERNEL_OFFSET)
 #define PAGE_SIZE ( 1 << PAGE_OFFSET ) 
 #define _SIZE(level) (1 << 12*level)
 #define PAGE_MASK (PAGE_SIZE -1)

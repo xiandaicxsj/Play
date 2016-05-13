@@ -9,7 +9,7 @@
 	#define MEM_KERN (1 << 0)
 	#define MEM_USER (1 << 1)
 #else
-	#include"memory.h"
+	#include"mem.h"
 	#include"debug.h"
 	#include"kernel.lds.h"
 #endif
@@ -55,16 +55,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 /* this is used for put the already_used low_memory
  * into buddy mempool
  */
-#ifndef TEST
-void merge_low_memory()
-{
-	u32 p_low_mem = virt_to_phy(low_mem_end);
-	u32 nr_pages = p_low_mem & PAGE_MASK ? (p_low_mem >> PAGE_OFFSET) + 1: (p_low_mem >> PAGE_OFFSET);
-	/* we use the alloc here,  mark this page to be used*/
-	/* map is no needed here, because kmalloc_low_mem has mapped the memory*/
-	_buddy_alloc_pages(nr_pages);
-}
-#endif
+static void merge_low_memory();
 
 struct page *pfn_to_page(u32 pfn)
 {
@@ -315,6 +306,22 @@ static u32 init_pages_list(u32 mem_size)
 	link_pages(pages_list, mem_size >> PAGE_OFFSET);
 }
 
+#ifndef TEST
+static void merge_low_memory()
+{
+	u32 p_low_mem = virt_to_phy(low_mem_end);
+	u32 nr_pages = p_low_mem & PAGE_MASK ? (p_low_mem >> PAGE_OFFSET) + 1: (p_low_mem >> PAGE_OFFSET);
+	/* we use the alloc here,  mark this page to be used*/
+	/* map is no needed here, because kmalloc_low_mem has mapped the memory*/
+	while(nr_pages)
+	{
+		_buddy_alloc_pages(1);
+		nr_pages --;
+	}
+}
+
+#endif
+
 #ifdef TEST
 void show_page(struct page *pages)
 {
@@ -415,6 +422,14 @@ static void* kmalloc_low_mem(u32 size, u32 align)
 	low_mem_end += size;
 	return (void *)addr;
 }
+static struct page * _buddy_alloc(u32 size, u32 align)
+{
+	/* align is useless */
+	u32 nr_pages = size >> PAGE_OFFSET;
+	nr_pages += (size & PAGE_MASK ? 1 : 0);
+	return _buddy_alloc_pages(nr_pages);
+}
+
 static void setup_low_memory()
 {
 	low_mem_begin = (u32)_bss_end;
@@ -423,17 +438,13 @@ static void setup_low_memory()
 	return ;
 }
 
-static void * _kmalloc(u32 size, u32 align, u32 flags)
+/* return kernel virtual */
+static void * _kmalloc(u32 size, u32 align)
 {
 #ifdef BUDDY_ALLOC 
 		struct page * pages = _buddy_alloc(size, align);
-		if (flags && MEM_KERN) {
-			/* we need to map the pages, if it is used by kernel
-			 * do not need to map the pages used for user space
-			 */
-		}
 #endif
-	return NULL;
+	return phy_to_virt(pages->pfn << PAGE_OFFSET);
 }
 
 /* interface */
@@ -449,8 +460,11 @@ struct page *alloc_pages(u32 nr, u32 flags)
 		pages = kmalloc_low_mem(nr * PAGE_SIZE, PAGE_SIZE);
 	else
 		pages = _buddy_alloc_pages(nr);
+	/*
 	if (flags & MEM_KERN)
+		return NULL; */
 		/* bugs */
+	return pages;
 }
 
 u32 kfree(void *addr)
@@ -470,7 +484,10 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 		addr = kmalloc_low_mem(size, align);
 	else
 		addr = _kmalloc(size, align);
+	/* need map */
 	if (flags & MEM_KERN)
+
+	return addr;
 		/* bugs */
 }
 

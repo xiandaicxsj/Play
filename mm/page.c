@@ -1,7 +1,9 @@
 #include"page.h"
 #include"print.h"
+#include"exception.h"
 void page_fault()
 {
+	disable_interrupt();
 	print_str("page fault\n");
 	while(1);
 }

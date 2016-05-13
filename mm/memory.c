@@ -1,8 +1,6 @@
-#include"page.h"
 #include"math.h"
 #include"bitop.h"
 
-#define TEST
 #define BUDDY_ALLOC
 
 #ifdef TEST
@@ -58,7 +56,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
  * into buddy mempool
  */
 #ifndef TEST
-void trans_low_memory()
+void merge_low_memory()
 {
 	u32 p_low_mem = virt_to_phy(low_mem_end);
 	u32 nr_pages = p_low_mem & PAGE_MASK ? (p_low_mem >> PAGE_OFFSET) + 1: (p_low_mem >> PAGE_OFFSET);
@@ -119,9 +117,9 @@ void init_buddy(u32 mem_size)
 		pfn += 1 << order;
 	}
 #ifndef TEST
-	trans_low_memory();
-#endif
+	merge_low_memory();
 	low_mem_alloc_used = 0;
+#endif
 	/* will be used when buddy is ok.
 	 * free_low_memory();
 	 */
@@ -176,7 +174,7 @@ struct page *find_buddy_pages(u32 pfn, u32 order)
  * the order or the size of certain pages is store in 
  * the first page of the pagses.
  */
-void _buddy_free_pages(struct page *pages)
+static void _buddy_free_pages(struct page *pages)
 {
 	u32 pages_idx;
 	struct  free_area_t *area;
@@ -245,7 +243,7 @@ void _buddy_free_pages(struct page *pages)
 	}
 }
 
-struct page * _buddy_alloc_pages(u32 num)
+static struct page * _buddy_alloc_pages(u32 num)
 {
 	/* need add _log function */
 	u32 order = _log(num);
@@ -286,7 +284,7 @@ struct page * _buddy_alloc_pages(u32 num)
 	return NULL;
 }
 
-u32 init_page_struct(struct page *cur, u32 pfn)
+static u32 init_page_struct(struct page *cur, u32 pfn)
 {
 	cur->pfn = pfn;
 	cur->order = -1;
@@ -294,7 +292,7 @@ u32 init_page_struct(struct page *cur, u32 pfn)
 	init_list(&cur->list);
 }
 
-u32 link_pages(struct page *head, u32 nr_pages)
+static u32 link_pages(struct page *head, u32 nr_pages)
 {
 	u32 pfn = 0;
 	struct page * cur = head;
@@ -307,12 +305,12 @@ u32 link_pages(struct page *head, u32 nr_pages)
 	}
 }
 
-u32 init_pages_list(u32 mem_size)
+static u32 init_pages_list(u32 mem_size)
 {
 	u32 nr_pages = mem_size >> PAGE_OFFSET;
 	u32 struct_size = nr_pages * sizeof(struct page);
 	u32 nr_pages_s = struct_size & PAGE_MASK ? (struct_size >> PAGE_OFFSET) + 1: (struct_size >> PAGE_OFFSET);
-	pages_list = (struct page *)kmalloc(nr_pages_s << PAGE_OFFSET, MEM_KERN);
+	pages_list = (struct page *)kmalloc(nr_pages_s << PAGE_OFFSET, 0, MEM_KERN);
 	/* no need to link page here */
 	link_pages(pages_list, mem_size >> PAGE_OFFSET);
 }
@@ -453,6 +451,16 @@ struct page *alloc_pages(u32 nr, u32 flags)
 		pages = _buddy_alloc_pages(nr);
 	if (flags & MEM_KERN)
 		/* bugs */
+}
+
+u32 kfree(void *addr)
+{
+
+}
+
+u32 kfree_page(struct page* page)
+{
+	_buddy_free_pages(page);
 }
 
 void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr

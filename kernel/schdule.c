@@ -189,9 +189,9 @@ void init_task(struct task_struct *task)
 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #ifdef ALLOC_COPY_CR3
-	task->task->reg.cr3 = copy_page_table(&init_page_dir);
+	task->task->reg.cr3 = (u32)alloc_pgd_table();
 #endif
-	task->task_reg.esp = (u32) task + PAGE_SIZE - 1;
+	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
 	/* just test */
 #ifdef test_proc

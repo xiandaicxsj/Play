@@ -11,6 +11,7 @@ void page_fault()
 {
 	disable_interrupt();
 	print_str("page fault\n");
+	enable_interrupt();
 	while(1);
 }
 
@@ -38,7 +39,7 @@ static u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 
 	pde = (pde_t *) pdt + pde_idx;
 	/* no 4M page is support */
-	if ( *pde & PDE_PRESENT )
+	if ( *pde & PGD_P )
 	 pt_addr = phy_to_virt(PT_ADDR(*pde));
 	else 
 	{
@@ -50,12 +51,12 @@ static u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 
 	pte_idx = INDEX(virt_addr, PTE_LEVEL);
 	pte = pt + pte_idex;
-	if ( *pte & PDE_PRESENT)
+	if ( *pte & PGT_P)
 	{
 		/* we del with flags here */
 	}
 	else
-	*pte = pfn_to_addr(page->pfn) | flags | PDE_PRESENT;
+	*pte = pfn_to_addr(page->pfn) | flags | PGD_P;
 	return 0;
 }
 
@@ -76,7 +77,7 @@ static void *copy_kernel_pdt(void *_pdt, void *pdt)
 	_pde = (pde_t *) _pdt + pde_idex; 
 	while(pde_idx < PDE_OFFSET)
 	{
-		if ( *pde & PDE_PRESENT )
+		if ( *pde & PGD_P )
 				*_pde = *pde; /* just copy is ok */
 		addr +=  1 << PAGE_SHIFT(PDE_LEVEL);
 		pde_idx = INDEX(addr, PDE_LEVEL);

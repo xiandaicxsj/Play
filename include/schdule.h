@@ -2,6 +2,7 @@
 #define _H_SCHDULE
 #include"type.h"
 #include"gate.h"
+#include"list.h"
 typedef struct tss_reg
 {
 	u32 previous_link;
@@ -41,6 +42,7 @@ struct task_struct
 	u32 cr3;
 	u32 status;
 	struct task_struct *next;
+	struct list_head list;
 
 };
 extern struct task_struct *current;
@@ -48,4 +50,6 @@ void init_task(struct task_struct *);
 void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
+#define TASK_RUN (1 << 0)
+#define TASK_WAIT (1 << 1)
 #endif

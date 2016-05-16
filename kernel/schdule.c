@@ -29,7 +29,7 @@ extern test_process1();
 struct task_struct *current;
 static u32 cur_pid = 0;
 
-void switch_to(struct task_struct *pre, struct task_struct *next)
+void switch_to(struct task_struct *prev, struct task_struct *next)
 {
 	u32 ldt_sec = gdt_ldt_sel(next->pid);
 
@@ -41,11 +41,13 @@ void switch_to(struct task_struct *pre, struct task_struct *next)
 	_tmp.b = gdt_tss_sel(next->pid);
 
 	current = next;
+	next->status = TASK_RUN;
+	prev->status = TASK_WAIT;
 	asm volatile(" movl $1f, %[next_ip] \n\t"
 		     " lldt %%ax\n\t"
 		     " ljmp %[task_sec] \n\t"
 		     " 1: "
-		     :[next_ip] "=m" (pre->task_reg.eip)
+		     :[next_ip] "=m" (prev->task_reg.eip)
 		     :[task_sec] "m" (*&_tmp.a),  "a" (ldt_sec));
 }
 
@@ -81,29 +83,27 @@ static void switch_to_ring3(struct task_struct *task)
 		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
 }
 
-struct task_head_t
-{
-	struct task_struct *task_list;
-	u32  task_num;
-};
-
-static struct task_head_t task_head;
+static struct task_struct* task_list;
 static void insert_task(struct task_struct *_task)
 {
-	if (!task_head.task_list)
+	if (!task_list)
 	{
-		task_head.task_list = _task;
-		return ;
+		task_list = _task;
+		return;
 	}
-	_task->next = task_head.task_list;
-	task_head.task_list = _task;
-
-	list_add(&_task->list, &task_head->list)
+	list_add(&_task->list, &task_list->list);
 	return; 
 }
 
 void test_switch_task()
 {
+	struct task_struct *next = container_of(&task_list->list, struct task_struct, list); 
+	/* we should set current to porper place */
+	while(next->pid == current->pid)
+	{
+		next = container_of(next->list.next, struct task_struct, list);
+	}
+	/*
 	struct task_struct *t = task_head.task_list;
 	if(!t || !current)
 		return ;
@@ -115,7 +115,10 @@ void test_switch_task()
 	}
 	if (!t)
 		return ;
-	switch_to(current, t);
+	*/
+	if ( next == task_list )
+		return ;
+	switch_to(current, next);
 }
 
 
@@ -169,6 +172,7 @@ u32 alloc_pid()
 	cur_pid ++;
 	return cur_pid;
 }
+
 void init_task(struct task_struct *task)
 {
 	//u32 sys_ds = (0x18 );

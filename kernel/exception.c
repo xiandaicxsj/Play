@@ -159,6 +159,7 @@ void setup_interrupt()
 	setup_interrupt_handler(idt, GENERAL_FAULT);
 	setup_interrupt_handler(idt, PAGE_FAULT);
 	setup_interrupt_handler(idt, TIMER);
+	/* set_up int used for usespace application */
 	set_idt(idt, INT_USER, HW_VC(48), DA_386TGate, 3);
 	load_idt();
 	enable_interrupt();

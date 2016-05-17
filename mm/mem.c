@@ -448,12 +448,12 @@ static void * _kmalloc(u32 size, u32 align)
 }
 
 /* interface */
-struct page *alloc_page(u32 flags)
+struct page *kalloc_page(u32 flags)
 {
-	alloc_pages(1, flags);
+	kalloc_pages(1, flags);
 }
 
-struct page *alloc_pages(u32 nr, u32 flags)
+struct page *kalloc_pages(u32 nr, u32 flags)
 {
 	struct page *pages;
 	if (low_mem_alloc_used)

@@ -1,5 +1,5 @@
 #include"list.h"
-void init_list(struct list_head *new)
+void list_init(struct list_head *new)
 {
 	new->next = new;
 	new->prev = new;

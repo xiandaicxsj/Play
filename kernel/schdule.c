@@ -103,21 +103,6 @@ void test_switch_task()
 	{
 		next = container_of(next->list.next, struct task_struct, list);
 	}
-	/*
-	struct task_struct *t = task_head.task_list;
-	if(!t || !current)
-		return ;
-	while(t)
-	{
-		if (current->pid != t->pid)
-			break;
-		t = t->next;
-	}
-	if (!t)
-		return ;
-	*/
-	if ( next == task_list )
-		return ;
 	switch_to(current, next);
 }
 
@@ -218,6 +203,7 @@ void init_task(struct task_struct *task)
 	task->task_reg.ss = LDT_SEL_RING3(task_ds);
 	task->task_reg.eflags = IOPL_RING3 | IF;
 	
+	list_init(&task->list);
 	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
 #ifdef test_proc

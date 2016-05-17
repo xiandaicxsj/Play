@@ -43,7 +43,7 @@ struct page
     u32 pfn;
     u32 order;
 };
-void page_fault();
+void page_fault(u32 fault_addr);
 void* alloc_page_table();
 void *copy_page_table(void *old_page_dir);
 extern u32 init_page_dir;

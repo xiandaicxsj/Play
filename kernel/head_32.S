@@ -407,7 +407,10 @@ hw13:
 .type hw14, @function
 hw14:
 	push_all
+	movl %cr2, %eax
+	pushl %eax
 	call page_fault
+	popl %eax
 	pop_all
 	iret
 

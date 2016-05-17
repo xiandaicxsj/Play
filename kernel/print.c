@@ -58,3 +58,42 @@ void print_str(char *b)
 	}
 }
 
+void reverse_str(char *str_buf, u32 buf_idx)
+{
+	char tmp_str[32];
+	int i=0;
+	for (i = 0; i < buf_idx; i++)
+	{
+		tmp_str[i] = str_buf[buf_idx - 1 - i];
+	}
+	for (i = 0; i < buf_idx; i++)
+	str_buf[i] = tmp_str[i];
+	str_buf[i] = '\0';
+}
+
+void print_int(u32 num)
+{
+	char str_buf[32];
+	int buf_idx = 0;
+	u32 tmp = num/16;
+	while(tmp)
+	{
+		if (tmp >= 10)
+			str_buf[buf_idx] = (tmp - 10)+'a'; 
+		else
+			str_buf[buf_idx] = tmp + '0';
+
+		num = num %16;
+		tmp = num/16;
+		buf_idx ++;
+	}
+
+	if (num >= 10)
+		str_buf[buf_idx] = (num - 10)+'a'; 
+	else
+		str_buf[buf_idx] = num + '0';
+	buf_idx ++;
+	str_buf[buf_idx] = '\0';
+	print_str(str_buf);
+}
+

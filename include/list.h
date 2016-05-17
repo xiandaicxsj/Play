@@ -10,7 +10,7 @@ struct list_head
 /* double rotate list */
 
 void list_add(struct list_head *new, struct list_head *head);
-void init_list(struct list_head *new);
+void list_init(struct list_head *new);
 void list_del(struct list_head *entry);
 
 /* member -> type */

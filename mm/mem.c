@@ -109,7 +109,7 @@ void init_buddy(u32 mem_size)
 	}
 #ifndef TEST
 	merge_low_memory();
-	low_mem_alloc_used = 0;
+	low_mem_alloc_used = 1;
 #endif
 	/* will be used when buddy is ok.
 	 * free_low_memory();
@@ -143,7 +143,7 @@ static struct page *adjust_pages(struct page *pages, u32 lo_order, u32 hi_order,
 		/* why set_bit here, indicate his buddy is used*/
 		set_bit(area->map, pages_idx);
 		if(!area->free_pages) {
-			init_list(&pages->list);
+			list_init(&pages->list);
 			area->free_pages = page_head;
 		}
 		else
@@ -197,7 +197,7 @@ static void _buddy_free_pages(struct page *pages)
 
 			if (!area->free_pages)
 			{
-				init_list(&pages->list);
+				list_init(&pages->list);
 				area->free_pages = pages;
 			}
 			else
@@ -280,7 +280,7 @@ static u32 init_page_struct(struct page *cur, u32 pfn)
 	cur->pfn = pfn;
 	cur->order = -1;
 	cur->count = 0;
-	init_list(&cur->list);
+	list_init(&cur->list);
 }
 
 static u32 link_pages(struct page *head, u32 nr_pages)

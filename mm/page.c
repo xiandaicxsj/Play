@@ -7,11 +7,14 @@ typedef u32 pte_t;
 /* used the static page to the */
 static u8 page_dir[PAGE_SIZE];
 
-void page_fault()
+void page_fault(u32 fault_addr)
 {
-	disable_interrupt();
+	/*
+	asm volatile ("movl %%cr2 , %%eax"
+		      :"=a"(addr)::);
+	*/
 	print_str("page fault\n");
-	enable_interrupt();
+	print_int(fault_addr);
 	while(1);
 }
 

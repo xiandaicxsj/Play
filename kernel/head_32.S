@@ -7,21 +7,46 @@
 .extern start_kernel
 
 .macro push_all
-	movw $_kernel_ds, %ax
-        movw %ax, %ds
-        movw %ax, %es
-        movw %ax, %gs
-        movw %ax, %fs
 	pushl %eax
 	pushl %ebx
 	pushl %ecx
 	pushl %edx
 	pushl %edi
 	pushl %esi
+
+	xorl %eax, %eax
+	movw %ds, %ax
+	pushl %eax
+
+	xorl %eax, %eax
+	movw %es, %ax
+	pushl %eax
+
+	xorl %eax, %eax
+	movw %gs, %ax
+	pushl %eax
+
+	xorl %eax, %eax
+	movw %fs, %ax
+	pushl %eax
+
+	movw $_kernel_ds, %ax
+        movw %ax, %ds
+        movw %ax, %es
+        movw %ax, %gs
 .endm
  
 
 .macro pop_all
+	popl %eax
+	movw %ax, %fs
+	popl %eax
+	movw %ax, %gs
+	popl %eax
+	movw %ax, %es
+	popl %eax
+	movw %ax, %ds
+
 	popl %esi
 	popl %edi
 	popl %edx

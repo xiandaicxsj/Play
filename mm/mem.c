@@ -109,7 +109,7 @@ void init_buddy(u32 mem_size)
 	}
 #ifndef TEST
 	merge_low_memory();
-	low_mem_alloc_used = 1;
+	low_mem_alloc_used = 0;
 #endif
 	/* will be used when buddy is ok.
 	 * free_low_memory();

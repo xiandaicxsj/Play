@@ -43,11 +43,11 @@ void switch_to(struct task_struct *prev, struct task_struct *next)
 	current = next;
 	next->status = TASK_RUN;
 	prev->status = TASK_WAIT;
-	asm volatile(" movl $1f, %[next_ip] \n\t"
+	asm volatile(//" movl $1f, %[next_ip] \n\t"
 		     " lldt %%ax\n\t"
 		     " ljmp %[task_sec] \n\t"
 		     " 1: "
-		     :[next_ip] "=m" (prev->task_reg.eip)
+		     ://[next_ip] "=m" (prev->task_reg.eip)
 		     :[task_sec] "m" (*&_tmp.a),  "a" (ldt_sec));
 }
 

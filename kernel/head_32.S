@@ -7,6 +7,11 @@
 .extern start_kernel
 
 .macro push_all
+	movw $_kernel_ds, %ax
+        movw %ax, %ds
+        movw %ax, %es
+        movw %ax, %gs
+        movw %ax, %fs
 	pushl %eax
 	pushl %ebx
 	pushl %ecx

@@ -1,1 +1,14 @@
-this is filesystem
+this is filesystem read
+
+1. data_buffer
+	tmp memory used for store content read from the hd
+2. inode
+	block_list /* used for store the block id of certain */
+
+3. super_block	
+	inode_num;	
+
+4. inode_bitmap
+
+5. block_bitmap
+

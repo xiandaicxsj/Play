@@ -2,6 +2,7 @@
 #include"print.h"
 #include"exception.h"
 #include"mem.h"
+#include"debug.h"
 typedef u32 pde_t;
 typedef u32 pte_t;
 /* used the static page to the */
@@ -18,20 +19,9 @@ void page_fault(u32 fault_addr)
 	while(1);
 }
 
-/* map one page */
-/* 1. need to check write/read flags 
-	 2. need to do privil check. used will not map into kernel space 
-*/
-
-/* vpfn : virtaddress pfn
- * ppfn :  current alloc pfn
- * flags : page table attr
- * pdt: virt address of page table
- */
-
-static u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
+/* umap_page not done where to use it ? */
+u32 umap_page(u32 vpfn, void *pdt)
 {
-	/* should be 4K align */
 	u32 virt_addr = pfn_to_addr(vpfn);
 	u32 pde_idx = INDEX(virt_addr, PDE_LEVEL); 
 	u32 pte_idx;
@@ -42,23 +32,77 @@ static u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	pde = (pde_t *) pdt + pde_idx;
 	/* no 4M page is support */
 	if ( *pde & PGD_P )
-	 pt = phy_to_virt(PT_ADDR(*pde));
+		pt = phy_to_virt(PT_ADDR(*pde));
+	else
+		return ;
+
+	pte_idx = INDEX(virt_addr, PTE_LEVEL);
+	pte = pt + pte_idx;
+
+	if ( *pte & PGT_P)
+		return ;
+	else
+		return;
+}
+/* vpfn : virtaddress pfn
+ * ppfn :  current alloc pfn
+ * flags : page table attr
+ * pdt: virt address of page table
+ */
+/* how to detect whether the page is use as read/write */
+
+/* flags is define mem.h */
+u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
+{
+	/* should be 4K align */
+	u32 virt_addr = pfn_to_addr(vpfn);
+	u32 pde_idx = INDEX(virt_addr, PDE_LEVEL); 
+	u32 pte_idx;
+	pde_t *pde;
+	pte_t *pte;
+	pte_t *pt;
+	u32 pde_flags;
+	u32 pte_flags;
+	u32 user_flag;
+
+	if (flags & MEM_USER)
+		user_flag = PGT_U;
+	else
+		user_flag = PGT_S;
+
+	/* pgd always writable */
+	pde_flags |= PGD_W;
+	if (flags & MEM_READ)
+		pte_flags |= PGT_R;
+	else if(flags & MEM_RDWR)
+		pte_flags |= PGT_W;
+
+	pde = (pde_t *) pdt + pde_idx;
+	/* no 4M page is support */
+	if ( *pde & PGD_P )
+		pt = phy_to_virt(PT_ADDR(*pde));
 	else 
 	{
 		struct page *page = kalloc_page(MEM_KERN);
 		/* not sure of the flags used here */
-		*pde = pfn_to_addr(page->pfn) | flags | PDE_PRESENT;
+		pde_flags |= PGD_P;
+		*pde = pfn_to_addr(page->pfn) | pde_flags;
 		pt = phy_to_virt(PT_ADDR(*pde));
 	}
 
 	pte_idx = INDEX(virt_addr, PTE_LEVEL);
 	pte = pt + pte_idx;
+
 	if ( *pte & PGT_P)
 	{
-		/* we del with flags here */
+		/* if p is set, how could this happen ? crash */
+		/* we del with flags here */ 
 	}
 	else
-	*pte = pfn_to_addr(ppfn) | flags | PGD_P;
+	{
+		pte_flags |= PGT_P;
+		*pte = pfn_to_addr(ppfn) | pte_flags;
+	}
 	return 0;
 }
 

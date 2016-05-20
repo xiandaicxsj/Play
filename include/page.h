@@ -18,8 +18,8 @@
 #define PAGE_MASK (PAGE_SIZE -1)
 #define ALIGN(addr, size) ((addr) & ~((size) - 1))
 #define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
-#define PTE_PRESENT  (1 << 2)
-#define PDE_PRESENT  (1 << 2)
+#define PTE_PRESENT  (1 << 0)
+#define PDE_PRESENT  (1 << 0)
 #define PE_SIZE 512
 #define PE_MASK (PE_SIZE - 1)
 /* no use now ,should use addr_to_pfh */
@@ -30,11 +30,11 @@
 #define PDE_SIZE 512
 #define PTE_OFFSET 512
 #define PDE_OFFSET 512
-#define PAGE_SHIFT(level)	( level == 1 ? 12 : 20 )
-#define INDEX(addr, level) (addr >> PAGE_SHIFT(level)) && PE_MASK
-#define PDE_ADDR(entry) (entry & PAGE_MASK)
-#define PT_ADDR(entry) ((entry) & PAGE_MASK)
-#define PG_ADDR(entry) ((entry) & PAGE_MASK)
+#define PAGE_SHIFT(level)	( level == 1 ? 12 : 22 )
+#define INDEX(addr, level) (((addr >> PAGE_SHIFT(level)) & 0x3ff))
+#define PDE_ADDR(entry) ((entry) & ~PAGE_MASK)
+#define PT_ADDR(entry) ((entry) & ~PAGE_MASK)
+#define PG_ADDR(entry) ((entry) & ~PAGE_MASK)
 #define CR3_ADDR(addr) (addr & PAGE_MASK)
 struct page
 {
@@ -47,7 +47,7 @@ void page_fault(u32 fault_addr);
 void* alloc_page_table();
 void *copy_page_table(void *old_page_dir);
 extern u32 init_page_dir;
-
+u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt);
 #endif
 
 

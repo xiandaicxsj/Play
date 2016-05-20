@@ -2,8 +2,11 @@
 #define H_MEM
 #include"type.h"
 #include"page.h"
-#define MEM_KERN (1 << 0)
+#define MEM_SUPER (1 << 0)
 #define MEM_USER (1 << 1)
+#define MEM_READ (1 << 2)
+#define MEM_RDWR (1 << 3)
+#define MEM_KERN (MEM_RDWR | MEM_SUPER)
 void setup_memory();
 struct page *kalloc_page(u32 flags);
 struct page *kalloc_pages(u32 nr, u32 flags);

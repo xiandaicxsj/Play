@@ -15,10 +15,13 @@ void start_kernel(void )
 
 	struct task_struct * task1 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	init_task(task1);
+	/* test map page */ 
+	//map_page(0xcffc0, 0, MEM_KERN, &init_page_dir);
+	init_console();
+
 	setup_interrupt();
 	switch_to_test(task0);
 
-	init_console();
 	while(1);
 	return ;
 }

@@ -7,6 +7,7 @@
 #include"debug.h"
 #include"print.h"
 #include"cpu.h"
+#define ALLOC_COPY_CR3
 #define test_proc
 
 #ifdef test_proc
@@ -174,7 +175,7 @@ void init_task(struct task_struct *task)
 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #ifdef ALLOC_COPY_CR3
-	task->task->reg.cr3 = (u32)alloc_pgd_table();
+	task->task_reg.cr3 = virt_to_phy((u32)alloc_page_table());
 #endif
 	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 

@@ -112,6 +112,8 @@ static void *copy_kernel_pdt(void *_pdt, void *pdt)
 	struct page *page;
 	pde_t *_pde;
 	pde_t *pde;
+	pde_t t;
+	pde_t _t;
 
 	u32 addr;
 	u32 pde_idx  = 0;
@@ -121,14 +123,18 @@ static void *copy_kernel_pdt(void *_pdt, void *pdt)
 
 	pde = (pde_t *) pdt + pde_idx;
 	_pde = (pde_t *) _pdt + pde_idx; 
+
 	while(pde_idx < PDE_OFFSET)
 	{
 		if ( *pde & PGD_P )
 				*_pde = *pde; /* just copy is ok */
-		addr +=  1 << PAGE_SHIFT(PDE_LEVEL);
-		pde_idx = INDEX(addr, PDE_LEVEL);
+		pde = (pde_t *) pdt + pde_idx;
+		_pde = (pde_t *)_pdt + pde_idx;
+		//addr +=  1 << PAGE_SHIFT(PDE_LEVEL);
+		pde_idx ++;
+		//pde_idx = INDEX(addr, PDE_LEVEL);
 	}
-	return pdt;
+	return _pdt;
 }
 
 /* return virt addr of pg table */

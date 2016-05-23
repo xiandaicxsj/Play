@@ -26,10 +26,10 @@
 #define PFN(addr) (addr >> PAGE_OFFSET)
 #define PDE_LEVEL (2)
 #define PTE_LEVEL (1)
-#define PTE_SIZE 512
-#define PDE_SIZE 512
-#define PTE_OFFSET 512
-#define PDE_OFFSET 512
+#define PTE_SIZE 1024
+#define PDE_SIZE 1024
+#define PTE_OFFSET 1024
+#define PDE_OFFSET 1024
 #define PAGE_SHIFT(level)	( level == 1 ? 12 : 22 )
 #define INDEX(addr, level) (((addr >> PAGE_SHIFT(level)) & 0x3ff))
 #define PDE_ADDR(entry) ((entry) & ~PAGE_MASK)

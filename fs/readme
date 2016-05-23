@@ -12,3 +12,64 @@ this is filesystem read
 
 5. block_bitmap
 
+
+(1)/* blk realted */
+1. register_blk_device(u32 dev_num, struct device_ops *)
+
+2. blk_read (change block to ...) -> device_read
+
+3. blk_write(change block to ...)
+
+	sturct device_ops {
+		device_reset();
+		device_read(u32 dev_num, u32 block_num, void *buffer);
+		device_write(u32 dev_num, u32 block_num, void *buffer);
+	}
+(2)/* fs realted */
+
+stcut fs {
+
+}
+/* we only use block to write/read blk device */
+it means when perform read
+	1. search block
+	2. read_blk to fill the block
+	3. copy to certain mem need this block
+	4. write is the same.
+
+init_block_cache():
+	/* use hash to deter  whether the block is in the cache */
+
+	1. block/hash_size -> link_list (lru);
+		the page cache in the list should be lru.
+	2. when but how is the 
+
+	/* can do it after */
+	3. need a sync point to write back the dirty page cache.
+
+init_super_block():
+	1. get_superblock_info from disk
+	2. init_inode/block map in the mem_supoer_block
+		-read inode/block map in the blk
+	/* do I need it */
+	3. add file_ops in the vfs
+
+	
+sys_fs_open();
+sys_fs_read();
+sys_fs_write();
+
+1./* page cache */
+	page : this page only used for blk 
+	size : 4K
+
+2. 
+
+
+/* 
+   1. block cache is a lot of pages need to cache block data, nowsdays it should not map in the use cr3 part(But use mmap in the furture may need this)
+   2. current page used for process (not file uses) need not to write/back???
+	for 2 may be swap need this ????
+	yes swap is need
+*/
+

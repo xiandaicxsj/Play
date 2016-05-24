@@ -46,7 +46,15 @@ static struct buffer_head *_look_up_buffer(u32 block_nr)
 	/* search for certain */
 	/* need write this part */
 	/* for_each_list */
-	return bh; /* bh may be NULL */
+	struct list_head *pos;
+	struct buffer_head *cur;
+	list_for_each(&bh->list, pos)
+	{
+		cur = container_of(pos, struct buffer_head, list);
+		if (cur->block_nr == block_nr)
+			break;
+	}
+	return cur; /* bh may be NULL */
 }
 
 u32 free_buffer(struct buffer_head *bh)
@@ -69,6 +77,7 @@ struct buffer_head * look_up_buffer(u32 block_nr)
 	bh = alloc_new_bh(block_nr);
 	if (!bh)
 		return NULL;
+	return bh;
 }
 
 void init_buffer(u32 dev_num)

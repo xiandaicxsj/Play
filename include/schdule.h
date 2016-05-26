@@ -3,6 +3,10 @@
 #include"type.h"
 #include"gate.h"
 #include"list.h"
+#ifdef TEST_FS
+#include"fs.h"
+#include"inode.h"
+#endif
 typedef struct tss_reg
 {
 	u32 previous_link;
@@ -41,6 +45,11 @@ struct task_struct
 	u32 pid;
 	u32 cr3;
 	u32 status;
+#ifdef TEST_FILE
+	struct file f[20];
+	struct inode *root;
+	struct inode *pwd;
+#endif
 	struct task_struct *next;
 	struct list_head list;
 

@@ -72,4 +72,7 @@ sys_fs_write();
 	for 2 may be swap need this ????
 	yes swap is need
 */
+need to think how to del with dirty bit of ...
+1. dirty bit
+2. device and driver blk seperate
 

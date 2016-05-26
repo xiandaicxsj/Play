@@ -3,11 +3,12 @@
 #define HASH_SIZE 100 /* we use block num to hash this */
 #define BUF_HASH(size) ((size %  HASH_SIZE) + 1) /* 0 is used for free buf */
 #define BUF_NUM 100
+#define BUF_SIZE 4096
 struct buffer_head
 {
 	struct list_head list;
 
-	void *buf;/* 4k or may be 1k 2k */
+	void *data;/* 4k or may be 1k 2k */
 	u32 dirty;
 	u32 block_nr;
 	int icount; /* who refer to this */
@@ -21,7 +22,7 @@ struct buffer_head
 
 struct buffer_head buf_hash[HASH_SIZE];
 
-static struct buffer_head *alloc_new_bh(u32 block_nr)
+static struct buffer_head * alloc_new_bh(u32 block_nr)
 {
 	u32 free_hash_idx = 0;
 	struct buffer_head *bh = NULL;
@@ -77,6 +78,7 @@ struct buffer_head * look_up_buffer(u32 block_nr)
 	bh = alloc_new_bh(block_nr);
 	if (!bh)
 		return NULL;
+	/* read */
 	return bh;
 }
 
@@ -110,7 +112,7 @@ void init_buffer(u32 dev_num)
 			bf_page =  kalloc_page(MEM_KERN);
 			if (!bf_page)
 				return 0;
-			bh->buf =  phy_to_virt(bf_page->pfn);
+			bh->data =  phy_to_virt(bf_page->pfn);
 			list_add(&bn->list, &buf_hash[free_hash_idx].list);
 			bh ++;
 			nr_bh_p ++;

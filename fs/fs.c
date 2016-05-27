@@ -33,13 +33,49 @@ u32 _sys_open(char *file_path, u32 file_attr)
 u32 _sys_read(int fd, void *buffer, u32 size)
 {
 	struct file *f = current->file[fd];
-	u32 r;
-	r = inode_read_data(f->inode, buffer, size);
-	return r;
+	struct buffer_headl *bh;
+	int left = size;
+
+	u32 size_off = 0;
+	u32 size_read = 0;
+	u32 t_size_read = 0;
+
+	u32 block_nr = 0;
+	u32 off_in_block = 0;
+
+	off_in_block = f->pos % BUF_SIZE:
+	block_nr = f->pos / BUF_SIZE;
+	while(left > 0)
+	{
+		off_in_block = f->pos / BUF_SIZE;
+
+		bh = read_inode_data(f->inode, block_nr);
+ 
+		if (!bh)
+			goto out;
+
+		t_size_read = left > BUF_SIZE ? left : BUF_SIZE;
+
+		if (copy_to_user(buffer + size_off, bh->data + off_in_block, t_size_read))
+			goto out;
+
+		left -= t_size_read; 
+		f->pos += t_size_read;
+
+		block_nr ++;
+
+		off_in_block = 0;
+	}
+out:
+	return size_read;
 }
 
 u32 _sys_write(int fd, void *buffer, u32 size)
 {
-	struct file *f = current->file[fd];
+	struct file *f;
+
+	f = current->file[fd];
+	if (!f)
+		return -1;
 }
 

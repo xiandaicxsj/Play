@@ -52,7 +52,7 @@ struct task_struct
 #endif
 	struct task_struct *next;
 	struct list_head list;
-
+	struct list_head wait_list;
 };
 extern struct task_struct *current;
 void init_task(struct task_struct *);

@@ -13,6 +13,8 @@ struct buffer_head
 	u32 block_nr;
 	int icount; /* who refer to this */
 	u32 dev_num;
+
+	struct list_head wait_queue; /* task wait for this */
 	/* who wait for this */
 	/* */
 	/*

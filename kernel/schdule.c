@@ -218,3 +218,18 @@ void init_task(struct task_struct *task)
 	*/
 }
 
+void schdule()
+{
+	struct task_struct *next;
+	/* this need to find next task */ 
+	/* */
+	switch_to(current, next);
+}
+void wait_on(struct list_head *list, struct task_struct *next)
+{
+	next->status = TASK_UNINTERRUPT;
+	list_add(&next->wait_list, list);
+	schdule();
+}
+
+

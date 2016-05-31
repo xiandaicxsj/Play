@@ -7,6 +7,10 @@
 #include"fs.h"
 #include"inode.h"
 #endif
+
+#define TASK_RUNNABLE (1u<<0)
+#define TASK_UNINTERRUPT (1u<<1)
+#define TASK_INTERRUPT (1u<<2)
 typedef struct tss_reg
 {
 	u32 previous_link;

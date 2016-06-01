@@ -33,6 +33,10 @@ struct m_super_block
 	struct m_inode * inode_map;
 };
 
+#define MODE_FILE (1 << 0)
+#define MODE_DIR (1 << 1)
+#define IS_DIR(mod) (mod & MODE_DIR)
+#define IS_FILE(mod) (mod & MODE_FILE)
 struct inode
 {
 	u32 mode;

@@ -14,26 +14,45 @@ struct buffer_head
 	u32 block_num;
 	int icount; /* who refer to this */
 
+	int locked;
+
 	struct list_head wait_queue; /* task wait for this */
 };
 
 struct buffer_head buf_hash[HASH_SIZE];
 
-static struct buffer_head * alloc_new_bh(u32 block_num)
+static struct buffer_head *alloc_new_bh(u32 block_num)
 {
 	u32 free_hash_idx = 0;
 	struct buffer_head *bh = NULL;
 	struct list_head *list;
-	if(!buf_head[free_hash_idx].icount)
+	if(!buf_hash[free_hash_idx].icount)
 		return bh;
-	list = &buf_head[free_hash_idx].list->next;
+
+	list = &buf_hash[free_hash_idx].list->next;
 	bh = container_of(list, struct buffer_head, list);
-	buf_head[free_hash_idx].icount --;
+	buf_hash[free_hash_idx].icount --;
 
 	list_del(list);
-	list_add(list, &buf_head[BUF_HASH(block_num)].list);
-	buf_head[BUF_HASH(block_num)].icount ++;
+	list_add(list, &buf_hash[BUF_HASH(block_num)].list);
+	buf_hash[BUF_HASH(block_num)].icount ++;
+
+	bh->dirty = 0;
+	bh->block_num = block_num;
+	bh->icount = 0;/* who refer to this */
+	bh->locked = 0;
+
 	return bh;
+}
+/* when some bh is needed, we need to free some bh */
+
+static u32 release_bh()
+{
+	u32 hash_idx = 0;
+	if (buf_hash[hash_idx].icount)
+		return;
+	for(; hash_idx < hash_size; hash_idx ++)
+
 }
 /* search in hash table */
 static struct buffer_head *_look_up_buffer(u32 block_num)
@@ -70,18 +89,34 @@ u32 free_buffer(struct buffer_head *bh)
 void get_bh(struct buffer_head *bh)
 {
 	struct device *device = bh->device;
+	bh->locked = 1;
 	switch (device->type)
 	{
 		case DEVICE_BLOCK:
 			blk_read(device, bh);
-			wait_on(&bh->list, current);
 			break;
 		default :
 			break;
 	}
+	bh->locked = 0;
 }
 
-void put_bh(struct buffer_head *bh, u32 block_num)
+void put_bh(struct buffer_head *bh)
+{
+	struct device *device = bh->device;
+
+	bh->locked = 1;
+	switch (device->type)
+	{
+		case DEVICE_BLOCK:
+			blk_write(device, bh);
+			break;
+		default :
+			break;
+	}
+	bh->locked = 0;
+}
+
 struct buffer_head* look_up_buffer(u32 block_num)
 {
 	struct buffer_head *bh  = _look_up_buffer(block_num);
@@ -138,8 +173,28 @@ void init_buffer(u32 dev_num)
 	}
 
 	hash_idx ++;
-	for (; hash_idx <; hash_idex ++)
+	for (; hash_idx < HASH_SIZE; hash_idex ++)
 	{
 		buf_hash[hash_idx].icount = 0;
+		list_init(&buf_hash[hash_idx].list);
+	}
+}
+
+void sync_buffer()
+{
+	u32 hash_idx = 0;
+	struct buffer_head *bh;
+	struct list_head *plist;
+	for (; hash_idx < HASH_SIZE; hash_idx ++)
+	{
+		if (buf_hash[hash_idx].icount)
+			list_for_each(&buf_hash[hash_idx].list, plist)
+		{
+			bh = container_of(plist, struct buffer_head, list); 
+			if (bh->locked)
+				continue;
+			if (bh->dirty)
+				put_bh(bh);
+		}
 	}
 }

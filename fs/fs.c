@@ -33,7 +33,7 @@ u32 _sys_open(char *file_path, u32 file_attr)
 u32 _sys_read(int fd, void *buffer, u32 size)
 {
 	struct file *f = current->file[fd];
-	struct buffer_headl *bh;
+	struct buffer_head *bh;
 	int left = size;
 
 	u32 size_off = 0;
@@ -49,7 +49,7 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 	{
 		off_in_block = f->pos / BUF_SIZE;
 
-		bh = read_inode_data(f->inode, block_nr);
+		bh = get_inode_bh(f->inode, block_nr);
  
 		if (!bh)
 			goto out;
@@ -72,10 +72,46 @@ out:
 
 u32 _sys_write(int fd, void *buffer, u32 size)
 {
-	struct file *f;
 
-	f = current->file[fd];
-	if (!f)
-		return -1;
+	struct file *f = current->file[fd];
+	struct buffer_head *bh;
+	int left = size;
+
+	u32 size_off = 0;
+	u32 size_read = 0;
+	u32 t_size_read = 0;
+
+	u32 block_nr = 0;
+	u32 off_in_block = 0;
+
+	off_in_block = f->pos % BUF_SIZE:
+	block_nr = f->pos / BUF_SIZE;
+	while(left > 0)
+	{
+		off_in_block = f->pos / BUF_SIZE;
+
+		bh = get_inode_bh(f->inode, block_nr);
+ 
+		if (!bh)
+			goto out;
+
+		t_size_read = left > BUF_SIZE ? left : BUF_SIZE;
+
+		if (copy_from_user(buffer + size_off, bh->data + off_in_block, t_size_read))
+		{
+			bh->dirty = 1;
+			goto out;
+		}
+
+		bh->dirty = 1;
+		left -= t_size_read; 
+		f->pos += t_size_read;
+
+		block_nr ++;
+
+		off_in_block = 0;
+	}
+out:
+	return size_read;
 }
 

@@ -29,6 +29,7 @@ static void init_block_bit_map(struct m_super_block *sb)
 
 	sb->block_bit_map = pfn_to_virt(page->pfn);
 	memcpy(sb->block_bit_map, bh->data, BUF_SIZE);
+
 	return ;
 	/* do we need this */
 }
@@ -78,7 +79,7 @@ static init_inode_map(struct m_super_block *sb)
 		h_head = (struct inode *) bh->data;
 		while (idx < nr_inode_per_buf)
 		{
-			m_head->hinode =  *h_head;
+			m_head->hinode = *h_head;
 			h_head ++;
 			m_head ++;
 			idx ++;
@@ -96,7 +97,7 @@ static int init_inode(struct super_block *sb)
 	init_inode_map(sb);
 }
 
-static m_inode * alloc_inode(struct super_block *sb)
+static m_inode *alloc_inode(struct super_block *sb)
 {
 	/* dirty */
 	u32 idx = find_set_first_aval_bit(sb->inode_bit_map, BUF_SIZE);
@@ -130,7 +131,7 @@ int init_super_block(struct sb)
 	init_block(sb);
 }
 
-char get_char(char * array)
+char get_char(char *array)
 {
 	return *array;
 }
@@ -138,8 +139,12 @@ char get_char(char * array)
 /* get inode by  inode_idx */
 static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 {
-	if (test_bit(sb->inode_bit_map, inode_idx)
-	struct m_inode *inode = sb->inode_map + inode_idx;
+	struct m_inode *inode;
+
+	if (!test_bit(sb->inode_bit_map, inode_idx))
+		return NULL;
+
+	inode = sb->inode_map + inode_idx;
 	/* how to determined whether inode is real file or not */
 	return inode->hinode.used ? inode: NULL;
 }
@@ -164,14 +169,15 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 		de++;
 		dir_idx ++;
 	}
+
 	if (dir_idx != dir_entry_num)
 	{
 		inode = get_inode_by_idx(inode->sb, de->inode);
 		if (!inode) 
-		{
-		/* may be error */
 			return NULL;
-		}
+
+		if ( !IS_DIR(inode->mode) )
+			return NULL;
 		return inode;
 	}
 	return NULL;
@@ -180,7 +186,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 struct m_inode *get_inode(char *file_path, u32 is_alloc)
 {
 	struct m_inode * parent_inode;
-	struct m_inode * inode;
+	struct m_inode * inode = NULL;
 	char c ;
 	char *dir;
 	u32 dir_len ;
@@ -205,19 +211,23 @@ struct m_inode *get_inode(char *file_path, u32 is_alloc)
 
 		if (c == '\0' )
 			break;
+
 		file_path ++;
 	}
 
 	if (!inode && is_alloc)
 	{
-		inode = alloc_inode(parent_inede->sb);
-		inset_parent(inode, parent_inode);
+		inode = alloc_inode(parent_inode->sb);
+		/* del with this dir */
+		insert_parent_inode(inode, parent_inode);
+		/* init_inode */
+
 	}
 
 	return inode;
 }
 
-struct buffer_head  *read_inode_data(struct m_inode *inode, u32 block_nr)
+struct buffer_head  *get_inode_bh(struct m_inode *inode, u32 block_nr)
 {
 	/* wo should  del with large file here */
 	u32 block_num  = inode->zone[block_nr];

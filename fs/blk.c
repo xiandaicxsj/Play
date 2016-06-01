@@ -4,17 +4,17 @@ void blk_read(struct device *device, struct buffer_head *bh)
 {
 
 	u32 block_num = bh->block_num;
-	struct blk_request req;
+	struct blk_req req;
 	struct blk_device * blk_device = container_of(device, struct blk_device, device);
 
 	req.cmd = BLK_READ;
 	req.block_num  = bh->block_num;
 	req.device = blk_device;
-	req.data = bh->data;
-	init_list(&req);
+	req.bh = bh;
+	init_list(&req->list);
 
-	blk_device->ops->sub_request(blk_device, &req);
-
+	blk_device->ops->sub_req(blk_device, &req);
+	wait_on(&bh->list, current);
 	/* cacule the block_num to device specific cender/... */
 }
 
@@ -22,16 +22,20 @@ void blk_write(struct device *device, struct buffer_head *bh)
 {
 
 	u32 block_num = bh->block_num;
-	struct blk_request req;
+	struct blk_req req;
 	struct blk_device * blk_device = container_of(device, struct blk_device, device);
 
+	if (!bh->dirty)
+		return ;
 	req.cmd = BLK_WRITE;
 	req.block_num  = bh->block_num;
 	req.device = blk_device;
-	req.data = bh->data;
-	init_list(&req);
-
-	blk_device->ops->sub_request(blk_device, &req);
+	req.bh = bh;
+	init_list(&req->list);
+	blk_device->ops->sub_req(blk_device, &req);
+	/* this should realse lock */
+	/* write need to wait */
+	wait_on(&bh->list, current);
 }
 
 /*

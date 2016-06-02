@@ -15,36 +15,40 @@ static void get_sb(u32 dev_num, struct super_block *sb)
 {
 	struct buffer_head *bh = NULL;
 	bh = look_up_buffer(1);
-	memcpy(sb, bh->data, sizeof(*sb));
+	sb->hsb = (struct m_super_block *)bh->data;
+	sb->bh = bh;
 }
 
 static void init_block_bit_map(struct m_super_block *sb)
 {
-	struct page *page = NULL;
+	//struct page *page = NULL;
 	struct buffer_head *bh = NULL;
 		
-	page = kmalloc_page(MEM_KERN);
+	//page = kmalloc_page(MEM_KERN);
 
 	bh = look_up_buffer(sb->hsb.block_bitmap_block);
 
-	sb->block_bit_map = pfn_to_virt(page->pfn);
-	memcpy(sb->block_bit_map, bh->data, BUF_SIZE);
-
+	//sb->block_bit_map = pfn_to_virt(page->pfn);
+	//memcpy(sb->block_bit_map, bh->data, BUF_SIZE);
+	sb->block_bit_map = bh->data;
+	sb->block_bm_bh = bh;
 	return ;
 	/* do we need this */
 }
 
 static void init_inode_bit_map(struct m_super_block *sb)
 {
-	struct page *page = NULL;
+	//struct page *page = NULL;
 	struct buffer_head *bh = NULL;
 		
-	page = kmalloc_page(MEM_KERN);
+	//page = kmalloc_page(MEM_KERN);
 
 	bh = look_up_buffer(sb->hsb.inode_bitmap_block);
 
-	sb->inode_bit_map = pfn_to_virt(page->pfn);
-	memcpy(sb->inode_bit_map, bh->data, BUF_SIZE);
+	sb->inode_bit_map = bh->data;
+	sb->inode_bm_bh = bh;
+	//sb->inode_bit_map = pfn_to_virt(page->pfn);
+	//memcpy(sb->inode_bit_map, bh->data, BUF_SIZE);
 	return ;
 	/* do we need this */
 }
@@ -83,6 +87,7 @@ static init_inode_map(struct m_super_block *sb)
 			h_head ++;
 			m_head ++;
 			idx ++;
+			m_head->bh = bh;
 		}
 
 		block_num --;
@@ -126,7 +131,7 @@ int init_super_block(struct sb)
         sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
 	        if (!sb)
 			return -1;
-        get_sb(ROOT_DEV, sb);
+    get_sb(ROOT_DEV, sb);
 	init_inode(sb);
 	init_block(sb);
 }

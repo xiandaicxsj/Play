@@ -22,14 +22,16 @@ struct super_block
 
 struct m_super_block
 {
-	struct super_block hsb;
-	struct buffer_head *bh; /* bh -> hsb */
+	struct super_block *hsb;
+	struct buffer_head *sb_bh; /* bh -> hsb */
 	/* used for memory mem */
 	u32 dirty;
 	/* if this two is dirty should write back */
 	/* but how to do this */
 	void * inode_bit_map;
 	void * block_bit_map;
+	struct buffer_head *inode_bm_bh;
+	struct buffer_head *block_bm_bh;
 	struct m_inode * inode_map;
 };
 

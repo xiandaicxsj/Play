@@ -198,3 +198,16 @@ void sync_buffer()
 		}
 	}
 }
+
+u32 lock_bh(struct buffer_head *bh)
+{
+	if (bh->locked)
+		return -1;
+	bh->locked = 1;
+	return 0;
+}
+
+void set_bh_dirty(struct buffer_head *bh)
+{
+	bh->dirty = 1;
+}

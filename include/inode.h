@@ -39,10 +39,13 @@ struct m_super_block
 #define MODE_DIR (1 << 1)
 #define IS_DIR(mod) (mod & MODE_DIR)
 #define IS_FILE(mod) (mod & MODE_FILE)
+#define ERR_FILE(mod) 
 struct inode
 {
 	u32 mode;
 	u32 file_size;
+	u32 index;
+	u32 bock_used;
 	zone_t zone[NR_BLOCK];
 	/* this may used furthure */
 	u32 access_time;
@@ -52,7 +55,7 @@ struct inode
 
 struct m_inode
 {
-	struct inode hinode;
+	struct inode* hinode;
 	struct m_super_block *sb;
 	/* bh -> m_inode struct , not the content of file */
 	struct buffer_head *bh;

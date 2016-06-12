@@ -1,5 +1,7 @@
 #include"blk_device.h"
 
+/* read/write for blk device */
+
 void blk_read(struct device *device, struct buffer_head *bh)
 {
 

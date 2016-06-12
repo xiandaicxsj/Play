@@ -24,7 +24,8 @@ struct blk_device
 	struct device;
 	struct blk_device_ops;	
 	struct list_head req_list;
-	u32 block_size;
 };
+
+void register_blk_device(void);
 
 #endif

@@ -12,6 +12,7 @@ typedef u8 dev_t
 #define DEV_MAJ(dev_num) (((dev_num) & 0xf0) >>  4)
 #define DEV_BLK 	(0x1)
 #define DEV_CHAR	(0x2)
+#define DEV_NUM(maj, min) (((maj) << 4 | (min)))
 struct device
 {
 	dev_t dev_num; 

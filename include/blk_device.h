@@ -11,6 +11,7 @@ struct blk_req
 	u32 nr_block;
 	struct buffer_head *bh;
 	struct list_head list;
+	struct blk_device_ops* blk_dev_ops;
 };
 
 struct blk_device_ops
@@ -21,11 +22,10 @@ struct blk_device_ops
 
 struct blk_device
 {
-	struct device;
-	struct blk_device_ops;	
+	struct device dev;
+	struct blk_device_ops * ops;	
 	struct list_head req_list;
 };
 
-void register_blk_device(void);
-
+void init_blk_device(struct blk_device *device, struct blk_device_ops *ops);
 #endif

@@ -1,7 +1,9 @@
 #include"blk_device.h"
 
-void register_blk_device(void)
+void init_blk_device(struct blk_device *dev, struct blk_device_ops *ops)
 {
-	/* probe method to do this */
-	/* */
+	u8 minor = alloc_minor(DEV_BLK);
+	list_init(&dev->req_list);
+	dev->ops = ops;
+	init_device(&dev->dev, DEV_BLK, minor);
 }

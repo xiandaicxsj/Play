@@ -1,4 +1,4 @@
-#include"device.h"
+einclude"device.h"
 
 struct device_head
 {
@@ -9,11 +9,19 @@ struct device_head
 
 struct device_head dev_type_list[DEV_TYPE]; 
 
-int register_device(dev_t dev_num , struct device *device)
+int init_device(struct device *dev, u8 major, u8 minor)
+{
+	list_init(&dev->list);
+	dev->dev_num = DEV_NUM(major, minor);
+	register_device(dev);
+}
+
+int register_device(struct device *device)
 {
 	struct device_head * dh ;
+	dev_t dev_num = devic->dev_num;
 	u8 major = DEV_MAJ(dev_num);
-	u8 minor = DEV_MIN(dev_nu=m);
+	u8 minor = DEV_MIN(dev_num);
 
 	dh =  &dev_type_list[major];
 

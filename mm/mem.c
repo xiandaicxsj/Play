@@ -3,7 +3,7 @@
 
 #define BUDDY_ALLOC
 
-#ifdef TEST
+#ifdef TEST_MEM
 	#include<stdio.h>
 	#include<stdlib.h>
 	#define MEM_KERN (1 << 0)
@@ -14,7 +14,7 @@
 	#include"kernel.lds.h"
 #endif
 /* now do not think of low memory */
-#ifndef TEST
+#ifndef TEST_MEM
 static u32 kernel_end;
 static u32 low_mem_begin;
 static u32 low_mem_end;
@@ -41,7 +41,7 @@ struct pages_pool
 
 struct page *pages_list;
 struct pages_pool pgp;
-#ifdef TEST
+#ifdef TEST_MEM
 void* kmalloc_low_mem(u32 size, u32 align)
 {
 	return malloc(size);
@@ -107,7 +107,7 @@ void init_buddy(u32 mem_size)
 		pages_idx ++;
 		pfn += 1 << order;
 	}
-#ifndef TEST
+#ifndef TEST_MEM
 	merge_low_memory();
 	low_mem_alloc_used = 0;
 #endif
@@ -306,7 +306,7 @@ static u32 init_pages_list(u32 mem_size)
 	link_pages(pages_list, mem_size >> PAGE_OFFSET);
 }
 
-#ifndef TEST
+#ifndef TEST_MEM
 static void merge_low_memory()
 {
 	u32 p_low_mem = virt_to_phy(low_mem_end);
@@ -322,7 +322,7 @@ static void merge_low_memory()
 
 #endif
 
-#ifdef TEST
+#ifdef TEST_MEM
 void show_page(struct page *pages)
 {
 	printf("   pages - order %d, pfn %d\n", pages->order, pages->pfn);
@@ -410,7 +410,7 @@ int main()
 }
 #endif
 #endif
-#ifndef TEST
+#ifndef TEST_MEM
 static void* kmalloc_low_mem(u32 size, u32 align)
 {
 	u32 addr;

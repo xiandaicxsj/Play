@@ -225,6 +225,7 @@ void schdule()
 	/* */
 	switch_to(current, next);
 }
+
 void wait_on(struct list_head *list, struct task_struct *next)
 {
 	next->status = TASK_UNINTERRUPT;

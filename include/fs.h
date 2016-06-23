@@ -1,7 +1,7 @@
 #ifndef _H_FS
 #define _H_FS
 #define ROOT_DEV 1
-#define O_READ (1 << 0)
+#define O_RD (1 << 0)
 #define O_RDWR (1 << 1)
 #define O_CREATE (1 << 2)
 void init_fs();

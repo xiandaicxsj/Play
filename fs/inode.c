@@ -180,17 +180,24 @@ static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 	return inode->hinode.used ? inode: NULL;
 }
 
+/* 
+ * dir: name 
+ * len name len
+ */
 struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inode, struct dir_entry ** de_ptr)
-{/* m_inode is different from inode */
+{
+	/* m_inode is different from inode */
 	u32 nr_block = inode->zone[0];
 	struct buffer_head *bh;
 	struct dir_entry *de;
 	struct m_inode *inode;
 	struct dir_entry *emp_de;
+
 	/* bh should contain the data */
 	u32 dir_entry_num = BUF_SIZE / sizeof(struct dir_entry);
 	u32 dir_idx;
 	bh = look_up_buffer(nr_block);
+	/* now bh contain data */
 	de = (struct dir_entry *) bh->data;
 	
 	dir_idx = 0;
@@ -198,7 +205,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	{
 		if(!str_cmp(de->name, dir, dir_len))
 			break;
-		if (de->name =='\0')
+		if (emp_de && de->name =='\0')
 			emp_de = de;
 		de++;
 		dir_idx ++;
@@ -219,17 +226,23 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 }
 
 /* inode can be a dir or file */
-void insert_parent_inode(struct minode *dinode, struct dir_entry *de, struct minode *inode, char *name, u32 len)
+void insert_parent_inode(struct minode *pinode, struct dir_entry *de, struct minode *inode, char *name, u32 len)
 {	
 	memcpy(de->name, name, len);
 	de->inode = inode->hinode->index;
 	/* bugs */	
+
+	/* this bug de has not bh memeber */
+	/* need to change this */
+	/* change the fucntion param contain struct buffer *bh */
 	set_bh_dirty(de->bh);
-	set_bh_dirty(dir_inode->bh);
+
+	/* do we need to set pinode->bh dirty */
+	set_bh_dirty(pinode->bh);
 }
 
 
-struct m_inode *get_inode(char *file_path, u32 is_alloc, u32 file_mode)
+struct m_inode *get_inode(char *file_path, u32 file_mode)
 {
 	struct m_inode * parent_inode;
 	struct m_inode * inode = NULL;
@@ -237,10 +250,17 @@ struct m_inode *get_inode(char *file_path, u32 is_alloc, u32 file_mode)
 	char c ;
 	char *dir;
 	u32 dir_len ;
+	u8 is_alloc = file_mode & O_CREATE;
+
+#ifdef TEST_FS
 	if ((c = get_char(file_path)) == '\')
 		inode = current->root_node;
 	else
 		inode = current->pwd;
+#else
+	/* need to write */
+	inode = get_root_node();
+#endif
 
 	parent_inode = inode;
 
@@ -248,7 +268,7 @@ struct m_inode *get_inode(char *file_path, u32 is_alloc, u32 file_mode)
 	while(1)
 	{
 		/* bugs */
-		dir= file_path;
+		dir = file_path;
 		dir_len = 0;
 		for (; c = get_char(file_path) && c != '\' && c != '\0'; file_path++, dir_len ++;;);
 
@@ -266,15 +286,15 @@ struct m_inode *get_inode(char *file_path, u32 is_alloc, u32 file_mode)
 
 	if (!inode && is_alloc && get_pdir_ok)
 	{
-		if (is_alloc && ERROR_FILE(file_mode)
+		if (is_alloc && ERROR_FILE(file_mode))
 				return NULL;
 		inode = get_minode(parent_inode->sb, file_mode);
+		/* find */
 		/* del with this dir */
 		insert_parent_inode(parent_inode, *de_ptr, inode, dir, dir_len);
 		/* init_inode */
 
 	}
-
 	return inode;
 }
 

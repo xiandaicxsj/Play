@@ -6,6 +6,10 @@ void init_fs()
 	init_super_block();
 }
 
+u32 _sys_close(u32 fd)
+{
+
+}
 
 u32 _sys_open(char *file_path, u32 file_attr)
 {
@@ -14,9 +18,7 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	u32 fd = -1;
 	u32 is_alloc;
 	
-	is_alloc = file_attr & O_CREATE ? 1 : 0;
-
-	inode = get_inode(file_path, is_alloc);
+	inode = get_inode(file_path, file_attr);
 
 	fd = alloc_file_struct(current);
 	if (fd < 0)
@@ -117,5 +119,24 @@ out:
 
 
 #ifdef TEST_FILE
+void test1()
+{
+
+}
+
+void test2()
+{
+
+}
+
+void test3()
+{
+
+}
+
+int main()
+{
+	_sys_open("/root/txt", O_CREATE);
+}
 
 #endif

@@ -29,6 +29,7 @@ static struct buffer_head *alloc_new_bh(u32 block_num)
 	if(!buf_hash[free_hash_idx].icount)
 		return bh;
 
+	/* this need to be locked */
 	list = &buf_hash[free_hash_idx].list->next;
 	bh = container_of(list, struct buffer_head, list);
 	buf_hash[free_hash_idx].icount --;
@@ -90,6 +91,7 @@ void get_bh(struct buffer_head *bh)
 {
 	struct device *device = bh->device;
 	bh->locked = 1;
+	/* lock */
 	switch (device->type)
 	{
 		case DEVICE_BLOCK:
@@ -125,8 +127,8 @@ struct buffer_head* look_up_buffer(u32 block_num)
 	bh = alloc_new_bh(block_num);
 	if (!bh)
 		return NULL;
-	get_bh(bh);
 	/* read */
+	get_bh(bh);
 	return bh;
 }
 

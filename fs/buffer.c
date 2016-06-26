@@ -1,24 +1,11 @@
 /* use for blokc cache */ 
 /* block cache is 4k */
+#include"buffer.h"
+#include"page.h"
+#include"mem.h"
+#include"blk.h"
 #define HASH_SIZE 100 /* we use block num to hash this */
 #define BUF_HASH(size) ((size %  HASH_SIZE) + 1) /* 0 is used for free buf */
-#define BUF_NUM 100
-#define BUF_SIZE 4096
-struct buffer_head
-{
-	struct device *device; /* this is import */
-
-	struct list_head list;
-	void *data;/* 4k or may be 1k 2k */
-	u32 dirty;
-	u32 block_num;
-	int icount; /* who refer to this */
-
-	int locked;
-
-	struct list_head wait_queue; /* task wait for this */
-};
-
 struct buffer_head buf_hash[HASH_SIZE];
 
 static struct buffer_head *alloc_new_bh(u32 block_num)
@@ -30,7 +17,7 @@ static struct buffer_head *alloc_new_bh(u32 block_num)
 		return bh;
 
 	/* this need to be locked */
-	list = &buf_hash[free_hash_idx].list->next;
+	list = buf_hash[free_hash_idx].list.next;
 	bh = container_of(list, struct buffer_head, list);
 	buf_hash[free_hash_idx].icount --;
 
@@ -45,15 +32,17 @@ static struct buffer_head *alloc_new_bh(u32 block_num)
 
 	return bh;
 }
-/* when some bh is needed, we need to free some bh */
 
+/* when some bh is needed, we need to free some bh */
 static u32 release_bh()
 {
 	u32 hash_idx = 0;
 	if (buf_hash[hash_idx].icount)
-		return;
-	for(; hash_idx < hash_size; hash_idx ++)
+		return -1;
+	for(; hash_idx < HASH_SIZE; hash_idx ++);
 
+	/* how to release the buffer */
+	return 0;
 }
 /* search in hash table */
 static struct buffer_head *_look_up_buffer(u32 block_num)
@@ -66,6 +55,7 @@ static struct buffer_head *_look_up_buffer(u32 block_num)
 	/* for_each_list */
 	struct list_head *pos;
 	struct buffer_head *cur;
+
 	list_for_each(&bh->list, pos)
 	{
 		cur = container_of(pos, struct buffer_head, list);
@@ -85,6 +75,7 @@ u32 free_buffer(struct buffer_head *bh)
 	buf_hash[BUF_HASH(bh->block_num)].icount --;	
 	list_add(&bh->list, &buf_hash[free_hash_idx].list);
 	buf_hash[free_hash_idx].icount++ ;
+	return 0;
 }
 
 void get_bh(struct buffer_head *bh)
@@ -92,9 +83,9 @@ void get_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 	bh->locked = 1;
 	/* lock */
-	switch (device->type)
+	switch (DEV_MAJ(device->dev_num))
 	{
-		case DEVICE_BLOCK:
+		case DEV_BLK:
 			blk_read(device, bh);
 			break;
 		default :
@@ -108,9 +99,9 @@ void put_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 
 	bh->locked = 1;
-	switch (device->type)
+	switch (DEV_MAJ(device->dev_num))
 	{
-		case DEVICE_BLOCK:
+		case DEV_BLK:
 			blk_write(device, bh);
 			break;
 		default :
@@ -134,7 +125,7 @@ struct buffer_head* look_up_buffer(u32 block_num)
 
 void init_buffer(u32 dev_num)
 {
-	struct device = get_device(dev_num);
+	struct device *dev = get_device(dev_num);
 
 	u32 bh_per_page = (PAGE_SIZE) / sizeof(struct buffer_head);
 	struct page * bh_page ;
@@ -142,6 +133,7 @@ void init_buffer(u32 dev_num)
 	void* addr;
 	struct buffer_head *bh;
 	u32 nr_bh;
+	u32 bh_pp_idx;
 	u32 hash_idx = 0;
 
 	list_init(&buf_hash[hash_idx].list);
@@ -151,31 +143,33 @@ void init_buffer(u32 dev_num)
 	{
 		bh_page =  kalloc_page(MEM_KERN);
 		if (!bh_page)
-			return 0;
-		addr = phy_to_virt(bh_page->pfn);  
+			return ;
+		addr = (void *)phy_to_virt(bh_page->pfn);  
 		bh = (struct buffer_head *) addr;
-		while(nr_bh_p < bh_per_page)
+		
+		bh_pp_idx = 0;
+		while(bh_pp_idx < bh_per_page)
 		{
-			list_init(bh->list);
+			list_init(&bh->list);
 			bh->icount = 0;
 			bh->block_num = -1;
 			bh->dirty = 0;
-			bh->device = device;
+			bh->device = dev;
 
 			bf_page =  kalloc_page(MEM_KERN);
 			if (!bf_page)
-				return 0;
-			bh->data =  phy_to_virt(bf_page->pfn);
-			list_add(&bn->list, &buf_hash[free_hash_idx].list);
+				return ;
+			bh->data =  (void *)phy_to_virt(bf_page->pfn);
+			list_add(&bh->list, &buf_hash[hash_idx].list);
 			bh ++;
-			nr_bh_p ++;
+			bh_pp_idx ++;
 			buf_hash[hash_idx].icount ++;
 		}
 		nr_bh += bh_per_page;
 	}
 
 	hash_idx ++;
-	for (; hash_idx < HASH_SIZE; hash_idex ++)
+	for (; hash_idx < HASH_SIZE; hash_idx ++)
 	{
 		buf_hash[hash_idx].icount = 0;
 		list_init(&buf_hash[hash_idx].list);

@@ -1,9 +1,15 @@
-#ifdef 	_H_DEVICE
+#ifndef 	_H_DEVICE
 #define _H_DEVICE
+
 #include"list.h"
 #include"type.h"
 /* for this */
-typedef u8 dev_t
+typedef u8 dev_t;
+struct device
+{
+	dev_t dev_num; 
+	struct list_head list;
+};
 /* bit 8 */
 /* 0-3  minior num*/ 
 /* 4-7  major  num*/
@@ -13,12 +19,8 @@ typedef u8 dev_t
 #define DEV_BLK 	(0x1)
 #define DEV_CHAR	(0x2)
 #define DEV_NUM(maj, min) (((maj) << 4 | (min)))
-struct device
-{
-	dev_t dev_num; 
-	struct list_head list;
-}
-struct *device get_device(dev_t dev_num);
+
+struct device *get_device(dev_t dev_num);
 int register_device(dev_t dev_num , struct device *device);
 int alloc_minor(u8 major);
 void init_device();

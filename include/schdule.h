@@ -49,11 +49,9 @@ struct task_struct
 	u32 pid;
 	u32 cr3;
 	u32 status;
-#ifdef TEST_FILE
-	struct file f[20];
-	struct inode *root;
-	struct inode *pwd;
-#endif
+	struct file_struct file[20];
+	struct m_inode *root;
+	struct m_inode *pwd;
 	struct task_struct *next;
 	struct list_head list;
 	struct list_head wait_list;

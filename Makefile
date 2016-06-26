@@ -31,6 +31,8 @@ link_objs:
 
 all: subdirs  link_objs create_img
 
+test_fs:
+	$(MAKE) -C fs/ test_fs
 clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir clean; done
 	$(MAKE) -C $(OBJS_DIR) clean

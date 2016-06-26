@@ -1,21 +1,31 @@
 #include"inode.h"
+#include"page.h"
+#include"mem.h"
+#include"math.h"
+#include"bitop.h"
+#include"device.h"
+#include"fs.h"
+#include"string.h"
 #define DIR_LEN 20
-struct super_block *sb;
+#define INODE_USED 1
+#define INODE_UNUSED 0
+struct m_super_block *sb;
 
 struct dir_entry 
 {
-	u32 inode_id;
+	u32 inode_idx;
 	char name[DIR_LEN];
 };
 
 /* dev_num is not used */
 /* need to fix */
 
-static void get_sb(u32 dev_num, struct super_block *sb)
+/* the dev num should be used like this ??*/
+static void get_sb(u32 dev_num, struct m_super_block *sb)
 {
 	struct buffer_head *bh = NULL;
 	bh = look_up_buffer(1);
-	sb->hsb = (struct m_super_block *)bh->data;
+	sb->hsb = (struct super_block *)bh->data;
 	sb->bh = bh;
 }
 
@@ -26,7 +36,7 @@ static void init_block_bit_map(struct m_super_block *sb)
 		
 	//page = kmalloc_page(MEM_KERN);
 
-	bh = look_up_buffer(sb->hsb.block_bitmap_block);
+	bh = look_up_buffer(sb->hsb->block_bitmap_block);
 
 	//sb->block_bit_map = pfn_to_virt(page->pfn);
 	//memcpy(sb->block_bit_map, bh->data, BUF_SIZE);
@@ -43,7 +53,7 @@ static void init_inode_bit_map(struct m_super_block *sb)
 		
 	//page = kmalloc_page(MEM_KERN);
 
-	bh = look_up_buffer(sb->hsb.inode_bitmap_block);
+	bh = look_up_buffer(sb->hsb->inode_bitmap_block);
 
 	sb->inode_bit_map = bh->data;
 	sb->inode_bm_bh = bh;
@@ -53,23 +63,23 @@ static void init_inode_bit_map(struct m_super_block *sb)
 	/* do we need this */
 }
 
-static init_inode_map(struct m_super_block *sb)
+static void init_inode_map(struct m_super_block *sb)
 {
 	struct page *page = NULL;
 	struct buffer_head *bh = NULL;
 	struct m_inode *m_head;
 	struct inode *h_head;
-	u32 num  = sb->inode_num;
-	u32 pages_num = ROUND_UP((num *sizeof(struct m_inode)), PAGE_SIZE);
+	u32 num  = sb->hsb->inode_num;
+	u32 pages_num = round_up((num *sizeof(struct m_inode)), PAGE_SIZE);
 
-	u32 block_num = sb->inode_block_num;
-	u32 block_off = sb->inode_block_off;
+	u32 block_num = sb->hsb->inode_block_num;
+	u32 block_off = sb->hsb->inode_block_off;
 
 	/* i don't know whether this isn needed */
-	u32 nr_inode_per_buf = BUFF_SIZE/sizeof(struct inode);
+	u32 nr_inode_per_buf = BUF_SIZE/sizeof(struct inode);
 	u32 idx = 0;
 
-	page = kalloc_page(pages_num, MEM_KERN);
+	page = kalloc_pages(pages_num, MEM_KERN);
 	sb->inode_map = (struct m_inode *) phy_to_virt(page->pfn);
 	if (!sb->inode_map)
 		return ;
@@ -102,31 +112,33 @@ static init_inode_map(struct m_super_block *sb)
 	return ;
 }
 
-static int init_inode(struct super_block *sb)
+static void init_inode(struct m_super_block *sb)
 {
 	init_inode_bit_map(sb);
 	init_inode_map(sb);
 }
 
-struct put_minode(struct super_block *sb, struct m_inode *inode)
+static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 {
 
+	return 0;
 }
 
-static m_inode *get_minode(struct m_super_block *sb, u32 file_mode)
+static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode)
 {
 	/* dirty */
 	struct m_inode *inode;
-	u32 index = find_set_first_aval_bit(sb->inode_bit_map, BUF_SIZE);
+	u32 idx = find_first_avail_bit(sb->inode_bit_map, BUF_SIZE);
+	set_bit(sb->inode_bit_map, idx);
 
 	sb->hsb->inode_used ++;
-	inode = sb->inode_map + idex; /* the dirty bit of struct m_inode */
+	inode = sb->inode_map + idx; /* the dirty bit of struct m_inode */
 	set_bh_dirty(sb->inode_bm_bh);
 	/* init inode */	
 	memset(inode->hinode, 0, sizeof(struct inode));
 	inode->hinode->used = INODE_USED;
 	inode->hinode->mode = file_mode;
-	inode->hinode->index = index;
+	inode->hinode->index = idx;
 
 	set_bh_dirty(inode->bh);
 
@@ -135,16 +147,18 @@ static m_inode *get_minode(struct m_super_block *sb, u32 file_mode)
 }
 
 /* so why is block_list needed */
-static int init_block(struct super_block *sb)
+static int init_block(struct m_super_block *sb)
 {
 	/* only init bit map here is ok */
 	init_block_bit_map(sb);
+	return 0;
 }
 
 /* return block num */
-static u32 alloc_block(struct super_block *sb)
+static u32 alloc_block(struct m_super_block *sb)
 {
-	u32 idx = find_set_first_aval_bit(sb->block_bit_map, BUF_SIZE);
+	u32 idx = find_first_avail_bit(sb->block_bit_map, BUF_SIZE);
+	set_bit(sb->block_bit_map, idx);
 	sb->hsb->block_used ++;
 	set_bh_dirty(sb->bh);
 
@@ -152,14 +166,15 @@ static u32 alloc_block(struct super_block *sb)
 	/* get availule block */
 }
 
-int init_super_block(struct sb)
+int init_super_block()
 {
-        sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
-	        if (!sb)
-			return -1;
-        get_sb(ROOT_DEV, sb);
+    sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
+	if (!sb)
+		return -1;
+    get_sb(ROOT_DEV, sb);
 	init_inode(sb);
 	init_block(sb);
+	return 0;
 }
 
 char get_char(char *array)
@@ -177,7 +192,7 @@ static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 
 	inode = sb->inode_map + inode_idx;
 	/* how to determined whether inode is real file or not */
-	return inode->hinode.used ? inode: NULL;
+	return inode->hinode->used ? inode: NULL;
 }
 
 /* 
@@ -187,10 +202,9 @@ static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inode, struct dir_entry ** de_ptr)
 {
 	/* m_inode is different from inode */
-	u32 nr_block = inode->zone[0];
+	u32 nr_block = inode->hinode->zone[0];
 	struct buffer_head *bh;
 	struct dir_entry *de;
-	struct m_inode *inode;
 	struct dir_entry *emp_de;
 
 	/* bh should contain the data */
@@ -205,7 +219,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	{
 		if(!str_cmp(de->name, dir, dir_len))
 			break;
-		if (emp_de && de->name =='\0')
+		if (emp_de && *(de->name) =='\0')
 			emp_de = de;
 		de++;
 		dir_idx ++;
@@ -213,11 +227,11 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 
 	if (dir_idx != dir_entry_num)
 	{
-		inode = get_inode_by_idx(inode->sb, de->inode);
+		inode = get_inode_by_idx(inode->sb, de->inode_idx);
 		if (!inode) 
 			return NULL;
 
-		if ( !IS_DIR(inode->mode) )
+		if ( !IS_DIR(inode->hinode->mode) )
 			return NULL;
 		return inode;
 	}
@@ -226,21 +240,29 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 }
 
 /* inode can be a dir or file */
-void insert_parent_inode(struct minode *pinode, struct dir_entry *de, struct minode *inode, char *name, u32 len)
+void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_inode *inode, char *name, u32 len)
 {	
+	struct buffer_head *bh;
 	memcpy(de->name, name, len);
-	de->inode = inode->hinode->index;
+	de->inode_idx = inode->hinode->index;
 	/* bugs */	
 
 	/* this bug de has not bh memeber */
 	/* need to change this */
 	/* change the fucntion param contain struct buffer *bh */
-	set_bh_dirty(de->bh);
-
-	/* do we need to set pinode->bh dirty */
+	bh = look_up_buffer(pinode->hinode->zone[0]);
 	set_bh_dirty(pinode->bh);
+	set_bh_dirty(bh);
+	
+	/* do we need to set pinode->bh dirty */
 }
 
+/* fix me */
+struct m_inode *get_root_node()
+{
+
+	return NULL;
+}
 
 struct m_inode *get_inode(char *file_path, u32 file_mode)
 {
@@ -251,9 +273,10 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	char *dir;
 	u32 dir_len ;
 	u8 is_alloc = file_mode & O_CREATE;
+	u8 get_pdir_ok = 0;
 
 #ifdef TEST_FS
-	if ((c = get_char(file_path)) == '\')
+	if ((c = get_char(file_path)) == '\\')
 		inode = current->root_node;
 	else
 		inode = current->pwd;
@@ -270,7 +293,8 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		/* bugs */
 		dir = file_path;
 		dir_len = 0;
-		for (; c = get_char(file_path) && c != '\' && c != '\0'; file_path++, dir_len ++;;);
+		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++, dir_len ++)
+			c = get_char(file_path);
 
 		if (c == '\0' ) {
 			get_pdir_ok = 1;
@@ -303,11 +327,11 @@ struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr)
 	/* wo should  del with large file here */
 	/* block_nr is the offset in the zone array */
 	/* block_num is the real block num */
-	u32 block_num = inode->zone[block_nr];
+	u32 block_num = inode->hinode->zone[block_nr];
 
-	if(block_num = -1)
+	if(block_num == -1)
 		return NULL;
 
-	return loop_up_buffer(block_num);
+	return look_up_buffer(block_num);
 }
 

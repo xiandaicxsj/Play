@@ -1,9 +1,11 @@
 #ifndef _H_INODE
 #define _H_INODE
+#include"type.h"
+#include"buffer.h"
 
 /* 0-5 directly block */
 #define NR_BLOCK 10
-typedef zone_t u32;
+typedef u32 zone_t;
 
 struct super_block
 {
@@ -23,7 +25,7 @@ struct super_block
 struct m_super_block
 {
 	struct super_block *hsb;
-	struct buffer_head *sb_bh; /* bh -> hsb */
+	struct buffer_head *bh; /* bh -> hsb */
 	/* used for memory mem */
 	u32 dirty;
 	/* if this two is dirty should write back */
@@ -62,5 +64,6 @@ struct m_inode
 	u32 icount;
 	u32 dirty; /* the inode is dirty, not the content is dirty */
 };
-
+struct m_inode *get_inode(char *file_path, u32 file_mode);
+struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr);
 #endif

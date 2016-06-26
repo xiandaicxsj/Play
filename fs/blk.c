@@ -1,43 +1,51 @@
 #include"blk_device.h"
+#include"device.h"
 
 /* read/write for blk device */
 
-void blk_read(struct device *device, struct buffer_head *bh)
+void blk_read(struct device *dev, struct buffer_head *bh)
 {
 
-	u32 block_num = bh->block_num;
-	struct blk_req req;
-	struct blk_device * blk_device = container_of(device, struct blk_device, device);
+	struct blk_req *req;
+	struct blk_device * blk_device = container_of(dev, struct blk_device, dev);
 
-	req.cmd = BLK_READ;
-	req.block_num  = bh->block_num;
-	req.device = blk_device;
-	req.bh = bh;
-	init_list(&req->list);
+
+	req = blk_device->ops->get_req(blk_device);
+
+	req->cmd = BLK_READ;
+	req->block_num  = bh->block_num;
+	req->device = blk_device;
+	req->bh = bh;
 
 	blk_device->ops->sub_req(blk_device, &req);
-	wait_on(&bh->list, current);
+	/* same with blk_write, only used for read sys */
+	//wait_on(&bh->list, current);
 	/* cacule the block_num to device specific cender/... */
 }
 
-void blk_write(struct device *device, struct buffer_head *bh)
+void blk_write(struct device *dev, struct buffer_head *bh)
 {
 
 	u32 block_num = bh->block_num;
-	struct blk_req req;
-	struct blk_device * blk_device = container_of(device, struct blk_device, device);
+	/* this should not be a fuction */
+	struct blk_req *req;
+	struct blk_device * blk_device = container_of(dev, struct blk_device, dev);
 
 	if (!bh->dirty)
 		return ;
-	req.cmd = BLK_WRITE;
-	req.block_num  = bh->block_num;
-	req.device = blk_device;
-	req.bh = bh;
-	init_list(&req->list);
+	/* req should be maintained by blk_device */
+	req = blk_device->ops->get_req(blk_device);
+
+	req->cmd = BLK_WRITE;
+	req->block_num  = bh->block_num;
+	req->device = blk_device;
+	req->bh = bh;
+
 	blk_device->ops->sub_req(blk_device, &req);
 	/* this should realse lock */
 	/* write need to wait */
-	wait_on(&bh->list, current);
+	/* bugs */
+	// wait_on(&bh->list, current);
 }
 
 /*

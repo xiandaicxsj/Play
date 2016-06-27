@@ -1,5 +1,5 @@
-einclude"device.h"
-
+#include"device.h"
+#include"test_fs.h"
 struct device_head
 {
 	u16 dev_num_bit_map;
@@ -42,7 +42,7 @@ int alloc_minor(u8 major)
 	return find_first_avail_bit(&dh->dev_num_bit_map);
 }
 
-void init_device()
+void init_devices()
 {
 	int dev_type_idx = 0;
 	for (dev_type_idx; dev_type_idx < DEV_TYPE; dev_type_idex ++) 

@@ -1,3 +1,4 @@
+#include"test.h"
 #ifdef TEST_FS
 #include<stdio>
 #define FILE_BACKEN "/home/..."

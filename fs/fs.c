@@ -2,14 +2,16 @@
 #include"fs.h"
 #include"schdule.h"
 #include"buffer.h"
-#define TEST_FS
-/*
+#include"test.h"
+
+
 void init_fs()
 {
-	init_buffer();
-	init_super_block();
+	init_buffer(ROOT_DEV);
+	init_super_block(ROOT_DEV);
 }
-*/
+
+
 u32 alloc_file_struct(struct task_struct *current)
 {
 
@@ -151,6 +153,8 @@ void test3()
 
 int main()
 {
+	init_device();
+	init_fs();
 	_sys_open("/root/txt", O_CREATE);
 }
 

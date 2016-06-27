@@ -6,6 +6,7 @@
 #include"device.h"
 #include"fs.h"
 #include"string.h"
+#include"test.h"
 #define DIR_LEN 20
 #define INODE_USED 1
 #define INODE_UNUSED 0
@@ -166,12 +167,12 @@ static u32 alloc_block(struct m_super_block *sb)
 	/* get availule block */
 }
 
-int init_super_block()
+int init_super_block(u32 dev_num)
 {
-    sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
+    	sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
 	if (!sb)
 		return -1;
-    get_sb(ROOT_DEV, sb);
+    	get_sb(dev_num, sb);
 	init_inode(sb);
 	init_block(sb);
 	return 0;
@@ -275,7 +276,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	u8 is_alloc = file_mode & O_CREATE;
 	u8 get_pdir_ok = 0;
 
-#ifdef TEST_FS
+#ifndef TEST_FS
 	if ((c = get_char(file_path)) == '\\')
 		inode = current->root_node;
 	else

@@ -4,6 +4,7 @@
 #include"page.h"
 #include"mem.h"
 #include"blk.h"
+#include"test.h"
 #define HASH_SIZE 100 /* we use block num to hash this */
 #define BUF_HASH(size) ((size %  HASH_SIZE) + 1) /* 0 is used for free buf */
 struct buffer_head buf_hash[HASH_SIZE];

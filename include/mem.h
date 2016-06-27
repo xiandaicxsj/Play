@@ -2,6 +2,7 @@
 #define H_MEM
 #include"type.h"
 #include"page.h"
+#include"test.h"
 #define MEM_SUPER (1 << 0)
 #define MEM_USER (1 << 1)
 #define MEM_READ (1 << 2)

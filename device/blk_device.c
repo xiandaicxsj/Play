@@ -1,4 +1,5 @@
 #include"blk_device.h"
+#include"test.h"
 
 void init_blk_device(struct blk_device *dev, struct blk_device_ops *ops)
 {

@@ -17,7 +17,7 @@ void list_del(struct list_head *entry);
 for ((pos) = (head)->next; (pos) != (head) && (pos); pos = pos->next)
 
 /* member -> type */
-#define offsetof(type, member) ((size_t) &((type *)0)->member)
+#define offsetof(type, member) ((u32) &((type *)0)->member)
 #define container_of(ptr, type, member) ({ \
 	const typeof( ((type *)0)->member) * _mptr = (ptr); \
 	(type *)( (char *)_mptr - offsetof(type, member));})

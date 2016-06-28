@@ -1,5 +1,7 @@
 #include"math.h"
 #include"bitop.h"
+#include"test.h"
+#include"mem.h"
 
 #define BUDDY_ALLOC
 
@@ -9,7 +11,6 @@
 	#define MEM_KERN (1 << 0)
 	#define MEM_USER (1 << 1)
 #else
-	#include"mem.h"
 	#include"debug.h"
 	#include"kernel.lds.h"
 #endif

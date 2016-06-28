@@ -31,8 +31,19 @@ link_objs:
 
 all: subdirs  link_objs create_img
 
+test: test_fs test_device test_mem test_kernel
 test_fs:
 	$(MAKE) -C fs/ test_fs
+
+test_device:
+	$(MAKE) -C device/ test_device
+
+test_mem:
+	$(MAKE) -C mm/ test_mem
+
+test_kernel:
+	echo "a"
+
 clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir clean; done
 	$(MAKE) -C $(OBJS_DIR) clean

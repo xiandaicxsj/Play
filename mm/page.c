@@ -3,6 +3,7 @@
 #include"exception.h"
 #include"mem.h"
 #include"debug.h"
+#include"test.h"
 typedef u32 pde_t;
 typedef u32 pte_t;
 /* used the static page to the */
@@ -34,15 +35,15 @@ u32 umap_page(u32 vpfn, void *pdt)
 	if ( *pde & PGD_P )
 		pt = phy_to_virt(PT_ADDR(*pde));
 	else
-		return ;
+		return -1;
 
 	pte_idx = INDEX(virt_addr, PTE_LEVEL);
 	pte = pt + pte_idx;
 
 	if ( *pte & PGT_P)
-		return ;
+		return -1;
 	else
-		return;
+		return -1;
 }
 /* vpfn : virtaddress pfn
  * ppfn :  current alloc pfn

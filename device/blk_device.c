@@ -13,5 +13,5 @@ void init_blk_device(dev_t dev_num, struct blk_device *bdev, struct blk_device_o
 
 	/* */
 	init_device(dev_num, &bdev->dev);
-	register_device(&bdev->dev);
+	register_device(dev_num, &bdev->dev);
 }

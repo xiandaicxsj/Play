@@ -34,5 +34,5 @@ struct blk_device
 	struct list_head req_list;
 };
 
-void init_blk_device(struct blk_device *device, struct blk_device_ops *ops);
+void init_blk_device(dev_t dev_num, struct blk_device *device, struct blk_device_ops *ops);
 #endif

@@ -11,7 +11,11 @@ sinclude $(SRCS:.c=.d)
 	rm -f $@.$$$$
 	
 
+%.o: %.S
+	$(ASM) $(ASMFLAGS) -o $@ -c $<
+
 %.o: %.c
+	@echo $(OBJS)
 	@echo compile $< $@
 	$(CC) $(CCFLAGS) $< -o $@
 # &< first prerequisite
@@ -19,12 +23,13 @@ sinclude $(SRCS:.c=.d)
 # now mak 
 .PHONY: all compile depend
 all: compile depend cp
-test_mem: compile depend
+test_device: compile depend  
 
 depend: $(DEPS)
 compile: $(OBJS)
 cp:
 	mv *.o  $(OBJS_DIR)/ 
+
 	
 
 clean:

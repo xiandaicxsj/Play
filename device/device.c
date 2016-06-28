@@ -3,17 +3,16 @@
 struct device_head
 {
 	u16 dev_num_bit_map;
-	struct list list;
+	struct list_head list;
 	u16 dev_num;
 };
 
 struct device_head dev_type_list[DEV_TYPE]; 
 
-int init_device(struct device *dev, u8 major, u8 minor)
+int init_device(dev_t dev_num, struct device *dev, u8 major, u8 minor)
 {
 	list_init(&dev->list);
-	dev->dev_num = DEV_NUM(major, minor);
-	register_device(dev);
+	dev->dev_num = dev_num;
 }
 
 int register_device(struct device *device)
@@ -45,15 +44,30 @@ int alloc_minor(u8 major)
 void init_devices()
 {
 	int dev_type_idx = 0;
-	for (dev_type_idx; dev_type_idx < DEV_TYPE; dev_type_idex ++) 
-	{
+	for (dev_type_idx; dev_type_idx < DEV_TYPE; dev_type_idex ++) {
 		list_init(&dev_type_list[dev_type_idx].list);
 		dev_type_list[dev_type_idex].dev_num_bit_map = 0;
 	}
-	regiset_blk_device();
+
+	init_blk_devices();
 }
 
 struct device *get_device(dev_t dev_num)
 {
-	/* need to be done */
+	struct device_head *dh;
+	struct list_head *pos;
+	struct device *res = NULL;
+	u8 major = DEV_MAJ(dev_num);
+	u8 minor = DEV_MIN(dev_num);
+
+	if (!test_bit(&dh->dev_num_bit_map, minor))
+		return res;
+
+	dh =  &dev_type_list[major];
+	list_for_each(&dh->list, pos) {
+		res = container_of(pos, struct deivce, list);
+		if ( res->dev_num == dev_num )
+			break;
+	}
+	return res;
 }

@@ -29,6 +29,16 @@ void test_blk_init(struct blk_device *device)
 
 }
 
+void test_blk_get_req(struct blk_device *device)
+{
+
+}
+
+void test_blk_free_req(struct blk_device *device, struct blk_req　*req)
+{
+
+}
+
 void test_blk_sub_req(struct blk_device *device, struct blk_req *req)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
@@ -40,6 +50,7 @@ void test_blk_sub_req(struct blk_device *device, struct blk_req *req)
 		test_blk_write(tdb,  req->block_num, req->bh->data);
 		break;
 	}
+	test_blk_free_req(device, req);
 	return ;
 }
 
@@ -80,10 +91,12 @@ static void contruct_test_blk_data(struct test_blk_device *tbd)
 
 void init_test_blk_device()
 {
-	u8 minor = alloc_minor(DEV_BLK);
-	init_blk_device(&tbd.blk_dev, test_blk_ops);
+	dev_t dev_num = ROOT_DEV;
 	//contruct_test_blk_data(&tbd);
+	init_test_blk_req();
 #ifdef TEST_FS
 	tdb.fd = fopen(FILE_BACKEN, "w+");
 #endif
+	init_blk_device(dev_num, &tbd.blk_dev, test_blk_ops);
+
 }

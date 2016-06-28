@@ -3,10 +3,8 @@
 #include"type.h"
 #include"gate.h"
 #include"list.h"
-#ifdef TEST_FS
 #include"fs.h"
 #include"inode.h"
-#endif
 
 #define TASK_RUNNABLE (1u<<0)
 #define TASK_UNINTERRUPT (1u<<1)

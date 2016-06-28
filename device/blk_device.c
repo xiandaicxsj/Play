@@ -1,10 +1,17 @@
 #include"blk_device.h"
 #include"test.h"
 
-void init_blk_device(struct blk_device *dev, struct blk_device_ops *ops)
+void init_blk_devices()
 {
-	u8 minor = alloc_minor(DEV_BLK);
-	list_init(&dev->req_list);
-	dev->ops = ops;
-	init_device(&dev->dev, DEV_BLK, minor);
+	init_test_blk_device();
+}
+
+void init_blk_device(dev_t dev_num, struct blk_device *bdev, struct blk_device_ops *ops)
+{
+	list_init(&bdev->req_list);
+	bdev->ops = ops;
+
+	/* */
+	init_device(dev_num, &bdev->dev);
+	register_device(&bdev->dev);
 }

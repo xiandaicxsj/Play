@@ -22,7 +22,7 @@ struct dir_entry
 /* need to fix */
 
 /* the dev num should be used like this ??*/
-static void get_sb(u32 dev_num, struct m_super_block *sb)
+static void get_sb(struct device *dev, struct m_super_block *sb)
 {
 	struct buffer_head *bh = NULL;
 	bh = look_up_buffer(1);
@@ -169,10 +169,16 @@ static u32 alloc_block(struct m_super_block *sb)
 
 int init_super_block(u32 dev_num)
 {
+	struct device *dev = get_device(dev_num);
+	if (!dev) {
+		return -1;
+
+	}
+
     	sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
 	if (!sb)
 		return -1;
-    	get_sb(dev_num, sb);
+    	get_sb(dev, sb);
 	init_inode(sb);
 	init_block(sb);
 	return 0;

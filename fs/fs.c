@@ -153,7 +153,7 @@ void test3()
 
 int main()
 {
-	init_device();
+	init_devices();
 	init_fs();
 	_sys_open("/root/txt", O_CREATE);
 }

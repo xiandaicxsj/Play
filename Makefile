@@ -13,6 +13,7 @@ CCFLAGS_DEP= -I $(SRC_DIR)/include
 KERNEL_BIN:=kernel.bin
 DIRS = $(SRC_DIR)/mm $(SRC_DIR)/kernel $(SRC_DIR)/loader $(SRC_DIR)/test
 OBJS_DIR= $(SRC_DIR)/objs
+OBJS_TEST= $(SRC_DIR)/test_objs
 
 IMG:=a.img
 FLOPPY:=mnt/
@@ -60,6 +61,7 @@ export CC
 export CCFLAGS
 export CCFLAGS_DEP
 export OBJS_DIR
+export OBJS_TEST
 export ASMFLAGS
 export ASM
 export KERNEL_BIN

@@ -23,14 +23,14 @@ sinclude $(SRCS:.c=.d)
 # now mak 
 .PHONY: all compile depend
 all: compile depend cp
-test_device: compile depend  
+test_device: compile depend  cp_device
 
 depend: $(DEPS)
 compile: $(OBJS)
 cp:
 	mv *.o  $(OBJS_DIR)/ 
-
-	
+cp_device:
+	mv *.o $(OBJS_TEST)/
 
 clean:
 	@echo "clean"

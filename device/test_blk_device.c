@@ -39,10 +39,15 @@ void test_blk_read(struct test_blk_device *tbd, u32 block_num, void *buf)
 
 void test_blk_init(struct blk_device *device)
 {
-
+	return 0;
 }
 
 void test_blk_get_req(struct blk_device *device)
+{
+
+}
+
+static void test_blk_free_req(struct blk_device *device, struct blk_req *req)
 {
 
 }
@@ -86,6 +91,11 @@ static void contruct_test_blk_data(struct test_blk_device *tbd)
 	inode_bm = &tbd->data[inode_bit_map_bn][0];
 	block_bm = &tbd->data[block_bit_map_bn][0];
 /* */
+}
+
+static void init_test_blk_req()
+{
+
 }
 
 void init_test_blk_device(void)

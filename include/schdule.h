@@ -5,6 +5,7 @@
 #include"list.h"
 #include"fs.h"
 #include"inode.h"
+#include"test.h"
 
 #define TASK_RUNNABLE (1u<<0)
 #define TASK_UNINTERRUPT (1u<<1)

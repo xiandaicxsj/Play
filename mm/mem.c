@@ -8,8 +8,6 @@
 #ifdef TEST_MEM
 	#include<stdio.h>
 	#include<stdlib.h>
-	#define MEM_KERN (1 << 0)
-	#define MEM_USER (1 << 1)
 #else
 	#include"debug.h"
 	#include"kernel.lds.h"
@@ -21,7 +19,6 @@ static u32 low_mem_begin;
 static u32 low_mem_end;
 static u32 low_mem_alloc_used;
 static u32 mem_size;
-#endif
 
 #ifdef BUDDY_ALLOC
 
@@ -42,17 +39,7 @@ struct pages_pool
 
 struct page *pages_list;
 struct pages_pool pgp;
-#ifdef TEST_MEM
-void* kmalloc_low_mem(u32 size, u32 align)
-{
-	return malloc(size);
-}
-void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
-{
-	return malloc(size);
-}
 
-#endif
 /* this is used for put the already_used low_memory
  * into buddy mempool
  */
@@ -108,10 +95,8 @@ void init_buddy(u32 mem_size)
 		pages_idx ++;
 		pfn += 1 << order;
 	}
-#ifndef TEST_MEM
 	merge_low_memory();
 	low_mem_alloc_used = 0;
-#endif
 	/* will be used when buddy is ok.
 	 * free_low_memory();
 	 */
@@ -307,7 +292,6 @@ static u32 init_pages_list(u32 mem_size)
 	link_pages(pages_list, mem_size >> PAGE_OFFSET);
 }
 
-#ifndef TEST_MEM
 static void merge_low_memory()
 {
 	u32 p_low_mem = virt_to_phy(low_mem_end);
@@ -323,7 +307,7 @@ static void merge_low_memory()
 
 #endif
 
-#ifdef TEST_MEM
+/*
 void show_page(struct page *pages)
 {
 	printf("   pages - order %d, pfn %d\n", pages->order, pages->pfn);
@@ -366,6 +350,8 @@ void show_buddy_info()
 	}
 }
 
+*/
+/*
 int main()
 {
 	struct page *pages;
@@ -375,28 +361,6 @@ int main()
 	struct page *pages31;
 	u32 mem_size = 256 *1024*1024;
 	init_pages_list(mem_size);
-	init_buddy(mem_size);
-	/*
-	pages0 = _buddy_alloc_pages(1);
-	pages2 = _buddy_alloc_pages(2);
-	pages3 = _buddy_alloc_pages(3);
-	show_buddy_info();
-	pages31 = _buddy_alloc_pages(3);
-	show_buddy_info();
-	printf("free page0\n");
-	_buddy_free_pages(pages0);
-	show_buddy_info();
-	printf("free page2\n");
-	_buddy_free_pages(pages2);
-	show_buddy_info();
-	printf("free page3\n");
-	_buddy_free_pages(pages3);
-	show_buddy_info();
-	printf("free page31\n");
-	_buddy_free_pages(pages31);
-	show_buddy_info();
-	//show_buddy_info();
-	*/
 	pages = _buddy_alloc_pages(1);
 	show_buddy_info();
 	pages = _buddy_alloc_pages(1);
@@ -409,9 +373,8 @@ int main()
 	show_buddy_info();
 	return 0;
 }
-#endif
-#endif
-#ifndef TEST_MEM
+*/
+
 static void* kmalloc_low_mem(u32 size, u32 align)
 {
 	u32 addr;
@@ -506,5 +469,35 @@ void setup_memory()
 	init_buddy(mem_size);
 #endif
 	return ;
+}
+#endif
+
+
+#ifdef TEST_MEM
+void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
+{
+	return malloc(size);
+}
+
+u32 kfree(void *t)
+{
+	free(t);
+	return 0;
+}
+/* not sure of this */
+struct page *kalloc_page(u32 flags)
+{
+	return malloc(PAGE_SIZE);
+}
+
+struct page *kalloc_pages(u32 nr, u32 flags)
+{
+	return malloc(nr * PAGE_SIZE);
+}
+
+u32 free_page(struct page *t)
+{
+	free(t);
+	return 0;
 }
 #endif

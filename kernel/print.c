@@ -4,6 +4,7 @@
 static u32 r = 0;
 static u32 c = 0;
 
+#ifndef TEST_KERNEL
 static u32 cal_cur_off()
 {
 	if (r == 30)
@@ -96,4 +97,5 @@ void print_int(u32 num)
 	str_buf[buf_idx] = '\0';
 	print_str(str_buf);
 }
+#endif
 

@@ -15,5 +15,4 @@ u32 free_page(struct page*);
 void* kmalloc(u32 size, u32 align, u32 flags); /* do we need flags */
 u32 kfree(void *);
 
-
 #endif

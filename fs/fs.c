@@ -5,6 +5,12 @@
 #include"test.h"
 
 
+#ifdef TEST_FS
+#include"string.h"
+int g_fidx = 0;
+struct file_struct g_files[20];
+#endif
+
 void init_fs()
 {
 	init_buffer(ROOT_DEV);
@@ -44,6 +50,10 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	f->inode = inode;
 	f->file_attr = file_attr;
 	f->pos = 0;
+#else
+	fd = g_fidx;
+	f =  &g_files[fd];
+	g_fidx ++;
 #endif
 
 	return fd;
@@ -51,9 +61,15 @@ u32 _sys_open(char *file_path, u32 file_attr)
 
 u32 _sys_read(int fd, void *buffer, u32 size)
 {
-	struct file_struct *f = &current->file[fd];
+	struct file_struct *f ;
 	struct buffer_head *bh;
 	int left = size;
+	
+#ifndef TEST_FS
+	f = &current->file[fd];
+#else
+	f = &g_files[fd];
+#endif
 
 	u32 size_off = 0;
 	u32 size_read = 0;
@@ -75,8 +91,12 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 
 		t_size_read = left > BUF_SIZE ? left : BUF_SIZE;
 
+#ifdef TEST_FS 
+		memcpy(buffer + size_off, bh->data + off_in_block, t_size_read);
+#else
 		if (copy_to_user(buffer + size_off, bh->data + off_in_block, t_size_read))
 			goto out;
+#endif
 
 		left -= t_size_read; 
 		f->pos += t_size_read;
@@ -92,9 +112,15 @@ out:
 u32 _sys_write(int fd, void *buffer, u32 size)
 {
 
-	struct file_struct *f = &current->file[fd];
+	struct file_struct *f;
 	struct buffer_head *bh;
 	int left = size;
+
+#ifndef TEST_FS
+	f = &current->file[fd];
+#else
+	f = &g_files[fd];
+#endif
 
 	u32 size_off = 0;
 	u32 size_read = 0;
@@ -116,11 +142,15 @@ u32 _sys_write(int fd, void *buffer, u32 size)
 
 		t_size_read = left > BUF_SIZE ? left : BUF_SIZE;
 
+#ifdef TEST_FS
+		memcpy(bh->data + off_in_block, buffer + size_off,  t_size_read);
+#else
 		if (copy_from_user(buffer + size_off, bh->data + off_in_block, t_size_read))
 		{
 			bh->dirty = 1;
 			goto out;
 		}
+#endif
 
 		bh->dirty = 1;
 		left -= t_size_read; 
@@ -135,7 +165,7 @@ out:
 }
 
 
-#ifdef TEST_FILE
+#ifdef TEST_FS
 void test1()
 {
 

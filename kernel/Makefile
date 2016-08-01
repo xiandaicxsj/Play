@@ -25,6 +25,10 @@ sinclude $(SRCS:.c=.d)
 .PHONY: all compile depend
 all: compile depend cp
 
+test_kernel: compile depend cp_kernel
+cp_kernel:
+	mv *.o  $(OBJS_TEST)/
+
 depend: $(DEPS)
 compile: $(OBJS)
 cp:

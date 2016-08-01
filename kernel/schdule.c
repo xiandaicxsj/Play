@@ -16,6 +16,7 @@ extern test_process();
 extern test_process1();
 #endif
 
+#ifndef TEST_KERNEL
 #define TASK_SS 4048
 #define LDT_CS 0
 #define LDT_DS 1
@@ -232,5 +233,6 @@ void wait_on(struct list_head *list, struct task_struct *next)
 	list_add(&next->wait_list, list);
 	schdule();
 }
+#endif
 
 

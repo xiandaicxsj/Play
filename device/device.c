@@ -57,10 +57,11 @@ struct device *get_device(dev_t dev_num)
 	u8 major = DEV_MAJ(dev_num);
 	u8 minor = DEV_MIN(dev_num);
 
+	dh =  &dev_type_list[major];
+
 	if (!test_bit(&dh->dev_num_bit_map, minor))
 		return res;
 
-	dh =  &dev_type_list[major];
 	list_for_each(&dh->list, pos) {
 		res = container_of(pos, struct device, list);
 		if ( res->dev_num == dev_num )

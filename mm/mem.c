@@ -487,16 +487,22 @@ u32 kfree(void *t)
 /* not sure of this */
 struct page *kalloc_page(u32 flags)
 {
-	return malloc(PAGE_SIZE);
+	struct page *tmp = (struct page *)malloc(sizeof(*tmp));
+	tmp->pfn = (u32) malloc(PAGE_SIZE); 
+	return tmp;
 }
 
 struct page *kalloc_pages(u32 nr, u32 flags)
 {
-	return malloc(nr * PAGE_SIZE);
+	struct page *tmp = (struct page *)malloc(sizeof(*tmp));
+	tmp->pfn = (u32) malloc(PAGE_SIZE * nr); 
+	return tmp;
 }
 
 u32 free_page(struct page *t)
 {
+	if (t->pfn)
+		free(t->pfn);
 	free(t);
 	return 0;
 }

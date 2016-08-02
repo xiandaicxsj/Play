@@ -133,8 +133,8 @@ void init_buffer(u32 dev_num)
 	struct page * bf_page;
 	void* addr;
 	struct buffer_head *bh;
-	u32 nr_bh;
-	u32 bh_pp_idx;
+	u32 nr_bh = 0;
+	u32 bh_pp_idx = 0;
 	u32 hash_idx = 0;
 
 	list_init(&buf_hash[hash_idx].list);
@@ -145,9 +145,12 @@ void init_buffer(u32 dev_num)
 		bh_page =  kalloc_page(MEM_KERN);
 		if (!bh_page)
 			return ;
+#ifndef TEST_FS
 		addr = (void *)phy_to_virt(bh_page->pfn);  
+#else
 		bh = (struct buffer_head *) addr;
-		
+#endif
+
 		bh_pp_idx = 0;
 		while(bh_pp_idx < bh_per_page)
 		{
@@ -160,7 +163,11 @@ void init_buffer(u32 dev_num)
 			bf_page =  kalloc_page(MEM_KERN);
 			if (!bf_page)
 				return ;
+#ifndef TEST_FS
 			bh->data =  (void *)phy_to_virt(bf_page->pfn);
+#else
+			bh->data = (void *)(bf_page->pfn);
+#endif
 			list_add(&bh->list, &buf_hash[hash_idx].list);
 			bh ++;
 			bh_pp_idx ++;

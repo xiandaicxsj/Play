@@ -11,6 +11,7 @@
 #define INODE_USED 1
 #define INODE_UNUSED 0
 struct m_super_block *sb;
+static struct m_inode root_inode;
 
 struct dir_entry 
 {
@@ -25,7 +26,7 @@ struct dir_entry
 static void get_sb(struct device *dev, struct m_super_block *sb)
 {
 	struct buffer_head *bh = NULL;
-	bh = look_up_buffer(1);
+	bh = look_up_buffer(1); // the first 1 super block 
 	sb->hsb = (struct super_block *)bh->data;
 	sb->bh = bh;
 }
@@ -113,10 +114,21 @@ static void init_inode_map(struct m_super_block *sb)
 	return ;
 }
 
+static void init_root(struct m_super_block *sb)
+{
+	struct buffer_head *bh = NULL;
+	bh = look_up_buffer(sb->hsb->root_node); // the first 1 super block 
+	root_inode.hinode = (struct m_inode *)bh->data;
+	root_inode.sb = sb;
+	root_inode.bh = bh;
+	root_inode.icount = 1;
+}
+
 static void init_inode(struct m_super_block *sb)
 {
 	init_inode_bit_map(sb);
 	init_inode_map(sb);
+	init_root(sb);
 }
 
 static int put_minode(struct m_super_block *sb, struct m_inode *inode)
@@ -267,8 +279,7 @@ void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_
 /* fix me */
 struct m_inode *get_root_node()
 {
-
-	return NULL;
+	return &root_inode;
 }
 
 struct m_inode *get_inode(char *file_path, u32 file_mode)

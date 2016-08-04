@@ -16,8 +16,8 @@ struct device
 #define DEV_TYPE (0xf)
 #define DEV_MIN(dev_num) ((dev_num) & 0x0f)
 #define DEV_MAJ(dev_num) (((dev_num) & 0xf0) >>  4)
-#define DEV_BLK 	(0x1)
-#define DEV_CHAR	(0x2)
+#define DEV_BLK 	(0x0)
+#define DEV_CHAR	(0x1)
 #define DEV_NUM(maj, min) (((maj) << 4 | (min)))
 
 struct device *get_device(dev_t dev_num);

@@ -148,7 +148,7 @@ void init_buffer(u32 dev_num)
 #ifndef TEST_FS
 		addr = (void *)phy_to_virt(bh_page->pfn);  
 #else
-		bh = (struct buffer_head *) addr;
+		bh = (struct buffer_head *) (bh_page->pfn);
 #endif
 
 		bh_pp_idx = 0;

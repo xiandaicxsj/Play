@@ -72,7 +72,7 @@ static void init_inode_map(struct m_super_block *sb)
 	struct m_inode *m_head;
 	struct inode *h_head;
 	u32 num  = sb->hsb->inode_num;
-	u32 pages_num = round_up((num *sizeof(struct m_inode)), PAGE_SIZE);
+	u32 pages_num = round_up((num *sizeof(struct m_inode)), PAGE_SIZE) / PAGE_SIZE;
 
 	u32 block_num = sb->hsb->inode_block_num;
 	u32 block_off = sb->hsb->inode_block_off;
@@ -82,7 +82,12 @@ static void init_inode_map(struct m_super_block *sb)
 	u32 idx = 0;
 
 	page = kalloc_pages(pages_num, MEM_KERN);
+#ifndef TEST_FS
 	sb->inode_map = (struct m_inode *) phy_to_virt(page->pfn);
+#else
+	sb->inode_map = (struct m_inode *) page->pfn;
+#endif
+
 	if (!sb->inode_map)
 		return ;
 

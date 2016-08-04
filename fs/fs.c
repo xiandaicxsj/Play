@@ -7,7 +7,7 @@
 
 #ifdef TEST_FS
 #include"string.h"
-int g_fidx = 0;
+static int g_fidx = 0;
 struct file_struct g_files[20];
 #endif
 
@@ -53,6 +53,11 @@ u32 _sys_open(char *file_path, u32 file_attr)
 #else
 	fd = g_fidx;
 	f =  &g_files[fd];
+
+	f->inode = inode;
+	f->file_attr = file_attr;
+	f->pos = 0;
+
 	g_fidx ++;
 #endif
 
@@ -185,7 +190,7 @@ int main()
 {
 	init_devices();
 	init_fs();
-	_sys_open("/root/txt", O_CREATE);
+	_sys_open("/txt", O_CREATE);
 }
 
 #endif

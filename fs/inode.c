@@ -229,7 +229,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	u32 nr_block = inode->hinode->zone[0];
 	struct buffer_head *bh;
 	struct dir_entry *de;
-	struct dir_entry *emp_de;
+	struct dir_entry *emp_de = NULL;
 
 	/* bh should contain the data */
 	u32 dir_entry_num = BUF_SIZE / sizeof(struct dir_entry);
@@ -243,7 +243,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	{
 		if(!str_cmp(de->name, dir, dir_len))
 			break;
-		if (emp_de && *(de->name) =='\0')
+		if (!emp_de && *(de->name) =='\0')
 			emp_de = de;
 		de++;
 		dir_idx ++;
@@ -287,6 +287,7 @@ struct m_inode *get_root_node()
 	return &root_inode;
 }
 
+/* root inode is 0 */
 struct m_inode *get_inode(char *file_path, u32 file_mode)
 {
 	struct m_inode * parent_inode;

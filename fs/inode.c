@@ -151,10 +151,11 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode)
 	struct m_inode *inode;
 	u32 idx = find_first_avail_bit(sb->inode_bit_map, BUF_SIZE);
 	set_bit(sb->inode_bit_map, idx);
+	set_bh_dirty(sb->inode_bm_bh);
 
 	sb->hsb->inode_used ++;
 	inode = sb->inode_map + idx; /* the dirty bit of struct m_inode */
-	set_bh_dirty(sb->inode_bm_bh);
+	set_bh_dirty(sb->bh);
 	/* init inode */	
 	memset(inode->hinode, 0, sizeof(struct inode));
 	inode->hinode->used = INODE_USED;
@@ -182,6 +183,7 @@ static u32 alloc_block(struct m_super_block *sb)
 	set_bit(sb->block_bit_map, idx);
 	sb->hsb->block_used ++;
 	set_bh_dirty(sb->bh);
+	set_bh_dirty(sb->block_bm_bh);
 
 	return idx;
 	/* get availule block */

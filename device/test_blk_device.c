@@ -27,7 +27,8 @@ struct test_blk_device
 void test_blk_write(struct test_blk_device *tbd, u32 block_num, void *buf)
 {
 #ifdef TEST_FS
-	fseek(tbd->fd, block_num * TEST_DEV_BLK_SIZE, SEEK_END);
+	u32 off = (block_num > 1 ? block_num -1 :0)* TEST_DEV_BLK_SIZE;
+	fseek(tbd->fd, off, SEEK_SET);
 	fwrite(buf, 1, TEST_DEV_BLK_SIZE, tbd->fd);
 #endif
 }

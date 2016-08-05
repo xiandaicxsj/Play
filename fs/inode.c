@@ -110,7 +110,10 @@ static void init_inode_map(struct m_super_block *sb)
 			h_head ++;
 			m_head ++;
 			idx ++;
+			/* FIXME we need to zero m_head */
 			m_head->bh = bh;
+			m_head->sb = sb;
+			m_head->dirty = 0;
 		}
 
 		block_num --;
@@ -346,15 +349,25 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	return inode;
 }
 
-struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr)
+struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr)
 {
 	/* wo should  del with large file here */
 	/* block_nr is the offset in the zone array */
 	/* block_num is the real block num */
 	u32 block_num = inode->hinode->zone[block_nr];
 
-	if(block_num == -1)
-		return NULL;
+	/* if is read and block_is none */
+	if(block_num == 0 )
+	{
+		if (attr & O_RDWR)
+		{
+			block_num = alloc_block(inode->sb);
+			inode->hinode->zone[block_nr] = block_num;
+			set_bh_dirty(sb->inode_bm_bh);
+		} else 
+			return NULL;
+
+	}
 
 	return look_up_buffer(block_num);
 }

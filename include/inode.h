@@ -65,6 +65,6 @@ struct m_inode
 	u32 dirty; /* the inode is dirty, not the content is dirty */
 };
 struct m_inode *get_inode(char *file_path, u32 file_mode);
-struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr);
+struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);
 int init_super_block(u32 dev_num);
 #endif

@@ -27,9 +27,16 @@ struct test_blk_device
 void test_blk_write(struct test_blk_device *tbd, u32 block_num, void *buf)
 {
 #ifdef TEST_FS
+	void *mem = kmalloc(TEST_DEV_BLK_SIZE , 0 ,0);
+	int ret = 0;
+
 	u32 off = (block_num > 1 ? block_num -1 :0)* TEST_DEV_BLK_SIZE;
 	fseek(tbd->fd, off, SEEK_SET);
-	fwrite(buf, 1, TEST_DEV_BLK_SIZE, tbd->fd);
+	ret = fwrite(buf, 1, TEST_DEV_BLK_SIZE, tbd->fd);
+	fflush(tbd->fd);
+
+	fseek(tbd->fd, off, SEEK_SET);
+	fread(mem, 1, TEST_DEV_BLK_SIZE, tbd->fd);
 #endif
 }
 
@@ -111,13 +118,19 @@ static void init_test_blk_req()
 
 }
 
+void des_test_blk_device(void)
+{
+	if (tbd.fd)
+		fclose(tbd.fd);
+}
+
 void init_test_blk_device(void)
 {
 	dev_t dev_num = ROOT_DEV;
 	//contruct_test_blk_data(&tbd);
 	init_test_blk_req();
 #ifdef TEST_FS
-	tbd.fd = fopen(FILE_BACKEN, "a+");
+	tbd.fd = fopen(FILE_BACKEN, "r+");
 #endif
 	init_blk_device(dev_num, &tbd.blk_dev, &test_blk_ops);
 	test_blk_init(&tbd.blk_dev);

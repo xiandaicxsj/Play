@@ -64,6 +64,17 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	return fd;
 }
 
+u32 _sys_seek(int fd, u32 off)
+{
+	struct file_struct *f ;
+#ifndef TEST_FS
+	f = &current->file[fd];
+#else
+	f = &g_files[fd];
+#endif
+	f->pos = off;
+
+}
 u32 _sys_read(int fd, void *buffer, u32 size)
 {
 	struct file_struct *f ;
@@ -94,7 +105,7 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 		if (!bh)
 			goto out;
 
-		t_size_read = left > BUF_SIZE ? left : BUF_SIZE;
+		t_size_read = left < BUF_SIZE ? left : BUF_SIZE;
 
 		/* mark bh as dirty */
 #ifdef TEST_FS 
@@ -163,7 +174,7 @@ u32 _sys_write(int fd, void *buffer, u32 size)
 		}
 #endif
 
-		bh->dirty = 1;
+		set_bh_dirty(bh);
 		left -= t_size_write; 
 		f->pos += t_size_write;
 		size_write += t_size_write;
@@ -196,6 +207,7 @@ int main()
 {
 	int fd = 0;
 	char buf[20];
+	char k[20];
 	int ret;
 	init_devices();
 	init_fs();
@@ -203,6 +215,10 @@ int main()
 	sprintf(buf, "aaa");
 	ret = _sys_write(fd, buf, sizeof(buf));
 	printf("%d\n", ret);
+	_sys_seek(fd, 0);
+	_sys_read(fd, k, sizeof(k));
+	printf("%s\n", k);
+	des_devices();
 	return 0;
 }
 

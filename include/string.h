@@ -10,9 +10,19 @@ static void inline memset(void *addr, u8 value, u32 size)
 	}
 }
 
-static void inline memcpy(void *dsr, void *addr, u32 size)
+static void inline memcpy(void *dest, void *src, u32 size)
 {
-
+	u8 *d = (u8 *)dest;
+	u8 *s = (u8 *)src;
+	int i = 0;
+	while(i< size)
+	{
+		*d = *s;
+		d++;
+		s++;
+		i++;
+	}
+	/* asm */
 }
 
 static u32 inline str_cmp(char *a, char *b, u32 len)

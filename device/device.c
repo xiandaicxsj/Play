@@ -48,6 +48,10 @@ void init_devices()
 
 	init_blk_devices();
 }
+void des_devices()
+{
+	des_blk_devices();
+}
 
 struct device *get_device(dev_t dev_num)
 {

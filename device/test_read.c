@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 typedef unsigned int u32;
 #define PAGE_SIZE 4096
 #define DIR_LEN 20
@@ -72,21 +73,20 @@ int main(int argc ,char *argv[])
 {
 	FILE *f;
 	struct block bk; 
-	int br  = 3;
+	int br = atoi(argv[1]);
+	printf("br %d\n", br);
 
-	f = fopen(BACK_FILE, "w+");
+	f = fopen("test_backen.bin", "r");
 
 	union first_block fb;
-	memset(&fb, 0, sizeof(fb)); 
+	read_block(f, 1, fb.b, sizeof(fb));
 
-	if (fread(&fb, sizeof(fb),1, f) != 1)
-		printf("read erro\n");
 	struct super_block *sb = &fb.sb;
 	printf(" inode_num is %d \n", sb->inode_num);
 	printf(" inode_used is %d \n", sb->inode_used);
 	printf(" block_num is %d \n", sb->block_num);
 	printf(" block_used is %d \n", sb->block_used);
-	printf(" block_used is %d \n", sb->magic);
+	printf(" magic is %d \n", sb->magic);
 	printf(" inode_block_off is %d \n", sb->inode_block_off);
 	printf(" inode_block_num is %d \n", sb->inode_block_num);
 	/* 14 bit contain real content */
@@ -96,8 +96,7 @@ int main(int argc ,char *argv[])
 
 
 	int i= 0;
-	if (fread(&bk, sizeof(bk), 1, f) != 1)
-		printf("error");
+	read_block(f, br, bk.b, sizeof(bk));
 	for( i; i < 10; i++)
 	{
 		printf("%d: 0x%x\n",i, bk.b[i]);

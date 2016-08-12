@@ -211,9 +211,12 @@ int main()
 	int ret;
 	init_devices();
 	init_fs();
+	/*
 	fd = _sys_open("/txt", O_CREATE |O_RDWR);
 	sprintf(buf, "aaa");
 	ret = _sys_write(fd, buf, sizeof(buf));
+	*/
+	fd = _sys_open("/txt", O_RD);
 	printf("%d\n", ret);
 	_sys_seek(fd, 0);
 	_sys_read(fd, k, sizeof(k));

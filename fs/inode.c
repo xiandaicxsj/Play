@@ -325,7 +325,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++, dir_len ++)
 			c = get_char(file_path);
 
-		if (c == '\0' ) {
+		if (c == '\0' && is_alloc) {
 			get_pdir_ok = 1;
 		}
 

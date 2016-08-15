@@ -95,7 +95,19 @@ int main(int argc ,char *argv[])
 	printf(" root_node is %d \n", sb->root_node);
 
 
+	read_block(f, 4, bk.b, sizeof(bk));
+	struct inode *ib;
+	ib = (struct inode * )bk.b;
 	int i= 0;
+	for( i; i < 10; i++)
+
+	{
+		printf("indx is %d\n", ib->index);
+		printf("zone is %d\n", ib->zone[0]);
+		ib ++;
+	}
+
+	i = 0;
 	read_block(f, br, bk.b, sizeof(bk));
 	for( i; i < 10; i++)
 	{

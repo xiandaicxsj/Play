@@ -107,13 +107,14 @@ static void init_inode_map(struct m_super_block *sb)
 			else
 				m_head->used = INODE_NUSED;
 			*/
-			h_head ++;
-			m_head ++;
-			idx ++;
 			/* FIXME we need to zero m_head */
 			m_head->bh = bh;
 			m_head->sb = sb;
 			m_head->dirty = 0;
+
+			h_head ++;
+			m_head ++;
+			idx ++;
 		}
 
 		block_num --;
@@ -235,6 +236,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	struct buffer_head *bh;
 	struct dir_entry *de;
 	struct dir_entry *emp_de = NULL;
+	struct m_inode *r_inode;
 
 	/* bh should contain the data */
 	u32 dir_entry_num = BUF_SIZE / sizeof(struct dir_entry);
@@ -256,13 +258,13 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 
 	if (dir_idx != dir_entry_num)
 	{
-		inode = get_inode_by_idx(inode->sb, de->inode_idx);
-		if (!inode) 
+		r_inode = get_inode_by_idx(inode->sb, de->inode_idx);
+		if (!r_inode) 
 			return NULL;
 
-		if ( !IS_DIR(inode->hinode->mode) )
+		if ( !IS_DIR(r_inode->hinode->mode) )
 			return NULL;
-		return inode;
+		return r_inode;
 	}
 	*de_ptr = emp_de;
 	return NULL;
@@ -322,8 +324,10 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		/* bugs */
 		dir = file_path;
 		dir_len = 0;
-		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++, dir_len ++)
+		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++) {
 			c = get_char(file_path);
+			dir_len ++;
+		}
 
 		if (c == '\0' && is_alloc) {
 			get_pdir_ok = 1;
@@ -333,6 +337,8 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		if (!inode)
 			break;
 
+		if (c == '\0' && !is_alloc)
+			return inode;
 		file_path ++;
 		parent_inode = inode;
 	}
@@ -365,7 +371,7 @@ struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr)
 		{
 			block_num = alloc_block(inode->sb);
 			inode->hinode->zone[block_nr] = block_num;
-			set_bh_dirty(sb->inode_bm_bh);
+			set_bh_dirty(inode->bh);
 		} else 
 			return NULL;
 

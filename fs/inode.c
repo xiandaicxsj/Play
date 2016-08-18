@@ -333,6 +333,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 			get_pdir_ok = 1;
 		}
 
+		/* de_ptr will be get from later func */
 		inode = get_dir_entry_inode(dir, dir_len, parent_inode, de_ptr);
 		if (!inode)
 			break;

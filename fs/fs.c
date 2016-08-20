@@ -26,7 +26,26 @@ u32 alloc_file_struct(struct task_struct *current)
 
 u32 _sys_close(u32 fd)
 {
+	struct file_struct *f;
 
+	if (fd < 0 )
+		return -1;
+#ifndef TEST_FS
+	f = &current->file[fd];
+
+	if (!f)
+		return NULL;
+#else
+	f =  &g_files[fd];
+	if (!f)
+		return NULL;
+#endif
+	free_inode(f->inode);
+
+#ifndef TEST_FS
+	current->fs[fd] = NULL;
+	/* FIXME delete fd */
+#endif
 }
 
 u32 _sys_open(char *file_path, u32 file_attr)

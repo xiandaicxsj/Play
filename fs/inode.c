@@ -294,6 +294,29 @@ struct m_inode *get_root_node()
 	return &root_inode;
 }
 
+/* put_inode means we flush the inode buffer
+   and dec inode->count, we will never free the 
+   inode related buffer */
+int put_inode(struct m_inode *inode)
+{
+	if(!inode)
+		return -1;
+	if (inode->icount <= 0)
+		/* FIXME */
+		return 0;
+	inode->inode --;
+	if (inode->count)
+		return 0;
+	/* think of mort */
+	if (inode->dirty)
+		put_bh(inode->bh);
+	/* do we need to sync the inode buffer */
+	/* inode->dirty ??? */
+	inode->dirty = 0;
+	flush_bhs();
+	return 0;
+}
+
 /* root inode is 0 */
 struct m_inode *get_inode(char *file_path, u32 file_mode)
 {
@@ -338,8 +361,10 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		if (!inode)
 			break;
 
-		if (c == '\0' && !is_alloc)
+		if (c == '\0' && !is_alloc) {
+			inode->count ++;
 			return inode;
+		}
 		file_path ++;
 		parent_inode = inode;
 	}
@@ -352,10 +377,19 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 		/* find */
 		/* del with this dir */
 		insert_parent_inode(parent_inode, *de_ptr, inode, dir, dir_len);
+		inode->count ++;
 		/* init_inode */
 
 	}
 	return inode;
+}
+
+int put_inode_bh(struct buffer_head *bh)
+{
+	if (bh->dirty)
+		put_bh();
+	/* check whethe locked bit of bh is set */
+	return free_bh(bh);
 }
 
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr)

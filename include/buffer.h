@@ -13,7 +13,7 @@ struct buffer_head
 	void *data;/* 4k or may be 1k 2k */
 	u32 dirty;
 	u32 block_num;
-	int icount; /* who refer to this */
+	int count; /* who refer to this */
 	int locked;
 	struct list_head wait_queue; /* task wait for this */
 };
@@ -21,6 +21,7 @@ void init_buffer(u32 dev_num);
 struct buffer_head* look_up_buffer(u32 block_num);
 void put_bh(struct buffer_head *bh);
 void get_bh(struct buffer_head *bh);
-u32 free_buffer(struct buffer_head *bh);
+int free_bh(struct buffer_head *bh);
 void set_bh_dirty(struct buffer_head *bh);
+void flush_bhs();
 #endif

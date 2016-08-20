@@ -61,10 +61,13 @@ struct m_inode
 	struct m_super_block *sb;
 	/* bh -> m_inode struct , not the content of file */
 	struct buffer_head *bh;
-	u32 icount;
+	u32 count;
 	u32 dirty; /* the inode is dirty, not the content is dirty */
 };
+
 struct m_inode *get_inode(char *file_path, u32 file_mode);
+int put_inode(struct m_inode *inode);
+
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);
 int init_super_block(u32 dev_num);
 #endif

@@ -9,53 +9,136 @@
 #define BUF_HASH(size) ((size %  HASH_SIZE) + 1) /* 0 is used for free buf */
 struct buffer_head buf_hash[HASH_SIZE];
 
-static struct buffer_head *alloc_new_bh(u32 block_num)
+void flush_bhs(void)
+{
+	u32 free_hash_idx ;
+	struct buffer_head *bh;
+
+	free_hash_idx = 1;
+	while(free_hash_idx < HASH_SIZE) {
+		bh = &buf_hash[free_hash_idx];
+		if (!bh->count)
+	/* search for certain */
+	/* need write this part */
+	/* for_each_list */
+		struct list_head *pos;
+		struct buffer_head *cur;
+
+		list_for_each(&bh->list, pos) {
+			cur = container_of(pos, struct buffer_head, list);
+			if (cur->dirty) {
+				put_bh(cur);
+			}
+		}
+		free_hash_idx ++;
+	}
+}
+
+/* FIXME bh->dirty */
+/* May think of a good way to handle this */
+static int try_free_bh(struct buffer_head *bh)
+{
+
+	if (bh->locked)
+		return -1;
+
+	if (bh->count > 0)
+		return -1;
+
+	if (bh->dirty)
+		put_bh(bh);
+
+	list_del(&bh->list);
+	buf_hash[BUF_HASH(bh->block_num)].count --;	
+	list_add(&bh->list, &buf_hash[free_hash_idx].list);
+	buf_hash[free_hash_idx].count++ ;
+}
+
+/* when bh is not enough we should force
+   free some bh */
+static int force_free_bhs()
+{
+	u32 free_hash_idx ;
+	struct buffer_head *bh;
+
+	free_hash_idx = 1;
+	while(free_hash_idx < HASH_SIZE) {
+		bh = &buf_hash[free_hash_idx];
+		if (!bh->count)
+	/* search for certain */
+	/* need write this part */
+	/* for_each_list */
+		struct list_head *pos;
+		struct buffer_head *cur;
+
+		list_for_each(&bh->list, pos) {
+			cur = container_of(pos, struct buffer_head, list);
+			try_free_bh(cur);
+		}
+		free_hash_idx ++;
+}
+
+int free_bh(struct buffer_head *bh)
+{
+	u32 free_hash_idx = 0;
+	/* other del should be done here */
+	/* need to write buffer to disk */
+	/* need to check count */
+	/* FIXME do we need to set this */
+	if (bh->locked)
+		return -1;
+
+	/* count should be 0 */
+	if (bh->count <= 0)
+		return -1;
+
+	bh->count --;
+
+	list_del(&bh->list);
+	buf_hash[BUF_HASH(bh->block_num)].count --;	
+	list_add(&bh->list, &buf_hash[free_hash_idx].list);
+	buf_hash[free_hash_idx].count++ ;
+	return 0;
+}
+
+static struct buffer_head *alloc_bh(u32 block_num)
 {
 	u32 free_hash_idx = 0;
 	struct buffer_head *bh = NULL;
 	struct list_head *list;
-	if(!buf_hash[free_hash_idx].icount)
-		return bh;
-
+	if(!buf_hash[free_hash_idx].count)
+	{
+		if (force_free_bhs())
+			return NULL;
+	}
 	/* this need to be locked */
 	list = buf_hash[free_hash_idx].list.next;
 	bh = container_of(list, struct buffer_head, list);
-	buf_hash[free_hash_idx].icount --;
+	buf_hash[free_hash_idx].count --;
 
 	list_del(list);
 	list_add(list, &buf_hash[BUF_HASH(block_num)].list);
-	buf_hash[BUF_HASH(block_num)].icount ++;
+	buf_hash[BUF_HASH(block_num)].count ++;
 
 	bh->dirty = 0;
 	bh->block_num = block_num;
-	bh->icount = 0;/* who refer to this */
+	bh->count = 1;/* who refer to this */
 	bh->locked = 0;
 
 	return bh;
 }
 
-/* when some bh is needed, we need to free some bh */
-static u32 release_bh()
-{
-	u32 hash_idx = 0;
-	if (buf_hash[hash_idx].icount)
-		return -1;
-	for(; hash_idx < HASH_SIZE; hash_idx ++);
-
-	/* how to release the buffer */
-	return 0;
-}
 /* search in hash table */
 static struct buffer_head *_look_up_buffer(u32 block_num)
 {
 	struct buffer_head *bh = &buf_hash[BUF_HASH(block_num)];
-	if (!bh->icount)
+	if (!bh->count)
 		return NULL;
 	/* search for certain */
 	/* need write this part */
 	/* for_each_list */
 	struct list_head *pos;
-	struct buffer_head *cur;
+	struct buffer_head *cur = NULL;
 
 	list_for_each(&bh->list, pos)
 	{
@@ -63,20 +146,10 @@ static struct buffer_head *_look_up_buffer(u32 block_num)
 		if (cur->block_num == block_num)
 			break;
 	}
-	return cur; /* bh may be NULL */
-}
+	if (cur)
+		cur->count ++;
 
-u32 free_buffer(struct buffer_head *bh)
-{
-	u32 free_hash_idx = 0;
-	/* other del should be done here */
-	/* need to write buffer to disk */
-	/* need to check icount */
-	list_del(&bh->list);
-	buf_hash[BUF_HASH(bh->block_num)].icount --;	
-	list_add(&bh->list, &buf_hash[free_hash_idx].list);
-	buf_hash[free_hash_idx].icount++ ;
-	return 0;
+	return cur; /* bh may be NULL */
 }
 
 void get_bh(struct buffer_head *bh)
@@ -84,8 +157,7 @@ void get_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 	bh->locked = 1;
 	/* lock */
-	switch (DEV_MAJ(device->dev_num))
-	{
+	switch (DEV_MAJ(device->dev_num)) {
 		case DEV_BLK:
 			blk_read(device, bh);
 			break;
@@ -100,8 +172,7 @@ void put_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 
 	bh->locked = 1;
-	switch (DEV_MAJ(device->dev_num))
-	{
+	switch (DEV_MAJ(device->dev_num)) {
 		case DEV_BLK:
 			blk_write(device, bh);
 			break;
@@ -116,7 +187,7 @@ struct buffer_head* look_up_buffer(u32 block_num)
 	struct buffer_head *bh  = _look_up_buffer(block_num);
 	if (bh)
 		return bh;
-	bh = alloc_new_bh(block_num);
+	bh = alloc_bh(block_num);
 	if (!bh)
 		return NULL;
 	/* read */
@@ -138,7 +209,7 @@ void init_buffer(u32 dev_num)
 	u32 hash_idx = 0;
 
 	list_init(&buf_hash[hash_idx].list);
-	buf_hash[hash_idx].icount = 0;
+	buf_hash[hash_idx].count = 0;
 
 	while(nr_bh < BUF_NUM)
 	{
@@ -155,7 +226,7 @@ void init_buffer(u32 dev_num)
 		while(bh_pp_idx < bh_per_page)
 		{
 			list_init(&bh->list);
-			bh->icount = 0;
+			bh->count = 0;
 			bh->block_num = -1;
 			bh->dirty = 0;
 			bh->device = dev;
@@ -171,7 +242,7 @@ void init_buffer(u32 dev_num)
 			list_add(&bh->list, &buf_hash[hash_idx].list);
 			bh ++;
 			bh_pp_idx ++;
-			buf_hash[hash_idx].icount ++;
+			buf_hash[hash_idx].count ++;
 		}
 		nr_bh += bh_per_page;
 	}
@@ -179,7 +250,7 @@ void init_buffer(u32 dev_num)
 	hash_idx ++;
 	for (; hash_idx < HASH_SIZE; hash_idx ++)
 	{
-		buf_hash[hash_idx].icount = 0;
+		buf_hash[hash_idx].count = 0;
 		list_init(&buf_hash[hash_idx].list);
 	}
 }
@@ -191,7 +262,7 @@ void sync_buffer()
 	struct list_head *plist;
 	for (; hash_idx < HASH_SIZE; hash_idx ++)
 	{
-		if (buf_hash[hash_idx].icount)
+		if (buf_hash[hash_idx].count)
 			list_for_each(&buf_hash[hash_idx].list, plist)
 		{
 			bh = container_of(plist, struct buffer_head, list); 

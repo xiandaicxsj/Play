@@ -384,6 +384,13 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	return inode;
 }
 
+static void set_inode_dirty(struct m_inode *inode)
+{
+	inode->dirty = 1;
+	set_bh_dirty(inode->bh);
+
+}
+
 int put_inode_bh(struct buffer_head *bh)
 {
 	if (bh->dirty)
@@ -406,7 +413,7 @@ struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr)
 		{
 			block_num = alloc_block(inode->sb);
 			inode->hinode->zone[block_nr] = block_num;
-			set_bh_dirty(inode->bh);
+			set_inode_dirty(inode);
 		} else 
 			return NULL;
 

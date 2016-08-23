@@ -19,9 +19,10 @@ struct test_blk_device
 #ifdef TEST_FS
 	FILE *fd;
 #endif
-	struct blk_req req;
-	int req_idx;
-	int req_max;
+	struct list_head free_req_list;
+	struct list_head used_req_list;
+	u32 req_count;
+	struct page *req_page;
 };
 
 void test_blk_write(struct test_blk_device *tbd, u32 block_num, void *buf)
@@ -61,11 +62,17 @@ void test_blk_init(struct blk_device *device)
 static struct blk_req* test_blk_get_req(struct blk_device *device)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
+	struct list_head *cur;
+	struct blk_req *req;
 
-	/*if (tbd->req_idx >= tbd->req_max)
+	if (tbd->req_count <= 0)
 		return NULL;
-	*/
-	return &tbd->req;
+
+	cur = tbd.free_req_list.next;
+	tbd->req_count --;
+	req = container_of(cur, struct blk_req, list);
+
+	return NULL;
 }
 
 static void test_blk_free_req(struct blk_device *device, struct blk_req *req)
@@ -115,7 +122,29 @@ static void contruct_test_blk_data(struct test_blk_device *tbd)
 
 static void init_test_blk_req()
 {
+	struct blk_req * req_addr;
+	u32 req_num  = 0;
+	u32 req_idx = 0;
 
+	list_init(&tbd.free_req_list);
+	list_init(&tbd.used_req_list);
+	tbd.req_page =  kalloc_page(MEM_KERN);
+
+#ifdef TEST_FS
+	req_addr = (struct blk_req *)(tbd.req_page->pfn);
+#else
+	req_addr = phy_to_virt(tbd.req_page->pfn);
+#endif
+	
+	req_num = PAGE_SIZE / sizeof(*req);
+
+	for(req_idx; req_idx < req_num; req_idx ++)	
+	{
+		list_init(&req_addr->list);
+		list_add(&req_addr, &tbd.free_req_list);
+		req_addr++;
+	}
+	tbd.req_count = req_num;
 }
 
 void des_test_blk_device(void)

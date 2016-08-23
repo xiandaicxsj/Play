@@ -2,6 +2,8 @@
 #include"blk_device.h"
 #include"type.h"
 #include"fs.h"
+#include"page.h"
+#include"mem.h"
 #ifdef TEST_FS
 #include<stdio.h>
 #define FILE_BACKEN "../device/test_backen.bin"
@@ -54,12 +56,10 @@ void test_blk_read(struct test_blk_device *tbd, u32 block_num, void *buf)
 void test_blk_init(struct blk_device *device)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
-	tbd->req_idx = 0;
-	tbd->req_max = 2;
 	return 0;
 }
 
-static struct blk_req* test_blk_get_req(struct blk_device *device)
+static struct blk_req *test_blk_get_req(struct blk_device *device)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
 	struct list_head *cur;
@@ -68,7 +68,7 @@ static struct blk_req* test_blk_get_req(struct blk_device *device)
 	if (tbd->req_count <= 0)
 		return NULL;
 
-	cur = tbd.free_req_list.next;
+	cur = tbd->free_req_list.next;
 	tbd->req_count --;
 	req = container_of(cur, struct blk_req, list);
 
@@ -136,12 +136,12 @@ static void init_test_blk_req()
 	req_addr = phy_to_virt(tbd.req_page->pfn);
 #endif
 	
-	req_num = PAGE_SIZE / sizeof(*req);
+	req_num = PAGE_SIZE / sizeof(*req_addr);
 
 	for(req_idx; req_idx < req_num; req_idx ++)	
 	{
 		list_init(&req_addr->list);
-		list_add(&req_addr, &tbd.free_req_list);
+		list_add(&req_addr->list, &tbd.free_req_list);
 		req_addr++;
 	}
 	tbd.req_count = req_num;

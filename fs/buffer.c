@@ -13,21 +13,25 @@ void flush_bhs(void)
 {
 	u32 free_hash_idx ;
 	struct buffer_head *bh;
+	struct list_head *pos;
+	struct buffer_head *cur;
 
 	free_hash_idx = 1;
 	while(free_hash_idx < HASH_SIZE) {
 		bh = &buf_hash[free_hash_idx];
 		if (!bh->count)
+			continue;
 	/* search for certain */
 	/* need write this part */
 	/* for_each_list */
-		struct list_head *pos;
-		struct buffer_head *cur;
+		pos = NULL;
+		cur = NULL;
 
 		list_for_each(&bh->list, pos) {
 			cur = container_of(pos, struct buffer_head, list);
 			if (cur->dirty) {
 				put_bh(cur);
+				cur->dirty = 0;
 			}
 		}
 		free_hash_idx ++;
@@ -39,6 +43,7 @@ void flush_bhs(void)
 static int try_free_bh(struct buffer_head *bh)
 {
 
+	int free_hash_idx = 0;
 	if (bh->locked)
 		return -1;
 
@@ -60,22 +65,26 @@ static int force_free_bhs()
 {
 	u32 free_hash_idx ;
 	struct buffer_head *bh;
+	struct list_head *pos;
+	struct buffer_head *cur;
 
 	free_hash_idx = 1;
 	while(free_hash_idx < HASH_SIZE) {
 		bh = &buf_hash[free_hash_idx];
 		if (!bh->count)
+			continue;
 	/* search for certain */
 	/* need write this part */
 	/* for_each_list */
-		struct list_head *pos;
-		struct buffer_head *cur;
+		pos = NULL;
+		cur = NULL;
 
 		list_for_each(&bh->list, pos) {
 			cur = container_of(pos, struct buffer_head, list);
 			try_free_bh(cur);
 		}
 		free_hash_idx ++;
+	}
 }
 
 int free_bh(struct buffer_head *bh)

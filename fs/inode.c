@@ -130,7 +130,7 @@ static void init_root(struct m_super_block *sb)
 	root_inode.hinode = (struct m_inode *)bh->data;
 	root_inode.sb = sb;
 	root_inode.bh = bh;
-	root_inode.icount = 1;
+	root_inode.count = 1;
 }
 
 static void init_inode(struct m_super_block *sb)
@@ -301,10 +301,10 @@ int put_inode(struct m_inode *inode)
 {
 	if(!inode)
 		return -1;
-	if (inode->icount <= 0)
+	if (inode->count <= 0)
 		/* FIXME */
 		return 0;
-	inode->inode --;
+	inode->count --;
 	if (inode->count)
 		return 0;
 	/* think of mort */
@@ -387,7 +387,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 int put_inode_bh(struct buffer_head *bh)
 {
 	if (bh->dirty)
-		put_bh();
+		put_bh(bh);
 	/* check whethe locked bit of bh is set */
 	return free_bh(bh);
 }

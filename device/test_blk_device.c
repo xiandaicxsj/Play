@@ -77,6 +77,9 @@ static struct blk_req *test_blk_get_req(struct blk_device *device)
 
 static void test_blk_free_req(struct blk_device *device, struct blk_req *req)
 {
+	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
+
+	list_add(&req->list, &tbd->free_req_list);
 }
 
 void test_blk_sub_req(struct blk_device *device, struct blk_req *req)

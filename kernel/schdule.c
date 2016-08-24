@@ -227,11 +227,15 @@ void schdule()
 	switch_to(current, next);
 }
 
-void wait_on(struct list_head *list, struct task_struct *next)
+void wait_on(struct list_head *wait_list, struct task_struct *next)
 {
 	next->status = TASK_UNINTERRUPT;
-	list_add(&next->wait_list, list);
+	list_add(&next->wait_list, wait_list);
 	schdule();
+}
+
+void wake_up(struct list_head  *wait_list)
+{
 }
 #endif
 

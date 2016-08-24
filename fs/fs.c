@@ -48,6 +48,11 @@ u32 _sys_close(u32 fd)
 #endif
 }
 
+u32 _sys_mkdir(char *dir_name)
+{
+
+}
+
 u32 _sys_open(char *file_path, u32 file_attr)
 {
 	struct m_inode *inode;

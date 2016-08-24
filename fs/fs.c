@@ -40,7 +40,7 @@ u32 _sys_close(u32 fd)
 	if (!f)
 		return NULL;
 #endif
-	free_inode(f->inode);
+	put_inode(f->inode);
 
 #ifndef TEST_FS
 	current->fs[fd] = NULL;
@@ -230,16 +230,18 @@ int main()
 	int ret;
 	init_devices();
 	init_fs();
-	/*
+
 	fd = _sys_open("/txt", O_CREATE |O_RDWR);
 	sprintf(buf, "aaa");
 	ret = _sys_write(fd, buf, sizeof(buf));
-	*/
+	/*
 	fd = _sys_open("/txt", O_RD);
 	printf("%d\n", ret);
 	_sys_seek(fd, 0);
 	_sys_read(fd, k, sizeof(k));
 	printf("%s\n", k);
+	*/
+	_sys_close(fd);
 	des_devices();
 	return 0;
 }

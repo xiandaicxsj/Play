@@ -9,6 +9,18 @@
 #define BUF_HASH(size) ((size %  HASH_SIZE) + 1) /* 0 is used for free buf */
 struct buffer_head buf_hash[HASH_SIZE];
 
+/* remain to be done 
+void copy_from_bh(struct buffer_head *bh, u32 off, u32 size, void *dest)
+{
+
+}
+
+void copy_to_bh(struct buffer_head *bh, u32 off, u32 size, void *src)
+{
+
+}
+*/
+
 void flush_bhs(void)
 {
 	u32 free_hash_idx ;
@@ -17,7 +29,7 @@ void flush_bhs(void)
 	struct buffer_head *cur;
 
 	free_hash_idx = 1;
-	while(free_hash_idx < HASH_SIZE) {
+	for(; free_hash_idx < HASH_SIZE; free_hash_idx ++) {
 		bh = &buf_hash[free_hash_idx];
 		if (!bh->count)
 			continue;
@@ -34,7 +46,6 @@ void flush_bhs(void)
 				cur->dirty = 0;
 			}
 		}
-		free_hash_idx ++;
 	}
 }
 
@@ -69,7 +80,7 @@ static int force_free_bhs()
 	struct buffer_head *cur;
 
 	free_hash_idx = 1;
-	while(free_hash_idx < HASH_SIZE) {
+	for(;free_hash_idx < HASH_SIZE; free_hash_idx++) {
 		bh = &buf_hash[free_hash_idx];
 		if (!bh->count)
 			continue;
@@ -83,7 +94,6 @@ static int force_free_bhs()
 			cur = container_of(pos, struct buffer_head, list);
 			try_free_bh(cur);
 		}
-		free_hash_idx ++;
 	}
 }
 
@@ -296,7 +306,7 @@ void set_bh_dirty(struct buffer_head *bh)
 	bh->dirty = 1;
 	/* juest test */
 #ifdef TEST_FS
-	put_bh(bh);
-	bh->dirty = 0;
+	//put_bh(bh);
+	//bh->dirty = 0;
 #endif 
 }

@@ -70,9 +70,10 @@ static struct blk_req *test_blk_get_req(struct blk_device *device)
 
 	cur = tbd->free_req_list.next;
 	tbd->req_count --;
+	if (!cur)
+		return NULL;
 	req = container_of(cur, struct blk_req, list);
-
-	return NULL;
+	return req;
 }
 
 static void test_blk_free_req(struct blk_device *device, struct blk_req *req)

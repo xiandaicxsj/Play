@@ -9,7 +9,7 @@ void start_kernel(void )
 {
 	setup_memory();
 
-
+	init_schuler();
 	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	init_task(task0);
 

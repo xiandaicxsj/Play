@@ -9,12 +9,27 @@ typedef u32 pte_t;
 /* used the static page to the */
 static u8 page_dir[PAGE_SIZE];
 
-void page_fault(u32 fault_addr)
+void page_fault(void)
 {
-	/*
+	u32 fault_addr;
+	struct page *p;
+	void *cr3;
+
 	asm volatile ("movl %%cr2 , %%eax"
-		      :"=a"(addr)::);
-	*/
+		      :"=a"(fault_addr)::);
+
+	p = kalloc_page(MEM_USER);
+	if (!p)  {
+		/* may need release some page */
+		return ;
+	}
+
+	cr3 = (void *)current->cr3;
+	if (!cr3)
+		return;
+
+	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, cr3)
+
 	print_str("page fault\n");
 	print_int(fault_addr);
 	while(1);

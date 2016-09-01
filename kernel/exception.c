@@ -36,16 +36,15 @@ void stack_exception();
 void general_protection();
 void copr_error();
 
-void disable_interrupt()
+void local_irq_disable()
 {
 	                asm volatile ( "cli" );
 }
 
-void enable_interrupt()
+void local_irq_enable()
 {
 	                asm volatile ( "sti" );
 }
-
 
 void default_handler1()
 {
@@ -162,5 +161,5 @@ void setup_interrupt()
 	/* set_up int used for usespace application */
 	set_idt(idt, INT_USER, HW_VC(48), DA_386TGate, 3);
 	load_idt();
-	enable_interrupt();
+	local_irq_enable();
 }

@@ -7,9 +7,19 @@
 #include"inode.h"
 #include"test.h"
 
-#define TASK_RUNNABLE (1u<<0)
-#define TASK_UNINTERRUPT (1u<<1)
-#define TASK_INTERRUPT (1u<<2)
+#define TASK_RUNNING (1u<<0)
+#define TASK_RUNNABLE (1u<<1)
+#define TASK_UNINTERRUPT (1u<<2)
+#define TASK_INTERRUPT (1u<<3)
+struct wait_queue {
+	struct list_head list;
+	/*
+	 * flag may be used to indicate whether the all task
+	 * is need to be waked up or only one task
+	 */
+	int flag;
+};
+
 typedef struct tss_reg
 {
 	u32 previous_link;
@@ -55,11 +65,13 @@ struct task_struct
 	struct list_head list;
 	struct list_head wait_list;
 };
+
 extern struct task_struct *current;
 void init_task(struct task_struct *);
 void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
+void init_schduler(void);
 #define TASK_RUN (1 << 0)
 #define TASK_WAIT (1 << 1)
 #endif

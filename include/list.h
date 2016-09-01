@@ -12,6 +12,7 @@ struct list_head
 void list_add(struct list_head *new, struct list_head *head);
 void list_init(struct list_head *new);
 void list_del(struct list_head *entry);
+int list_empty(struct list_head *new);
 /* head should be list ptr, pos should be list ptr */
 #define list_for_each(head, pos) \
 for ((pos) = (head)->next; (pos) != (head) && (pos); pos = pos->next)

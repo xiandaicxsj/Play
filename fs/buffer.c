@@ -174,7 +174,13 @@ static struct buffer_head *_look_up_buffer(u32 block_num)
 void get_bh(struct buffer_head *bh)
 {
 	struct device *device = bh->device;
-	bh->locked = 1;
+
+#ifndef TEST_FS
+	while(!bh->blocked)
+		wait_on(&bh->wait_queue, current, TASK_UNINTERRUPT);
+#endif
+	bh->blocked = 1;
+
 	/* lock */
 	switch (DEV_MAJ(device->dev_num)) {
 		case DEV_BLK:
@@ -183,14 +189,23 @@ void get_bh(struct buffer_head *bh)
 		default :
 			break;
 	}
+
+#ifndef TEST_FS
 	bh->locked = 0;
+	wake_up(&bh->wait_queue);
+#endif
 }
 
 void put_bh(struct buffer_head *bh)
 {
 	struct device *device = bh->device;
 
-	bh->locked = 1;
+#ifndef TEST_FS
+	while(!bh->blocked)
+		wait_on(&bh->wait_queue, current, TASK_UNINTERRUPT);
+#endif
+	bh->blocked = 1;
+
 	switch (DEV_MAJ(device->dev_num)) {
 		case DEV_BLK:
 			blk_write(device, bh);
@@ -198,7 +213,11 @@ void put_bh(struct buffer_head *bh)
 		default :
 			break;
 	}
+
+#ifndef TEST_FS
 	bh->locked = 0;
+	wake_up(&bh->wait_queue);
+#endif
 }
 
 struct buffer_head* look_up_buffer(u32 block_num)

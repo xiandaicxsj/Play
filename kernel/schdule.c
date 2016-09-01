@@ -25,7 +25,7 @@ extern test_process1();
 #define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
 #define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
 #define gdt_tss_sel(n) ((((n) << 1) + TASK_VECTOR_BASE) << 3)
-#define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
+#define gdt_ldt_sel(n) ((((n) << 4) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 struct task_struct *current;
@@ -85,15 +85,10 @@ static void switch_to_ring3(struct task_struct *task)
 		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
 }
 
-static struct task_struct* task_list;
+static struct task_struct task_run_list;
 static void insert_task(struct task_struct *_task)
 {
-	if (!task_list)
-	{
-		task_list = _task;
-		return;
-	}
-	list_add(&_task->list, &task_list->list);
+	list_add(&_task->list, &task_run_list.list);
 	return; 
 }
 
@@ -206,7 +201,6 @@ void init_task(struct task_struct *task)
 	task->task_reg.eflags = IOPL_RING3 | IF;
 	
 	list_init(&task->list);
-	insert_task(task);
 	set_tss(gdt_tss_vec(pid), task); 
 #ifdef test_proc
 	if (pid == 1)
@@ -219,23 +213,57 @@ void init_task(struct task_struct *task)
 	*/
 }
 
-void schdule()
+static struct task_struct *get_next_proper_task()
+{
+	/* */
+	struct list_head *head =  task_run_list.next;
+	struct list_head *post = NULL;
+
+	list_for_each(head, pos) {
+		task = container_of(pos, struct task_struct, wait_list);
+		if (task->status == TASK_RUNNABLE)
+			return task;
+	}
+}
+
+void init_schduler(void)
+{
+	list_init(&task_run_list);
+	/* do we need to add idle */
+}
+
+void schdule(void)
 {
 	struct task_struct *next;
 	/* this need to find next task */ 
 	/* */
+	next = get_next_proper_task();
 	switch_to(current, next);
 }
 
-void wait_on(struct list_head *wait_list, struct task_struct *next)
+void wait_on(struct list_head *wait_list, struct task_struct *next, u32 flags)
 {
-	next->status = TASK_UNINTERRUPT;
+	next->status = flags;
 	list_add(&next->wait_list, wait_list);
 	schdule();
 }
 
 void wake_up(struct list_head  *wait_list)
 {
+	struct list_head * head = wait_list;
+	struct list_head * pos = NULL;
+	struct task_struct *task;
+
+	if (list_empty(wait_list))
+		return ;
+
+	list_for_each(head, pos) {
+		task =container_of(pos, struct task_struct, wait_list);
+		task->status = TASK_RUNNABLE;
+		insert_task(task);
+	}
+
+	schdule();
 }
 #endif
 

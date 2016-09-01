@@ -14,7 +14,8 @@ struct buffer_head
 	u32 dirty;
 	u32 block_num;
 	int count; /* who refer to this */
-	int locked;
+	/* each read/write need to check the locked field first */
+	int locked; 
 	struct list_head wait_queue; /* task wait for this */
 };
 void init_buffer(u32 dev_num);

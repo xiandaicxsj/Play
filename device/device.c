@@ -47,6 +47,7 @@ void init_devices()
 	}
 
 	init_blk_devices();
+	init_char_devices();
 }
 void des_devices()
 {

@@ -7,6 +7,7 @@
 #include"inode.h"
 #include"test.h"
 
+typedef u32 pid_t
 #define TASK_RUNNING (1u<<0)
 #define TASK_RUNNABLE (1u<<1)
 #define TASK_UNINTERRUPT (1u<<2)
@@ -55,9 +56,15 @@ struct task_struct
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
 	struct seg_desc ldt[3];//这里对应的是任务的ldt需要重新进行处理
-	u32 pid;
+	pid_t pid;
 	u32 cr3;
 	u32 status;
+	/*
+	 * 0 stdin
+	 * 1 stdout
+	 * 2 stderr
+	 *
+	 */
 	struct file_struct file[20];
 	struct m_inode *root;
 	struct m_inode *pwd;

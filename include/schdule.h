@@ -65,7 +65,7 @@ struct task_struct
 	 * 2 stderr
 	 *
 	 */
-	struct file_struct file[20];
+	struct file_struct *file[20];
 	struct m_inode *root;
 	struct m_inode *pwd;
 	struct task_struct *next;

@@ -20,7 +20,6 @@ void init_fs()
 
 u32 alloc_file_struct(struct task_struct *current)
 {
-
 	return -1;
 }
 
@@ -60,6 +59,9 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	int fd = -1;
 	u32 is_alloc;
 	
+#if 1 
+	fd = alloc_file_struct(current);
+#endif
 	inode = get_inode(file_path, file_attr);
 
 	if (!inode)
@@ -99,6 +101,7 @@ u32 _sys_seek(int fd, u32 off)
 	f->pos = off;
 
 }
+
 u32 _sys_read(int fd, void *buffer, u32 size)
 {
 	struct file_struct *f ;

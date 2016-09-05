@@ -7,6 +7,19 @@
 #define NR_BLOCK 10
 typedef u32 zone_t;
 
+struct inode_pos
+{
+	/* need to think of this */
+	/*
+	int (*open)(char *file_name, u32 attr);
+	int (*close)(int fd);
+	int (*seek)(int fd, u32 off, u32 beg);
+	int (*read)(int fd, void *buffer, u32 size);
+	int (*write)(int fd, void *buffer, u32 size);
+	int (*flush)(int fd);
+	*/
+};
+
 struct super_block
 {
 	u32 inode_num;  /* total inode num */
@@ -53,6 +66,8 @@ struct inode
 	u32 access_time;
 	u32 modify_time;
 	u32 used; /* whether is inode is used */
+	/* we need is field to get ops of m_inode */
+	u32 dev_id;
 };
 
 struct m_inode
@@ -63,6 +78,8 @@ struct m_inode
 	struct buffer_head *bh;
 	u32 count;
 	u32 dirty; /* the inode is dirty, not the content is dirty */
+	/* inode_ops */
+	struct inode_ops *ops;
 };
 
 struct m_inode *get_inode(char *file_path, u32 file_mode);

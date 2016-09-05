@@ -7,6 +7,7 @@
 #include"inode.h"
 #include"test.h"
 
+#define MAX_FILE_PROCESS 20
 typedef u32 pid_t
 #define TASK_RUNNING (1u<<0)
 #define TASK_RUNNABLE (1u<<1)
@@ -65,7 +66,8 @@ struct task_struct
 	 * 2 stderr
 	 *
 	 */
-	struct file_struct *file[20];
+	struct file_struct *file[MAX_FILE_PROCESS];
+	u32 fd_count;
 	struct m_inode *root;
 	struct m_inode *pwd;
 	struct task_struct *next;

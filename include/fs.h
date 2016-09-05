@@ -23,6 +23,9 @@ struct file_struct
 	u32 pos;
 	u32 fd;
 	u32 file_attr; /* open attr of file */
+	/* file is file/device */
+	u32 type;
+	u32 count;
 	void *data;
 	struct m_inode *inode;
 	struct file_operations *ops;

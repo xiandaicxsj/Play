@@ -8,8 +8,17 @@
 #ifdef TEST_FS
 #include"string.h"
 static int g_fidx = 0;
-struct file_struct g_files[20];
+struct file_struct *g_files[20];
 #endif
+
+struct file_operations {
+	.open = fs_open,
+	.close = fs_close,
+	.read = fs_read,
+	.write = fs_write,
+	.seek = fs_seek,
+	.mkdir = fs_mkdir,
+};
 
 void init_fs()
 {
@@ -17,48 +26,28 @@ void init_fs()
 	init_super_block(ROOT_DEV);
 }
 
-
-u32 alloc_file_struct(struct task_struct *current)
+u32 fs_close(struct file_struct *f)
 {
-	return -1;
-}
-
-u32 _sys_close(u32 fd)
-{
-	struct file_struct *f;
-
-	if (fd < 0 )
-		return -1;
-#ifndef TEST_FS
-	f = &current->file[fd];
-
-	if (!f)
-		return NULL;
-#else
-	f =  &g_files[fd];
-	if (!f)
-		return NULL;
-#endif
 	put_inode(f->inode);
-
 #ifndef TEST_FS
 	current->fs[fd] = NULL;
 	/* FIXME delete fd */
 #endif
 }
 
-u32 _sys_mkdir(char *dir_name)
+u32 fs_mkdir(char *dir_name)
 {
 
 }
 
-u32 _sys_open(char *file_path, u32 file_attr)
+/* not sure */
+u3 fs_open(char *file_path, u32 file_atter)
 {
 	struct m_inode *inode;
 	struct file_struct *f;
 	int fd = -1;
 	u32 is_alloc;
-	
+
 #if 1 
 	fd = alloc_file_struct(current);
 #endif
@@ -90,28 +79,27 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	return fd;
 }
 
-u32 _sys_seek(int fd, u32 off)
+u32 fs_seek(struct file_struct *f, u32 off)
 {
 	struct file_struct *f ;
 #ifndef TEST_FS
-	f = &current->file[fd];
+	f = current->file[fd];
 #else
-	f = &g_files[fd];
+	f = g_files[fd];
 #endif
 	f->pos = off;
 
 }
 
-u32 _sys_read(int fd, void *buffer, u32 size)
+u32 fs_read(struct file_struct *f, void *buffer, u32 size)
 {
-	struct file_struct *f ;
 	struct buffer_head *bh;
 	int left = size;
 	
 #ifndef TEST_FS
-	f = &current->file[fd];
+	f = current->file[fd];
 #else
-	f = &g_files[fd];
+	f = g_files[fd];
 #endif
 
 	u32 size_off = 0;
@@ -135,12 +123,7 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 		t_size_read = left < BUF_SIZE ? left : BUF_SIZE;
 
 		/* mark bh as dirty */
-#ifdef TEST_FS 
 		memcpy(buffer + size_off, bh->data + off_in_block, t_size_read);
-#else
-		if (copy_to_user(buffer + size_off, bh->data + off_in_block, t_size_read))
-			goto out;
-#endif
 
 		left -= t_size_read; 
 		f->pos += t_size_read;
@@ -163,9 +146,9 @@ u32 _sys_write(int fd, void *buffer, u32 size)
 	int left = size;
 
 #ifndef TEST_FS
-	f = &current->file[fd];
+	f = current->file[fd];
 #else
-	f = &g_files[fd];
+	f = g_files[fd];
 #endif
 
 	if (!(f->file_attr & O_RDWR))
@@ -191,15 +174,7 @@ u32 _sys_write(int fd, void *buffer, u32 size)
 
 		t_size_write = left < BUF_SIZE ? left : BUF_SIZE;
 
-#ifdef TEST_FS
 		memcpy(bh->data + off_in_block, buffer + size_off,  t_size_write);
-#else
-		if (copy_from_user(buffer + size_off, bh->data + off_in_block, t_size_write))
-		{
-			bh->dirty = 1;
-			goto out;
-		}
-#endif
 
 		set_bh_dirty(bh);
 		left -= t_size_write; 

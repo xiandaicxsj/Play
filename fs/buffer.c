@@ -267,6 +267,7 @@ void init_buffer(u32 dev_num)
 			bh->count = 0;
 			bh->block_num = -1;
 			bh->dirty = 0;
+			/* we need to set the device */
 			bh->device = dev;
 
 			bf_page =  kalloc_page(MEM_KERN);

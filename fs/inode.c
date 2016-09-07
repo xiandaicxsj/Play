@@ -142,11 +142,15 @@ static void init_inode(struct m_super_block *sb)
 
 static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 {
-
 	return 0;
 }
 
-static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode)
+/* FIXME we need to think of this 
+ * as we do not want file in /dev/* 
+ * in sb and flush disk
+ */
+static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode
+				  u32 type)
 {
 	/* dirty */
 	struct m_inode *inode;
@@ -318,7 +322,20 @@ int put_inode(struct m_inode *inode)
 }
 
 /* root inode is 0 */
-struct m_inode *get_inode(char *file_path, u32 file_mode)
+/* /dev/* we do't need to flush to disk */
+int create_inode(char *file_path, struct file_operation *ops, u32 type)
+{
+	struct m_inode *inode = get_inode(file_path, O_CREATE, INODE_DEV);
+
+	if (!inode)
+		return -1;
+
+	inode->ops = ops;
+	return 0;
+}
+
+/* type will be used only for create inode for a device */
+struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 {
 	struct m_inode * parent_inode;
 	struct m_inode * inode = NULL;
@@ -344,7 +361,6 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	file_path ++;
 	while(1)
 	{
-		/* bugs */
 		dir = file_path;
 		dir_len = 0;
 		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++) {
@@ -352,11 +368,13 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 			dir_len ++;
 		}
 
+		/* /a/b/c means we get /a/b */
 		if (c == '\0' && is_alloc) {
 			get_pdir_ok = 1;
 		}
 
 		/* de_ptr will be get from later func */
+		/* de_ptr is the place to put the file (not dir)*/
 		inode = get_dir_entry_inode(dir, dir_len, parent_inode, de_ptr);
 		if (!inode)
 			break;
@@ -373,7 +391,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode)
 	{
 		if (is_alloc && ERROR_FILE(file_mode))
 				return NULL;
-		inode = get_minode(parent_inode->sb, file_mode);
+		inode = get_minode(parent_inode->sb, file_mode, type);
 		/* find */
 		/* del with this dir */
 		insert_parent_inode(parent_inode, *de_ptr, inode, dir, dir_len);

@@ -37,6 +37,10 @@ struct m_super_block
 	struct m_inode * inode_map;
 };
 
+#define INODE_NONE 0
+#define INODE_DEV 1
+#define INODE_FILE 2
+
 #define MODE_FILE (1 << 0)
 #define MODE_DIR (1 << 1)
 #define IS_DIR(mod) (mod & MODE_DIR)

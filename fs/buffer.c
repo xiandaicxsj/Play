@@ -255,7 +255,7 @@ void init_buffer(u32 dev_num)
 		if (!bh_page)
 			return ;
 #ifndef TEST_FS
-		addr = (void *)phy_to_virt(bh_page->pfn);  
+		addr = (void *)phy_to_virt(phy_to_addr(bh_page->pfn));  
 #else
 		bh = (struct buffer_head *) (bh_page->pfn);
 #endif
@@ -274,7 +274,7 @@ void init_buffer(u32 dev_num)
 			if (!bf_page)
 				return ;
 #ifndef TEST_FS
-			bh->data =  (void *)phy_to_virt(bf_page->pfn);
+			bh->data =  (void *)phy_to_virt(pfn_to_addr(bf_page->pfn));
 #else
 			bh->data = (void *)(bf_page->pfn);
 #endif

@@ -30,6 +30,14 @@ extern test_process1();
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 struct task_struct *current;
 static u32 cur_pid = 0;
+void init_task_file_struct(struct task_struct *task)
+{
+	/* do we really need this */
+	task->file[0] = get_stdio_file_struct();
+	task->file[1] = get_stdout_file_struct();
+	task->file[1] = get_stderr_file_struct();
+	task->fd_count = 3;
+}
 
 void switch_to(struct task_struct *prev, struct task_struct *next)
 {
@@ -202,6 +210,8 @@ void init_task(struct task_struct *task)
 	
 	list_init(&task->list);
 	set_tss(gdt_tss_vec(pid), task); 
+
+	init_task_file_struct();
 #ifdef test_proc
 	if (pid == 1)
 		current = task;

@@ -13,23 +13,85 @@ struct file_struct *g_files[20];
 
 struct vfs
 {
+	struct file_struct *file;
+	u32 file_struct_count;
+};
+
+struct vfs vfs;
+
+struct file_struct *get_stdio_file_struct()
+{
+}
+
+struct file_struct *get_stdout_file_struct()
+{
+
+}
+
+struct file_struct *get_stderr_file_struct()
+{
 
 }
 
 struct file_struct *search_file_struct(struct minode *inode)
 {
-	/* FIXME */
-	return f;
+	struct file_struct *empty_fs = NULL;
+	struct file_struct *fs_ptr = NULL;
+	u32 idx = 0;
+
+	fs_ptr = vfs.file;
+	if (!fs_ptr)
+		return NULL;
+
+	while(idx < vfs->file_struct_count)
+	{
+
+		if (fs_ptr->count && fs_ptr->inode == inode)
+			return fs_ptr;
+
+		if(fs_ptr->count == 0 && !empty_fs)
+			empty_fs =  fs_ptr;
+
+		idx ++;
+	}
+	return empty_fs;
 }
 
 void init_file_struct()
 {
+	struct page *file_page; 
+	struct file_struct *f_ptr;
+	u32 count = 0;
+	u32 idx = 0;
+
+	page = kalloc_page(MEM_KERN);
+	if (!page)
+		return ;
+
+	count = (PAGE_SIZE) / sizeof(struct file_struct);
+
+#ifdef TEST_FS
+	f_ptr = (struct file_struct *)phy_to_virt(pfn_to_addr(page->pfn));
+#else
+	f_ptr =  (struct file_struct *)page->pfn;
+#endif
+
+	vfs.file_struct_count = count;
+	vfs.file = f_ptr;
+
+	while(idx < count)
+	{
+		memset(f_ptr, 0, sizeof(*fptr));
+		f_ptr++;
+		idx ++;
+	}
 	/* FIXME */
 }
 
 void init_vfs()
 {
     init_file_struct();
+    init_std_file_struct();
 }
 
 void destroy_vfs()
@@ -37,19 +99,22 @@ void destroy_vfs()
 
 }
 
-struct file_struct * find_file_struct(struct minode *inode, u32 attr)
+/* for file system one inode vs one file_struct */
+/* for 0-3 stdin/out/error we can duplicate this */ 
+struct file_struct * find_file_struct(struct minode *inode, u32 file_attr)
 {
 	/* find */
 	struct file_struct *f = NULL;
 	if (!inode)
 		return NULL;
 
-	f = search_fs_struct(inode);
+	f = search_file_struct(inode);
 	if (!f)
 		return NULL;
 
 	f->type = inode->type;
 	f->ops = inode->ops;
+
 #if 1 
 	/* only one can open to one file
 	 * device can be access by two more users at the same time
@@ -62,10 +127,10 @@ struct file_struct * find_file_struct(struct minode *inode, u32 attr)
 	f->inode = inode;
 	f->file_attr = file_attr;
 	f->pos = 0;
+	/* count shoule be 1 */
 	f->count = 1;
 
 	return f;
-
 }
 
 u32 alloc_file_fd(struct task_struct *current)
@@ -82,6 +147,7 @@ u32 alloc_file_fd(struct task_struct *current)
 
 	if (current->fd_count < 3) {
 		/* we need to set the 0 1 2 */
+		return -1;
 	}
 
 	fd = current->fd_count;
@@ -178,7 +244,11 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 	f = g_files[fd];
 #endif
 	p = kalloc_page(MEM_KERN);
+#ifndef TEST_FS
 	addr = phy_to_virt(pfn_to_addr(p->pfn));
+#else
+	addr = (void *)p->pfn;
+#endif
 
 	while(left > 0) {
 

@@ -54,6 +54,7 @@ struct file_struct *search_file_struct(struct minode *inode)
 
 		idx ++;
 	}
+
 	return empty_fs;
 }
 
@@ -114,6 +115,7 @@ struct file_struct * find_file_struct(struct minode *inode, u32 file_attr)
 
 	f->type = inode->type;
 	f->ops = inode->ops;
+	f->data = inode->data;
 
 #if 1 
 	/* only one can open to one file

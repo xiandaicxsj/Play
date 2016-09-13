@@ -1,9 +1,10 @@
-
-struct kb_device 
+#include"console.h"
+#include"tty.h"
+struct console 
 {
-
 };
-struct kb_device kb;
+
+struct console_dev kb;
 
 struct file_operation key_board_operation
 {

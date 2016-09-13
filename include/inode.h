@@ -74,6 +74,7 @@ struct m_inode
 	struct file_operations *ops;
 	/* */
 	u32 dev_id;
+	void *data;
 };
 
 struct m_inode *get_inode(char *file_path, u32 file_mode);

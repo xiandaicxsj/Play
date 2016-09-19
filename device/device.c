@@ -43,6 +43,8 @@ void init_devices()
 		dev_type_list[dev_type_idx].dev_num_bit_map = 0;
 	}
 
+	/* /dev/ */
+	init_device_inode();
 	init_blk_devices();
 	init_char_devices();
 }

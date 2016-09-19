@@ -157,14 +157,18 @@ void des_test_blk_device(void)
 		fclose(tbd.fd);
 }
 
+/* this should be call in .init */
 void init_test_blk_device(void)
 {
-	dev_t dev_num = ROOT_DEV;
+        u32 major = DEV_BLK;
+        u32 minor = alloc_minor(major);
+
+        dev_t dev_num = DEV_NUM(major, minor);
 	//contruct_test_blk_data(&tbd);
 	init_test_blk_req();
 #ifdef TEST_FS
 	tbd.fd = fopen(FILE_BACKEN, "r+");
 #endif
-	init_blk_device(dev_num, &tbd.blk_dev, &test_blk_ops);
+	register_blk_device(dev_num, &tbd.blk_dev, &test_blk_ops);
 	test_blk_init(&tbd.blk_dev);
 }

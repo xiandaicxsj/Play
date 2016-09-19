@@ -10,13 +10,7 @@ struct device_head
 
 struct device_head dev_type_list[DEV_TYPE]; 
 
-int init_device(dev_t dev_num, struct device *dev, u8 major, u8 minor)
-{
-	list_init(&dev->list);
-	dev->dev_num = dev_num;
-}
-
-int register_device(dev_t dev_num, struct device *device)
+int register_device(dev_t dev_num, struct device *dev)
 {
 	struct device_head * dh ;
 	u8 major = DEV_MAJ(dev_num);
@@ -28,7 +22,10 @@ int register_device(dev_t dev_num, struct device *device)
 		return -1;
 
 	set_bit(&dh->dev_num_bit_map, minor);
-	list_add(&device->list, &dh->list); 
+
+	dev->dev_num = dev_num;
+	list_init(&dev->list);
+	list_add(&dev->list, &dh->list); 
 }
 
 int alloc_minor(u8 major)

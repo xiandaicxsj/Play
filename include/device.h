@@ -23,7 +23,5 @@ struct device
 struct device *get_device(dev_t dev_num);
 int register_device(dev_t dev_num , struct device *device);
 int alloc_minor(u8 major);
-void init_devices();
-void des_devices();
 
 #endif

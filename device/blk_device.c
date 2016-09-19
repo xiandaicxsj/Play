@@ -11,12 +11,9 @@ void des_blk_devices()
 	des_test_blk_device();
 }
 
-void init_blk_device(dev_t dev_num, struct blk_device *bdev, struct blk_device_ops *ops)
+void register_blk_device(dev_t dev_num, struct blk_device *bdev, struct blk_device_ops *ops)
 {
 	list_init(&bdev->req_list);
 	bdev->ops = ops;
-
-	/* */
-	init_device(dev_num, &bdev->dev);
 	register_device(dev_num, &bdev->dev);
 }

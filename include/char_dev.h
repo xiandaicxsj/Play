@@ -1,6 +1,16 @@
-#ifdef _H_CHAR_DEV
+#ifndef _H_CHAR_DEV
 #define _H_CHAR_DEV
-void init_char_dev();
+#include"device.h"
 
+struct char_device_ops
+{
 
+};
+
+struct char_device
+{
+	struct device dev;
+	struct char_device_ops * ops;
+	struct list_head req_list;
+};
 #endif

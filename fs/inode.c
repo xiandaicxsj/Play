@@ -322,8 +322,9 @@ int put_inode(struct m_inode *inode)
 }
 
 /* root inode is 0 */
-/* /dev/* we do't need to flush to disk */
-int create_inode(char *file_path, struct file_operation *ops, u32 type, void *data)
+/* /dev
+ * we do't need to flush to disk */
+int create_inode(char *file_path, struct file_operation *ops, void *data)
 {
 	struct m_inode *inode = get_inode(file_path, O_CREATE, INODE_DEV);
 

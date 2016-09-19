@@ -1,4 +1,4 @@
-#include"char_dev.h"
+#include"char_device.h"
 struct kb_device 
 {
 
@@ -18,6 +18,8 @@ void kb_read(struct file_struct *f, void *buffer, u32 size)
 
 void init_key_board()
 {
+	/* del with irq related */
+	register_irq_handler();
 	create_inode("/dev/kb", &kb_operation, &kb);
 }
 

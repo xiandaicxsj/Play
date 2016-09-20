@@ -119,9 +119,11 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 				m_head->ops = !ops ? sb->ops: ops;
 			/* data port to device */
 				m_head->data = sb->data; 
+				m_head->type = h_head;
 			} else {
 					m_head->ops = NULL;
 					m_head->data = NULL;
+					m_head->type = INODE_NONE;
 			}
 
 			h_head ++;
@@ -279,7 +281,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 		if (!r_inode) 
 			return NULL;
 
-		if ( !IS_DIR(r_inode->hinode->mode) )
+		if ( !IS_DIR(r_inode->hinode->type) )
 			return NULL;
 		return r_inode;
 	}

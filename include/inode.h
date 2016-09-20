@@ -39,18 +39,19 @@ struct m_super_block
 	void *data;
 };
 
-#define INODE_NONE 0
-#define INODE_DEV 1
-#define INODE_FILE 2
+#define INODE_NONE NONE_TYPE
+#define INODE_DEV DIR_TYPE
+#define INODE_FILE FILE_TYPE
+#define INODE_DEV DEV_TYPE
 
-#define MODE_FILE (1 << 0)
-#define MODE_DIR (1 << 1)
-#define IS_DIR(mod) (mod & MODE_DIR)
-#define IS_FILE(mod) (mod & MODE_FILE)
-#define ERR_FILE(mod) 
+#define IS_DIR(mod) (mod & INODE_DEV)
+#define IS_FILE(mod) (mod & INODE_FILE)
+#define IS_DEV(mod) (mod & INODE_DEV)
+#define ERR_FILE(mod) 0
 struct inode
 {
 	u32 mode;
+	u32 type;
 	u32 file_size;
 	u32 index;
 	u32 bock_used;
@@ -79,7 +80,7 @@ struct m_inode
 	void *data;
 };
 
-struct m_inode *get_inode(char *file_path, u32 file_mode);
+struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type);
 int put_inode(struct m_inode *inode);
 
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);

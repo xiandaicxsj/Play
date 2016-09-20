@@ -51,10 +51,7 @@ u3 fs_open(char *file_path, u32 file_atter)
 	int fd = -1;
 	u32 is_alloc;
 
-#if 1 
-	fd = alloc_file_struct(current);
-#endif
-	inode = get_inode(file_path, file_attr);
+	inode = get_inode(file_path, file_attr, INODE_FILE);
 
 	if (!inode)
 		return fd;

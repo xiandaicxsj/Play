@@ -194,11 +194,11 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	struct file_struct *file;
 	int fd = -1;
 
-	inode = get_inode(file_path, file_attr);
+	inode = get_inode(file_path, file_attr, INODE_NONE);
 	if (!inode)
 		return fd;
 
-	if (inode->type == INODE_DEV) {
+	if (IS_DEV(inode->type)) {
 		if (inode->ops->open(file_path, file_attr))
 			return -1;
 	}

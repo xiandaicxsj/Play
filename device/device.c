@@ -35,6 +35,10 @@ int alloc_minor(u8 major)
 	return find_first_avail_bit(&dh->dev_num_bit_map);
 }
 
+static void init_device_inode()
+{
+}
+
 void init_devices()
 {
 	int dev_type_idx = 0;

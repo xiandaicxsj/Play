@@ -23,9 +23,11 @@ struct dir_entry
 /* need to fix */
 
 /* the dev num should be used like this ??*/
-static void get_sb(struct device *dev, struct m_super_block *sb)
+static void get_sb(struct device *dev, struct m_super_block *sb, struct file_operations *ops)
 {
 	struct buffer_head *bh = NULL;
+	sb->data = dev;
+	sb->ops = ops;
 	bh = look_up_buffer(1); // the first 1 super block 
 	sb->hsb = (struct super_block *)bh->data;
 	sb->bh = bh;
@@ -65,12 +67,14 @@ static void init_inode_bit_map(struct m_super_block *sb)
 	/* do we need this */
 }
 
-static void init_inode_map(struct m_super_block *sb)
+static void init_inode_map(struct m_super_block *sb, struct file_operations *ops,u32 type)
 {
 	struct page *page = NULL;
 	struct buffer_head *bh = NULL;
 	struct m_inode *m_head;
 	struct inode *h_head;
+	u32 idx = 0;
+	u32 iidex = 0;
 	u32 num  = sb->hsb->inode_num;
 	u32 pages_num = round_up((num *sizeof(struct m_inode)), PAGE_SIZE) / PAGE_SIZE;
 
@@ -79,7 +83,6 @@ static void init_inode_map(struct m_super_block *sb)
 
 	/* i don't know whether this isn needed */
 	u32 nr_inode_per_buf = BUF_SIZE/sizeof(struct inode);
-	u32 idx = 0;
 
 	page = kalloc_pages(pages_num, MEM_KERN);
 #ifndef TEST_FS
@@ -112,9 +115,19 @@ static void init_inode_map(struct m_super_block *sb)
 			m_head->sb = sb;
 			m_head->dirty = 0;
 
+			if (test_bit(sb->inode_bit_map, iidx)) {
+				m_head->ops = !ops ? sb->ops: ops;
+			/* data port to device */
+				m_head->data = sb->data; 
+			} else {
+					m_head->ops = NULL;
+					m_head->data = NULL;
+			}
+
 			h_head ++;
 			m_head ++;
 			idx ++;
+			iidex ++;
 		}
 
 		block_num --;
@@ -131,12 +144,13 @@ static void init_root(struct m_super_block *sb)
 	root_inode.sb = sb;
 	root_inode.bh = bh;
 	root_inode.count = 1;
+	root_inode.data = sb->data;
 }
 
-static void init_inode(struct m_super_block *sb)
+static void init_inode(struct m_super_block *sb, struct file_operations *ops)
 {
 	init_inode_bit_map(sb);
-	init_inode_map(sb);
+	init_inode_map(sb, ops, INODE_FILE);
 	init_root(sb);
 }
 
@@ -194,9 +208,8 @@ static u32 alloc_block(struct m_super_block *sb)
 	/* get availule block */
 }
 
-int init_super_block(u32 dev_num)
+int init_super_block(struct device *dev, struct file_operations *ops)
 {
-	struct device *dev = get_device(dev_num);
 	if (!dev) {
 		return -1;
 
@@ -205,8 +218,8 @@ int init_super_block(u32 dev_num)
     	sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
 	if (!sb)
 		return -1;
-    	get_sb(dev, sb);
-	init_inode(sb);
+    	get_sb(dev, sb, ops);
+	init_inode(sb, ops);
 	init_block(sb);
 	return 0;
 }

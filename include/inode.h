@@ -35,6 +35,8 @@ struct m_super_block
 	struct buffer_head *inode_bm_bh;
 	struct buffer_head *block_bm_bh;
 	struct m_inode * inode_map;
+	struct file_operations *ops;
+	void *data;
 };
 
 #define INODE_NONE 0

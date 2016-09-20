@@ -21,6 +21,7 @@ struct vfs vfs;
 
 struct file_struct *get_stdio_file_struct()
 {
+
 }
 
 struct file_struct *get_stdout_file_struct()

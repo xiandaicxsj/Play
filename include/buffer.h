@@ -18,7 +18,7 @@ struct buffer_head
 	int locked; 
 	struct list_head wait_queue; /* task wait for this */
 };
-void init_buffer(u32 dev_num);
+void init_buffer(struct device *dev);
 struct buffer_head* look_up_buffer(u32 block_num);
 void put_bh(struct buffer_head *bh);
 void get_bh(struct buffer_head *bh);

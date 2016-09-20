@@ -220,6 +220,9 @@ void put_bh(struct buffer_head *bh)
 #endif
 }
 
+/* we do not touch device
+ * init_buffer will set bh->device
+ */
 struct buffer_head* look_up_buffer(u32 block_num)
 {
 	struct buffer_head *bh  = _look_up_buffer(block_num);
@@ -233,10 +236,9 @@ struct buffer_head* look_up_buffer(u32 block_num)
 	return bh;
 }
 
-void init_buffer(u32 dev_num)
+/* this buffer is used for block cache*/
+void init_buffer(struct device *dev)
 {
-	struct device *dev = get_device(dev_num);
-
 	u32 bh_per_page = (PAGE_SIZE) / sizeof(struct buffer_head);
 	struct page * bh_page ;
 	struct page * bf_page;

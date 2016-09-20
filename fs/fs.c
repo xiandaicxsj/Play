@@ -11,7 +11,7 @@ static int g_fidx = 0;
 struct file_struct *g_files[20];
 #endif
 
-struct file_operations {
+struct file_operations fs_ops{
 	.open = fs_open,
 	.close = fs_close,
 	.read = fs_read,
@@ -22,8 +22,11 @@ struct file_operations {
 
 void init_fs()
 {
-	init_buffer(ROOT_DEV);
-	init_super_block(ROOT_DEV);
+	struct device *dev;
+	dev = get_device(ROOT_DEV);
+	/* this buffer is */
+	init_buffer(dev);
+	init_super_block(dev, fs_ops);
 }
 
 u32 fs_close(struct file_struct *f)

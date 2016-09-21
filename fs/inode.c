@@ -162,6 +162,10 @@ static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 	return 0;
 }
 
+static int rm_minode(struct m_supoer_block *sb, struct m_inode *inode)
+{
+ /* continue */
+}
 /* FIXME we need to think of this 
  * as we do not want file in /dev 
  * in sb and flush disk
@@ -292,6 +296,16 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 	return NULL;
 }
 
+void delete_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_inode *inode)
+{
+	struct buffer_head *bh;
+	memset(de, 0, sizeof(*de);
+
+	bh = look_up_buffer(pinode->hinode->zone[0]);
+	set_bh_dirty(bh);
+	/* not sure of this */
+	set_bh_dirty(pinode->bh);
+}
 /* inode can be a dir or file */
 void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_inode *inode, char *name, u32 len)
 {	
@@ -364,6 +378,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 	char *dir;
 	u32 dir_len ;
 	u8 need_create = file_mode & O_CREATE;
+	u32 need_rm = file_mode & O_DEL;
 	u8 get_pdir_ok = 0;
 
 #ifndef TEST_FS
@@ -400,11 +415,21 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 			break;
 
 		if (c == '\0' && !need_create) {
+			if (need_rm)
+				break;
 			inode->count ++;
 			return inode;
 		}
 		file_path ++;
 		parent_inode = inode;
+	}
+
+	if (inode && need_rm)
+	{
+		if (!*de_ptr)
+			return NULL;
+		delete_parent_inode(parent_inode, *de_ptr, inode);
+		rm_minode(parent_inode->sb, inode);
 	}
 
 	if (!inode && need_create && get_pdir_ok)

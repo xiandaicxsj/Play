@@ -74,7 +74,7 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 	struct m_inode *m_head;
 	struct inode *h_head;
 	u32 idx = 0;
-	u32 iidex = 0;
+	u32 iidx = 0;
 	u32 num  = sb->hsb->inode_num;
 	u32 pages_num = round_up((num *sizeof(struct m_inode)), PAGE_SIZE) / PAGE_SIZE;
 
@@ -119,17 +119,18 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 				m_head->ops = !ops ? sb->ops: ops;
 			/* data port to device */
 				m_head->data = sb->data; 
-				m_head->type = h_head;
+				m_head->type = h_head->type;
 			} else {
-					m_head->ops = NULL;
-					m_head->data = NULL;
+
+					m_head->ops = 0;
+					m_head->data = 0;
 					m_head->type = INODE_NONE;
 			}
 
 			h_head ++;
 			m_head ++;
 			idx ++;
-			iidex ++;
+			iidx ++;
 		}
 
 		block_num --;
@@ -162,10 +163,10 @@ static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 }
 
 /* FIXME we need to think of this 
- * as we do not want file in /dev/* 
+ * as we do not want file in /dev 
  * in sb and flush disk
  */
-static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode
+static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode,
 				  u32 type)
 {
 	/* dirty */
@@ -184,7 +185,7 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode
 	inode->hinode->type = type;
 	inode->hinode->index = idx;
 
-	m_inode->type = type;
+	inode->type = type;
 	set_bh_dirty(inode->bh);
 
 	return inode;

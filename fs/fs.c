@@ -11,99 +11,33 @@ static int g_fidx = 0;
 struct file_struct *g_files[20];
 #endif
 
-struct file_operations fs_ops{
-	.open = fs_open,
-	.close = fs_close,
-	.read = fs_read,
-	.write = fs_write,
-	.seek = fs_seek,
-	.mkdir = fs_mkdir,
-};
-
-void init_fs()
-{
-	struct device *dev;
-	dev = get_device(ROOT_DEV);
-	/* this buffer is */
-	init_buffer(dev);
-	init_super_block(dev, fs_ops);
-}
-
-u32 fs_close(struct file_struct *f)
+int fs_close(struct file_struct *f)
 {
 	put_inode(f->inode);
-#ifndef TEST_FS
-	current->fs[fd] = NULL;
-	/* FIXME delete fd */
-#endif
 }
 
-u32 fs_mkdir(char *dir_name)
+int fs_mkdir(char *dir_name)
 {
 
 }
 
 /* not sure */
-u3 fs_open(char *file_path, u32 file_atter)
+int fs_open(char *file_path, u32 file_attr)
 {
-	struct m_inode *inode;
-	struct file_struct *f;
-	int fd = -1;
-	u32 is_alloc;
-
-	inode = get_inode(file_path, file_attr, INODE_FILE);
-
-	if (!inode)
-		return fd;
-#ifndef TEST_FS
-	fd = alloc_file_struct(current);
-	if (fd < 0)
-		return fd;
-
-	f = &current->file[fd];
-
-	f->inode = inode;
-	f->file_attr = file_attr;
-	f->pos = 0;
-	f->inode = inode->data;
-#else
-	fd = g_fidx;
-	f =  &g_files[fd];
-
-	f->inode = inode;
-	f->file_attr = file_attr;
-	f->pos = 0;
-	f->data = inode->data;
-
-	g_fidx ++;
-#endif
-
-	return fd;
+	return 0;
 }
 
-u32 fs_seek(struct file_struct *f, u32 off)
+int fs_seek(struct file_struct *f, u32 off)
 {
-	struct file_struct *f ;
-#ifndef TEST_FS
-	f = current->file[fd];
-#else
-	f = g_files[fd];
-#endif
 	f->pos = off;
 
 }
 
-u32 fs_read(struct file_struct *f, void *buffer, u32 size)
+int fs_read(struct file_struct *f, void *buffer, u32 size)
 {
 	struct buffer_head *bh;
 	int left = size;
 	
-#ifndef TEST_FS
-	f = current->file[fd];
-#else
-	f = g_files[fd];
-#endif
-
 	u32 size_off = 0;
 	u32 size_read = 0;
 	u32 t_size_read = 0;
@@ -140,18 +74,11 @@ out:
 	return size_read;
 }
 
-u32 _sys_write(int fd, void *buffer, u32 size)
+int fs_write(struct file_struct *f, void *buffer, u32 size)
 {
 
-	struct file_struct *f;
 	struct buffer_head *bh;
 	int left = size;
-
-#ifndef TEST_FS
-	f = current->file[fd];
-#else
-	f = g_files[fd];
-#endif
 
 	if (!(f->file_attr & O_RDWR))
 		return -1;
@@ -190,7 +117,7 @@ out:
 	return size_write;
 }
 
-
+/*
 #ifdef TEST_FS
 void test1()
 {
@@ -219,16 +146,31 @@ int main()
 	fd = _sys_open("/txt", O_CREATE |O_RDWR);
 	sprintf(buf, "aaa");
 	ret = _sys_write(fd, buf, sizeof(buf));
-	/*
 	fd = _sys_open("/txt", O_RD);
 	printf("%d\n", ret);
 	_sys_seek(fd, 0);
 	_sys_read(fd, k, sizeof(k));
 	printf("%s\n", k);
-	*/
 	_sys_close(fd);
 	des_devices();
 	return 0;
 }
 
 #endif
+*/
+struct file_operations fs_ops = {
+	.open = fs_open,
+	.close = fs_close,
+	.read = fs_read,
+	.write = fs_write,
+	.seek = fs_seek,
+};
+
+void init_fs()
+{
+	struct device *dev;
+	dev = get_device(ROOT_DEV);
+	/* this buffer is */
+	init_buffer(dev);
+	init_super_block(dev, &fs_ops);
+}

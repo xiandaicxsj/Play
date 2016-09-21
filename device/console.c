@@ -22,11 +22,11 @@ int con_dev_read(struct file_struct *f, void *buffer, u32 size)
 	return 0;
 }
 
-static scroll(console_device *dev)
+static scroll(struct console_device *dev)
 {
 }
 
-static con_dev_new_line(console_device *dev)
+static con_dev_new_line(struct console_device *dev)
 {
 	dev->c_colum = 0;
 	dev->c_row ++;
@@ -36,7 +36,7 @@ static con_dev_new_line(console_device *dev)
 	/* we need to update c_cur */
 }
 
-static con_dev_out_char(console_device *dev, char a)
+static con_dev_out_char(struct console_device *dev, char a)
 {
 	u32 off = dev->c_base + dev->c_cur;
 
@@ -50,9 +50,10 @@ static con_dev_out_char(console_device *dev, char a)
 int con_dev_write(struct file_struct *f, void *buffer, u32 size)
 {
 	int i = 0;
-	console_device *con_dev = f->data;
+	struct console_device *con_dev = f->data;
 
 	while(i < size) {
+		/*
 		switch (buffer[i]) {
 		case '':
 			con_dev_new_line(con_dev);
@@ -63,6 +64,7 @@ int con_dev_write(struct file_struct *f, void *buffer, u32 size)
 			con_dev_out_char(buffer[i]);	
 			break;
 		}
+		*/
 		i++;
 	}
 	/* no cache */
@@ -72,6 +74,7 @@ int con_dev_write(struct file_struct *f, void *buffer, u32 size)
 
 void con_dev_flush(struct file_struct *f)
 {
+
 }
 
 struct file_operation con_dev_ops
@@ -84,12 +87,12 @@ struct file_operation con_dev_ops
 
 static void init_console_device(struct console_device *dev)
 {
-	dev.c_base = phy_to_virt(0xb8000);
-	dev.c_start = 0;
-	dev.c_limit = 2000;/* size */
-	dev.c_colum = 0;
-	dev.c_row = 0;
-	dev.c_cur = 0;
+	dev->c_base = phy_to_virt(0xb8000);
+	dev->c_start = 0;
+	dev->c_limit = 2000;/* size */
+	dev->c_colum = 0;
+	dev->c_row = 0;
+	dev->c_cur = 0;
  /* init console_dev */
 }
 
@@ -111,6 +114,6 @@ void init_console()
 
 	register_char_device(dev_num, &con_dev.dev, &con_dev_ops);
 	/* create file relate ops */
-	create_inode(dev_name, &con_dev_operation, &con_dev);
+	create_inode(dev_name, &con_dev_ops, &con_dev);
 }
 

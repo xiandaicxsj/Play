@@ -176,10 +176,10 @@ void get_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 
 #ifndef TEST_FS
-	while(!bh->blocked)
+	while(!bh->locked)
 		wait_on(&bh->wait_queue, current, TASK_UNINTERRUPT);
 #endif
-	bh->blocked = 1;
+	bh->locked = 1;
 
 	/* lock */
 	switch (DEV_MAJ(device->dev_num)) {
@@ -201,10 +201,10 @@ void put_bh(struct buffer_head *bh)
 	struct device *device = bh->device;
 
 #ifndef TEST_FS
-	while(!bh->blocked)
+	while(!bh->locked)
 		wait_on(&bh->wait_queue, current, TASK_UNINTERRUPT);
 #endif
-	bh->blocked = 1;
+	bh->locked = 1;
 
 	switch (DEV_MAJ(device->dev_num)) {
 		case DEV_BLK:

@@ -8,11 +8,12 @@
 #include"test.h"
 
 #define MAX_FILE_PROCESS 20
-typedef u32 pid_t
+typedef u32 pid_t;
 #define TASK_RUNNING (1u<<0)
 #define TASK_RUNNABLE (1u<<1)
 #define TASK_UNINTERRUPT (1u<<2)
 #define TASK_INTERRUPT (1u<<3)
+
 struct wait_queue {
 	struct list_head list;
 	/*

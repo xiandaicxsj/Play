@@ -10,5 +10,5 @@ void init_char_device()
 void register_char_device(dev_t dev_num, struct char_device *cdev, struct char_device_ops *ops)
 {
 	cdev->ops = ops;
-	register_device(dev_num, &cdev->dev)
+	register_device(dev_num, &cdev->dev);
 }

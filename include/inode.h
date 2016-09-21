@@ -2,6 +2,7 @@
 #define _H_INODE
 #include"type.h"
 #include"buffer.h"
+#include"fs.h"
 
 /* 0-5 directly block */
 #define NR_BLOCK 10
@@ -40,7 +41,7 @@ struct m_super_block
 };
 
 #define INODE_NONE NONE_TYPE
-#define INODE_DEV DIR_TYPE
+#define INODE_DIR DIR_TYPE
 #define INODE_FILE FILE_TYPE
 #define INODE_DEV DEV_TYPE
 
@@ -85,5 +86,5 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type);
 int put_inode(struct m_inode *inode);
 
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);
-int init_super_block(u32 dev_num);
+int init_super_block(struct device *dev, struct file_operations *ops);
 #endif

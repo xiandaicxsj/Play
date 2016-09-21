@@ -3,7 +3,10 @@
 #include"schdule.h"
 #include"buffer.h"
 #include"test.h"
-#include"vfs.h"
+#include"mem.h"
+#include"page.h"
+#include"inode.h"
+//#include"vfs.h"
 
 #ifdef TEST_FS
 #include"string.h"
@@ -44,7 +47,7 @@ struct file_struct *search_file_struct(struct minode *inode)
 	if (!fs_ptr)
 		return NULL;
 
-	while(idx < vfs->file_struct_count)
+	while(idx < vfs.file_struct_count)
 	{
 
 		if (fs_ptr->count && fs_ptr->inode == inode)
@@ -61,7 +64,7 @@ struct file_struct *search_file_struct(struct minode *inode)
 
 void init_file_struct()
 {
-	struct page *file_page; 
+	struct page *page; 
 	struct file_struct *f_ptr;
 	u32 count = 0;
 	u32 idx = 0;
@@ -83,7 +86,7 @@ void init_file_struct()
 
 	while(idx < count)
 	{
-		memset(f_ptr, 0, sizeof(*fptr));
+		memset(f_ptr, 0, sizeof(*f_ptr));
 		f_ptr++;
 		idx ++;
 	}
@@ -103,7 +106,7 @@ void destroy_vfs()
 
 /* for file system one inode vs one file_struct */
 /* for 0-3 stdin/out/error we can duplicate this */ 
-struct file_struct * find_file_struct(struct minode *inode, u32 file_attr)
+struct file_struct * find_file_struct(struct m_inode *inode, u32 file_attr)
 {
 	/* find */
 	struct file_struct *f = NULL;
@@ -173,7 +176,7 @@ u32 _sys_close(u32 fd)
 	if (!f)
 		return NULL;
 #endif
-	f->close(f);
+	f->ops->close(f);
 	//put_inode(f->inode);
 
 #ifndef TEST_FS
@@ -182,7 +185,7 @@ u32 _sys_close(u32 fd)
 #endif
 }
 
-u32 _sys_mkdir(char *dir_name)
+u32 _sys_mkdir(char *file_path)
 {
 	u32 file_attr = O_CREATE;
 	struct m_inode *inode;
@@ -237,16 +240,16 @@ u32 _sys_seek(int fd, u32 off)
 #else
 	f = g_files[fd];
 #endif
-	if (f->type == INODE_DE)
+	if (f->type == INODE_DEV)
 		return 0;
 	f->pos = off;
 }
 
-u32 _sys_read(int fd, void *buffer, u32 size)
+u32 _sys_read(int fd, void *buffer, u32 _size)
 {
 	struct file_struct *f ;
 	struct buffer_head *bh;
-	u32 left = size;
+	u32 left = _size;
 	u32 size = 0;
 	u32 off = 0;
 	struct page *p;
@@ -267,7 +270,7 @@ u32 _sys_read(int fd, void *buffer, u32 size)
 	while(left > 0) {
 
 		size = left > PAGE_SIZE ? PAGE_SIZE : left;
-		if (f->ops->read(f, addr, size) != SIZE)
+		if (f->ops->read(f, addr, size) != size)
 			return off;
 
 		if (copy_to_user(buffer + off, addr, size))
@@ -282,11 +285,11 @@ out:
 	return off;
 }
 
-u32 _sys_write(int fd, void *buffer, u32 size)
+u32 _sys_write(int fd, void *buffer, u32 _size)
 {
 	struct file_struct *f ;
 	struct buffer_head *bh;
-	u32 left = size;
+	u32 left = _size;
 	u32 size = 0;
 	u32 off = 0;
 	struct page *p;
@@ -308,7 +311,7 @@ u32 _sys_write(int fd, void *buffer, u32 size)
 		if (copy_from_user(buffer + off, addr, size))
 			return off;
 
-		if (f->ops->write(f, addr, size) != SIZE)
+		if (f->ops->write(f, addr, size) != size)
 			return off;
 
 		left -= size;

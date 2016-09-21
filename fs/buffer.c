@@ -328,7 +328,9 @@ void set_bh_dirty(struct buffer_head *bh)
 	bh->dirty = 1;
 	/* juest test */
 #ifdef TEST_FS
-	//put_bh(bh);
-	//bh->dirty = 0;
+	put_bh(bh);
+	bh->dirty = 0;
 #endif 
 }
+/* we need to create a kernle thread to flush the file automatic*/
+

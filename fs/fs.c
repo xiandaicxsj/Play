@@ -65,6 +65,7 @@ u3 fs_open(char *file_path, u32 file_atter)
 	f->inode = inode;
 	f->file_attr = file_attr;
 	f->pos = 0;
+	f->inode = inode->data;
 #else
 	fd = g_fidx;
 	f =  &g_files[fd];
@@ -72,6 +73,7 @@ u3 fs_open(char *file_path, u32 file_atter)
 	f->inode = inode;
 	f->file_attr = file_attr;
 	f->pos = 0;
+	f->data = inode->data;
 
 	g_fidx ++;
 #endif

@@ -1,6 +1,7 @@
 #ifndef _H_FS
 #define _H_FS
 #define ROOT_DEV 1
+#define NONE_TYPE
 #define FILE_TYPE (1<<0)
 #define DIR_TYPE (1<<0)
 #define DEV_TYPE (1<<0)
@@ -13,11 +14,11 @@
 struct file_operations
 {
 	int (*open)(char *file_name, u32 attr);
-	int (*close)(int fd);
-	int (*seek)(int fd, u32 off, u32 beg);
-	int (*read)(int fd, void *buffer, u32 size);
-	int (*write)(int fd, void *buffer, u32 size);
-	int (*flush)(int fd);
+	int (*close)(struct file_struct *file);
+	int (*seek)(struct file_struct *file, u32 off, u32 beg);
+	int (*read)(struct file_struct *file, void *buffer, u32 size);
+	int (*write)(struct file_struct *file, void *buffer, u32 size);
+	int (*flush)(struct file_struct *file);
 };
 
 void init_fs();

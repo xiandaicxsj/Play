@@ -47,6 +47,7 @@ struct m_super_block
 #define IS_DIR(mod) (mod & INODE_DEV)
 #define IS_FILE(mod) (mod & INODE_FILE)
 #define IS_DEV(mod) (mod & INODE_DEV)
+#define IS_NONE(mod) (mod == NONE_TYPE)
 #define ERR_FILE(mod) 0
 struct inode
 {

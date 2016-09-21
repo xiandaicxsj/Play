@@ -74,7 +74,7 @@ void con_dev_flush(struct file_struct *f)
 {
 }
 
-struct file_operation con_dev_operation
+struct file_operation con_dev_ops
 {
 	.read = con_dev_read,
 	.write = con_dev_write,

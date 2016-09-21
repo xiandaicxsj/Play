@@ -184,7 +184,13 @@ u32 _sys_close(u32 fd)
 
 u32 _sys_mkdir(char *dir_name)
 {
+	u32 file_attr = O_CREATE;
+	struct m_inode *inode;
+	inode = get_inode(file_path, file_attr, INODE_DIR);
 
+	if (!inode)
+		return -1;
+	return 0;
 }
 
 u32 _sys_open(char *file_path, u32 file_attr)
@@ -192,9 +198,14 @@ u32 _sys_open(char *file_path, u32 file_attr)
 	struct m_inode *inode;
 	struct file_path;
 	struct file_struct *file;
+	u32 type;
 	int fd = -1;
 
-	inode = get_inode(file_path, file_attr, INODE_NONE);
+	if (file_attr & O_CREATE)
+		type = INODE_FILE;
+	else 
+		type = INODE_NONE;
+	inode = get_inode(file_path, file_attr, INODE_FILE);
 	if (!inode)
 		return fd;
 

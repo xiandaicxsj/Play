@@ -181,8 +181,10 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode
 	memset(inode->hinode, 0, sizeof(struct inode));
 	inode->hinode->used = INODE_USED;
 	inode->hinode->mode = file_mode;
+	inode->hinode->type = type;
 	inode->hinode->index = idx;
 
+	m_inode->type = type;
 	set_bh_dirty(inode->bh);
 
 	return inode;
@@ -360,7 +362,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 	char c ;
 	char *dir;
 	u32 dir_len ;
-	u8 is_alloc = file_mode & O_CREATE;
+	u8 need_create = file_mode & O_CREATE;
 	u8 get_pdir_ok = 0;
 
 #ifndef TEST_FS
@@ -386,7 +388,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		}
 
 		/* /a/b/c means we get /a/b */
-		if (c == '\0' && is_alloc) {
+		if (c == '\0' && need_create) {
 			get_pdir_ok = 1;
 		}
 
@@ -396,7 +398,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		if (!inode)
 			break;
 
-		if (c == '\0' && !is_alloc) {
+		if (c == '\0' && !need_create) {
 			inode->count ++;
 			return inode;
 		}
@@ -404,9 +406,12 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		parent_inode = inode;
 	}
 
-	if (!inode && is_alloc && get_pdir_ok)
+	if (!inode && need_create && get_pdir_ok)
 	{
-		if (is_alloc && ERROR_FILE(file_mode))
+		if (ERROR_FILE(file_mode))
+				return NULL;
+		/* if create  */
+		if (IS_NONE(type))
 				return NULL;
 		inode = get_minode(parent_inode->sb, file_mode, type);
 		/* find */

@@ -37,6 +37,7 @@ struct file_struct *get_stderr_file_struct()
 
 }
 
+/* search mean we need to create if necessary */
 struct file_struct *search_file_struct(struct minode *inode)
 {
 	struct file_struct *empty_fs = NULL;

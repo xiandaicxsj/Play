@@ -162,9 +162,28 @@ static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 	return 0;
 }
 
+static int reset_minode(struct m_inode *inode)
+{
+	inode->count = 0;
+	inode->type = 0;
+}
+/* each inode->hinode */
 static int rm_minode(struct m_supoer_block *sb, struct m_inode *inode)
 {
- /* continue */
+	clear_bit(sb->inode_bit_map, inode->hinode->idx);
+	set_bh_dirty(sb->inode_bm_bh);
+
+	/* supper block realted */
+	sb->hsb->inode_used --;
+	set_bh_dirty(sb->bh);
+
+	memset(inode->hinode, 0, sizeof(*(inode->hinode));
+
+	inode->hinode->used = INODE_UNUSED;
+	set_bh_dirty(inode->bh);
+
+	reset_minode(inode);
+
 }
 /* FIXME we need to think of this 
  * as we do not want file in /dev 

@@ -53,7 +53,7 @@ struct m_super_block
 struct inode
 {
 	u32 mode;
-	u32 type;
+	u32 type; /*file or dir */
 	u32 file_size;
 	u32 index;
 	u32 bock_used;
@@ -73,12 +73,10 @@ struct m_inode
 	struct buffer_head *bh;
 	u32 count;
 	u32 dirty; /* the inode is dirty, not the content is dirty */
-	/* type means whether m_inode is juest device/file */ 
-	u32 type;
+	u32 type; /* type means whether m_inode is juest device/file */ 
+
 	/* inode_ops */
 	struct file_operations *ops;
-	/* */
-	u32 dev_id;
 	void *data;
 };
 

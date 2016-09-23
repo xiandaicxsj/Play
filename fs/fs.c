@@ -170,6 +170,8 @@ void init_fs()
 {
 	struct device *dev;
 	dev = get_device(ROOT_DEV);
+	if (!dev)
+		return ;
 	/* this buffer is */
 	init_buffer(dev);
 	init_super_block(dev, &fs_ops);

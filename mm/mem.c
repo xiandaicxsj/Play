@@ -499,6 +499,15 @@ struct page *kalloc_pages(u32 nr, u32 flags)
 	return tmp;
 }
 
+u32 kfree_page(struct page* t)
+{
+	if (t->pfn)
+		free(t->pfn);
+	free(t);
+	return 0;
+
+}
+
 u32 free_page(struct page *t)
 {
 	if (t->pfn)

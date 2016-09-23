@@ -8,6 +8,13 @@
 #define NR_BLOCK 10
 typedef u32 zone_t;
 
+#define DIR_LEN 20
+struct dir_entry
+{
+       u32 inode_idx;
+       char name[DIR_LEN];
+};
+
 struct super_block
 {
 	u32 inode_num;  /* total inode num */
@@ -45,7 +52,7 @@ struct m_super_block
 #define INODE_FILE FILE_TYPE
 #define INODE_DEV DEV_TYPE
 
-#define IS_DIR(mod) (mod & INODE_DEV)
+#define IS_DIR(mod) (mod & INODE_DIR)
 #define IS_FILE(mod) (mod & INODE_FILE)
 #define IS_DEV(mod) (mod & INODE_DEV)
 #define IS_NONE(mod) (mod == NONE_TYPE)

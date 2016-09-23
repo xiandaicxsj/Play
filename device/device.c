@@ -1,6 +1,7 @@
 #include"device.h"
 #include"test.h"
 #include"type.h"
+#include"char_device.h"
 struct device_head
 {
 	u16 dev_num_bit_map;
@@ -8,7 +9,7 @@ struct device_head
 	u16 dev_num;
 };
 
-struct device_head dev_type_list[DEV_TYPE]; 
+struct device_head dev_type_list[DEV_TYPE_COUNT]; 
 
 int register_device(dev_t dev_num, struct device *dev)
 {
@@ -39,19 +40,25 @@ static void init_device_inode()
 {
 }
 
-void init_devices()
+void pre_init_devices()
 {
 	int dev_type_idx = 0;
-	for (dev_type_idx; dev_type_idx < DEV_TYPE; dev_type_idx ++) {
+	for (dev_type_idx; dev_type_idx < DEV_TYPE_COUNT; dev_type_idx ++) {
 		list_init(&dev_type_list[dev_type_idx].list);
 		dev_type_list[dev_type_idx].dev_num_bit_map = 0;
 	}
 
 	/* /dev/ */
-	init_device_inode();
+	//init_device_inode();
 	init_blk_devices();
+	//init_char_devices();
+}
+
+void post_init_device()
+{
 	init_char_devices();
 }
+
 void des_devices()
 {
 	des_blk_devices();

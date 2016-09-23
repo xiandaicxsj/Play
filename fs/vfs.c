@@ -7,6 +7,7 @@
 #include"page.h"
 #include"inode.h"
 //#include"vfs.h"
+#include"test.h"
 
 #ifdef TEST_FS
 #include"string.h"
@@ -97,7 +98,7 @@ void init_file_struct()
 void init_vfs()
 {
     init_file_struct();
-    init_std_file_struct();
+    //init_std_file_struct();
 }
 
 void destroy_vfs()
@@ -274,8 +275,12 @@ u32 _sys_read(int fd, void *buffer, u32 _size)
 		if (f->ops->read(f, addr, size) != size)
 			return off;
 
+#ifdef TEST_FS
+		memcpy(buffer + off, addr, size);
+#else
 		if (copy_to_user(buffer + off, addr, size))
 			goto out;
+#endif
 
 		left -= size;
 		off += size;
@@ -308,9 +313,12 @@ u32 _sys_write(int fd, void *buffer, u32 _size)
 	addr = phy_to_virt(pfn_to_addr(p->pfn));
 
 	while(left > 0) {
-
+#ifdef TEST_FS
+		memcpy(addr, buffer+ off, size);
+#else
 		if (copy_from_user(buffer + off, addr, size))
 			return off;
+#endif
 
 		if (f->ops->write(f, addr, size) != size)
 			return off;
@@ -347,8 +355,9 @@ int main()
 	char buf[20];
 	char k[20];
 	int ret;
-	init_devices();
+	pre_init_devices();
 	init_fs();
+	post_init_device();
 
 	fd = _sys_open("/txt", O_CREATE |O_RDWR);
 	sprintf(buf, "aaa");

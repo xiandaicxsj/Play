@@ -1,35 +1,10 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-typedef unsigned int u32;
+#include"inode_test.h"
 #define PAGE_SIZE 4096
 #define DIR_LEN 20
 #define BACK_FILE "./test_backen.bin"
-struct super_block
-{
-       		u32 inode_num;  /* total inode num */
-       		u32 inode_used; /* already used inode */
-       		u32 block_num;
-       		u32 block_used;
-       		u32 magic; /* determine certain magic number */
-       		u32 inode_block_off; /* fist block store struct inode data struct */
-       		u32 inode_block_num; /* sizeof block used to store struct inode data  struct*/
-       		u32 inode_bitmap_block; /* block store the inode_bit_map */
-       		u32 block_bitmap_block;
-       		u32 root_node; /* block nr of root node */
-};
-
-struct dir_entry
-{
-	        u32 inode_idx;
-		char name[DIR_LEN];
-};
-
-union dir_block {
-	struct dir_entry d[20];
-	char b[PAGE_SIZE];
-};
-
 union first_block{
 	struct super_block sb;
 	char b[PAGE_SIZE];
@@ -41,18 +16,6 @@ struct block {
 
 #define NR_BLOCK 10
 typedef u32 zone_t;
-struct inode
-{
-        u32 mode;
-        u32 file_size;
-	 u32 index;
-	    u32 bock_used;
-	    zone_t zone[NR_BLOCK];
-						        /* this may used furthure */
-       u32 access_time;
-       u32 modify_time;
-       u32 used; /* whether is inode is used */
-};
 
 union root_block 
 {
@@ -109,7 +72,7 @@ int main(int argc ,char *argv[])
 
 	i = 0;
 	read_block(f, br, bk.b, sizeof(bk));
-	for( i; i < 10; i++)
+	for( i; i < 30; i++)
 	{
 		printf("%d: 0x%x\n",i, bk.b[i]);
 	}

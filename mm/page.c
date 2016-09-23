@@ -4,6 +4,7 @@
 #include"mem.h"
 #include"debug.h"
 #include"test.h"
+#include"schdule.h"
 typedef u32 pde_t;
 typedef u32 pte_t;
 /* used the static page to the */
@@ -15,8 +16,10 @@ void page_fault(void)
 	struct page *p;
 	void *cr3;
 
-	asm volatile ("movl %%cr2 , %%eax"
+	/* FIXME why mov cause error
+	asm volatile ("movl %%cr2, %%eax"
 		      :"=a"(fault_addr)::);
+	*/
 
 	p = kalloc_page(MEM_USER);
 	if (!p)  {
@@ -28,7 +31,7 @@ void page_fault(void)
 	if (!cr3)
 		return;
 
-	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, cr3)
+	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, cr3);
 
 	print_str("page fault\n");
 	print_int(fault_addr);

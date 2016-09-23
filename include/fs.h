@@ -8,6 +8,7 @@
 #define O_RD (1 << 0)
 #define O_RDWR (1 << 1)
 #define O_CREATE (1 << 2)
+#define O_DEL (1 << 3)
 #define O_ERROR ( ~(O_RD | O_RDWR | O_CREATE) )
 #define ERROR_FILE(file_mod) (file_mod & O_ERROR)
 

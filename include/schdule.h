@@ -6,7 +6,7 @@
 #include"fs.h"
 #include"inode.h"
 #include"test.h"
-
+extern struct task_struct *current;
 #define MAX_FILE_PROCESS 20
 typedef u32 pid_t;
 #define TASK_RUNNING (1u<<0)

@@ -132,7 +132,7 @@ static void init_test_blk_req()
 
 	list_init(&tbd.free_req_list);
 	list_init(&tbd.used_req_list);
-	tbd.req_page =  kalloc_page(MEM_KERN);
+	tbd.req_page = kalloc_page(MEM_KERN);
 
 #ifdef TEST_FS
 	req_addr = (struct blk_req *)(tbd.req_page->pfn);
@@ -164,6 +164,7 @@ void init_test_blk_device(void)
         u32 minor = alloc_minor(major);
 
         dev_t dev_num = DEV_NUM(major, minor);
+	dev_num = ROOT_DEV;
 	//contruct_test_blk_data(&tbd);
 	init_test_blk_req();
 #ifdef TEST_FS

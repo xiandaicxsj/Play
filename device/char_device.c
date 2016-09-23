@@ -1,6 +1,8 @@
 #include"char_device.h"
-
-void init_char_device()
+#include"keyboard.h"
+#include"mouse.h"
+#include"console.h"
+void init_char_devices()
 {
 	init_key_board();
 	init_mouse();

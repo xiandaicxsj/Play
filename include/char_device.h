@@ -13,4 +13,5 @@ struct char_device
 	struct char_device_ops * ops;
 	struct list_head req_list;
 };
+void init_char_devices();
 #endif

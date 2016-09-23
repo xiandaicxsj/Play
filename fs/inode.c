@@ -7,17 +7,10 @@
 #include"fs.h"
 #include"string.h"
 #include"test.h"
-#define DIR_LEN 20
 #define INODE_USED 1
 #define INODE_UNUSED 0
 struct m_super_block *sb;
 static struct m_inode root_inode;
-
-struct dir_entry 
-{
-	u32 inode_idx;
-	char name[DIR_LEN];
-};
 
 /* dev_num is not used */
 /* need to fix */
@@ -168,16 +161,16 @@ static int reset_minode(struct m_inode *inode)
 	inode->type = 0;
 }
 /* each inode->hinode */
-static int rm_minode(struct m_supoer_block *sb, struct m_inode *inode)
+static int rm_minode(struct m_super_block *sb, struct m_inode *inode)
 {
-	clear_bit(sb->inode_bit_map, inode->hinode->idx);
+	clear_bit(sb->inode_bit_map, inode->hinode->index);
 	set_bh_dirty(sb->inode_bm_bh);
 
 	/* supper block realted */
 	sb->hsb->inode_used --;
 	set_bh_dirty(sb->bh);
 
-	memset(inode->hinode, 0, sizeof(*(inode->hinode));
+	memset(inode->hinode, 0, sizeof(*(inode->hinode)));
 
 	inode->hinode->used = INODE_UNUSED;
 	set_bh_dirty(inode->bh);
@@ -267,7 +260,8 @@ static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 
 	inode = sb->inode_map + inode_idx;
 	/* how to determined whether inode is real file or not */
-	return inode->hinode->used ? inode: NULL;
+	/* return inode->hinode->used ? inode: NULL; */
+	return inode;
 }
 
 /* 
@@ -318,7 +312,7 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 void delete_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_inode *inode)
 {
 	struct buffer_head *bh;
-	memset(de, 0, sizeof(*de);
+	memset(de, 0, sizeof(*de));
 
 	bh = look_up_buffer(pinode->hinode->zone[0]);
 	set_bh_dirty(bh);
@@ -397,11 +391,11 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 	char *dir;
 	u32 dir_len ;
 	u8 need_create = file_mode & O_CREATE;
-	u32 need_rm = file_mode & O_DEL;
+	u8 need_rm = file_mode & O_DEL;
 	u8 get_pdir_ok = 0;
 
 #ifndef TEST_FS
-	if ((c = get_char(file_path)) == '\\')
+	if ((c = get_char(file_path)) == '\')
 		inode = current->root_node;
 	else
 		inode = current->pwd;
@@ -417,7 +411,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 	{
 		dir = file_path;
 		dir_len = 0;
-		for (c = get_char(file_path); c != '\\' && c != '\0'; file_path++) {
+		for (c = get_char(file_path); c != '/' && c != '\0'; file_path++) {
 			c = get_char(file_path);
 			dir_len ++;
 		}

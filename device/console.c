@@ -1,5 +1,7 @@
 #include"console.h"
 #include"char_device.h"
+#include"fs.h"
+#include"page.h"
 #define CONSOLE_WITH 80
 #define CONSOLE_LEN 20
 /* dev console */
@@ -16,6 +18,11 @@ struct console_device
 };
 
 struct console_device con_dev;
+
+int con_dev_open(char *file_name, u32 attr)
+{
+
+}
 
 int con_dev_read(struct file_struct *f, void *buffer, u32 size)
 {
@@ -41,7 +48,7 @@ static con_dev_out_char(struct console_device *dev, char a)
 	u32 off = dev->c_base + dev->c_cur;
 
 	asm volatile ( "movb 0xf0, %%ah \n\t"
-                       "movw %%eax, (%%edi)"
+                       "movw %%ax, (%%edi)"
                        :: "a"(a), "D"(off):);
 
 	dev->c_cur ++ ;
@@ -77,13 +84,13 @@ void con_dev_flush(struct file_struct *f)
 
 }
 
-struct file_operation con_dev_ops
+struct file_operations con_dev_ops = 
 {
 	.read = con_dev_read,
 	.write = con_dev_write,
 	.open = con_dev_open,
 	.flush = con_dev_flush,
-}
+};
 
 static void init_console_device(struct console_device *dev)
 {
@@ -105,7 +112,7 @@ void init_console()
 	char dev_name[20];
 
 	major = DEV_CHAR;
-	minort = alloc_minor(major);
+	minor = alloc_minor(major);
 	dev_num = DEV_NUM(major, minor);
 
 	sprintf(dev_name, "/dev/console%d", minor);

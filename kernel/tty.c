@@ -1,4 +1,5 @@
 #include"tty.h"
+#include"port.h"
 #define COM1_BASE	0x3F8
 #define COM2_BASE	0x3F8
 #define COM3_BASE	0x3F8

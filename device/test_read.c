@@ -26,7 +26,7 @@ union root_block
 
 int read_block(FILE *f, u32 block_nr, char *b, u32 size)
 {
-	fseek(f, sizeof(char) * size * (block_nr - 1), SEEK_SET);
+	fseek(f, sizeof(char) * size * block_nr, SEEK_SET);
 	if (fread(b, sizeof(char), size, f) != size)
 		printf("error\n");
 
@@ -42,7 +42,7 @@ int main(int argc ,char *argv[])
 	f = fopen("test_backen.bin", "r");
 
 	union first_block fb;
-	read_block(f, 1, fb.b, sizeof(fb));
+	read_block(f, 0, fb.b, sizeof(fb));
 
 	struct super_block *sb = &fb.sb;
 	printf(" inode_num is %d \n", sb->inode_num);
@@ -58,10 +58,11 @@ int main(int argc ,char *argv[])
 	printf(" root_node is %d \n", sb->root_node);
 
 
+	int i= 0;
+	/*
 	read_block(f, 4, bk.b, sizeof(bk));
 	struct inode *ib;
 	ib = (struct inode * )bk.b;
-	int i= 0;
 	for( i; i < 10; i++)
 
 	{
@@ -69,6 +70,7 @@ int main(int argc ,char *argv[])
 		printf("zone is %d\n", ib->zone[0]);
 		ib ++;
 	}
+	*/
 
 	i = 0;
 	read_block(f, br, bk.b, sizeof(bk));

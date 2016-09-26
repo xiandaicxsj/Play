@@ -12,6 +12,7 @@
 struct m_super_block *sb;
 static struct m_inode *root_inode;
 #define ROOT_INODE 0
+#define SB_BLK_NR 0
 
 struct m_inode *get_root_node()
 {
@@ -27,7 +28,7 @@ static void get_sb(struct device *dev, struct m_super_block *sb, struct file_ope
 	struct buffer_head *bh = NULL;
 	sb->data = dev;
 	sb->ops = ops;
-	bh = look_up_buffer(1); // the first 1 super block 
+	bh = look_up_buffer(SB_BLK_NR); // the first 1 super block 
 	sb->hsb = (struct super_block *)bh->data;
 	sb->bh = bh;
 }

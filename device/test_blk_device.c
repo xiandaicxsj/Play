@@ -13,6 +13,8 @@
 #define TEST_DEV_BLK_REV 3
 #define BLOCK_ALIGN char b[TEST_DEV_BLK_SIZE]
 
+#define BLOCK_OFF(num)  (block_num * TEST_DEV_BLK_SIZE)
+
 struct test_blk_device
 {
 	struct blk_device blk_dev;
@@ -33,7 +35,7 @@ void test_blk_write(struct test_blk_device *tbd, u32 block_num, void *buf)
 	void *mem = kmalloc(TEST_DEV_BLK_SIZE , 0 ,0);
 	int ret = 0;
 
-	u32 off = (block_num > 1 ? block_num -1 :0)* TEST_DEV_BLK_SIZE;
+	u32 off = BLOCK_OFF(block_num);
 	fseek(tbd->fd, off, SEEK_SET);
 	ret = fwrite(buf, 1, TEST_DEV_BLK_SIZE, tbd->fd);
 	fflush(tbd->fd);
@@ -47,7 +49,7 @@ void test_blk_read(struct test_blk_device *tbd, u32 block_num, void *buf)
 {
 
 #ifdef TEST_FS
-	u32 off = (block_num > 1 ? block_num -1 :0)* TEST_DEV_BLK_SIZE;
+	u32 off = BLOCK_OFF(block_num);
 	fseek(tbd->fd, off, SEEK_SET);
 	fread(buf, 1, TEST_DEV_BLK_SIZE, tbd->fd);
 #endif

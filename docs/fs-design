@@ -1,0 +1,46 @@
+fs 
+file_struct 
+    1.reprent one file 
+    2.reprent one device
+	fops 
+
+buffer 	
+	1. buffer current only used  for file_sys
+
+inode
+	inode can be file or device
+	1. device
+	inode for device should be create when system booting 
+	2. file
+	file inode should be persisitent on the system
+
+read diagram
+	1. current-process
+		read	
+		   sys_read
+			- search inode
+			- search file_struct
+			- file_struct->read (); /* same wite inode read */
+				1) file		
+					buffer
+					......
+				2) device
+					cal device specific func
+					
+
+init 
+	/* */
+	1.get_device
+	2.get_device_ops
+	3.supoer
+		3.bh_head
+	/* block device */
+		if the inode is just inode fs
+	inode -> fs ->  block_buffer -> read/write ->device->ops
+
+	/* tty device */
+	inode -> read -> char_buffer -> rd/wr
+inode  
+
+
+/dev/* /dev dir should be residence in fs/sys

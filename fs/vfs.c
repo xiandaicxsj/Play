@@ -77,7 +77,7 @@ void init_file_struct()
 
 	count = (PAGE_SIZE) / sizeof(struct file_struct);
 
-#ifdef TEST_FS
+#ifndef TEST_FS
 	f_ptr = (struct file_struct *)phy_to_virt(pfn_to_addr(page->pfn));
 #else
 	f_ptr =  (struct file_struct *)page->pfn;
@@ -291,12 +291,11 @@ out:
 	return off;
 }
 
-u32 _sys_write(int fd, void *buffer, u32 _size)
+u32 _sys_write(int fd, void *buffer, u32 size)
 {
 	struct file_struct *f ;
 	struct buffer_head *bh;
-	u32 left = _size;
-	u32 size = 0;
+	u32 left = size;
 	u32 off = 0;
 	struct page *p;
 	void *addr;
@@ -310,9 +309,15 @@ u32 _sys_write(int fd, void *buffer, u32 _size)
 		return -1;
 
 	p = kalloc_page(MEM_KERN);
+#ifndef TEST_FS
 	addr = phy_to_virt(pfn_to_addr(p->pfn));
+#else
+	addr = (void *)p->pfn;
+#endif
 
 	while(left > 0) {
+		size = left > PAGE_SIZE ? PAGE_SIZE : left;
+
 #ifdef TEST_FS
 		memcpy(addr, buffer+ off, size);
 #else
@@ -355,6 +360,7 @@ int main()
 	char buf[20];
 	char k[20];
 	int ret;
+	init_vfs();
 	pre_init_devices();
 	init_fs();
 	post_init_device();

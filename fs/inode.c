@@ -10,7 +10,13 @@
 #define INODE_USED 1
 #define INODE_UNUSED 0
 struct m_super_block *sb;
-static struct m_inode root_inode;
+static struct m_inode *root_inode;
+#define ROOT_INODE 0
+
+struct m_inode *get_root_node()
+{
+	return root_inode;
+}
 
 /* dev_num is not used */
 /* need to fix */
@@ -132,6 +138,7 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 	return ;
 }
 
+/*
 static void init_root(struct m_super_block *sb)
 {
 	struct buffer_head *bh = NULL;
@@ -142,14 +149,7 @@ static void init_root(struct m_super_block *sb)
 	root_inode.count = 1;
 	root_inode.data = sb->data;
 }
-
-static void init_inode(struct m_super_block *sb, struct file_operations *ops)
-{
-	init_inode_bit_map(sb);
-	init_inode_map(sb, ops, INODE_FILE);
-	init_root(sb);
-}
-
+*/
 static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 {
 	return 0;
@@ -227,22 +227,6 @@ static u32 alloc_block(struct m_super_block *sb)
 
 	return idx;
 	/* get availule block */
-}
-
-int init_super_block(struct device *dev, struct file_operations *ops)
-{
-	if (!dev) {
-		return -1;
-
-	}
-
-    	sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
-	if (!sb)
-		return -1;
-    	get_sb(dev, sb, ops);
-	init_inode(sb, ops);
-	init_block(sb);
-	return 0;
 }
 
 char get_char(char *array)
@@ -333,14 +317,16 @@ void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_
 	bh = look_up_buffer(pinode->hinode->zone[0]);
 	set_bh_dirty(pinode->bh);
 	set_bh_dirty(bh);
+
+	/* refine this */
+	if (IS_FILE(inode->type) || IS_DIR(inode->type)) {
+		if (!pinode)
+			return ;
+		inode->ops = pinode->ops;
+		inode->data = pinode->data;
+	}
 	
 	/* do we need to set pinode->bh dirty */
-}
-
-/* fix me */
-struct m_inode *get_root_node()
-{
-	return &root_inode;
 }
 
 /* put_inode means we flush the inode buffer
@@ -386,7 +372,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 {
 	struct m_inode * parent_inode;
 	struct m_inode * inode = NULL;
-	struct dir_entry **de_ptr;
+	struct dir_entry *de_ptr;
 	char c ;
 	char *dir;
 	u32 dir_len ;
@@ -414,6 +400,8 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		for (c = get_char(file_path); c != '/' && c != '\0'; file_path++) {
 			c = get_char(file_path);
 			dir_len ++;
+			if (c == '/')
+				break;
 		}
 
 		/* /a/b/c means we get /a/b */
@@ -423,7 +411,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 
 		/* de_ptr will be get from later func */
 		/* de_ptr is the place to put the file (not dir)*/
-		inode = get_dir_entry_inode(dir, dir_len, parent_inode, de_ptr);
+		inode = get_dir_entry_inode(dir, dir_len, parent_inode, &de_ptr);
 		if (!inode)
 			break;
 
@@ -439,9 +427,9 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 
 	if (inode && need_rm)
 	{
-		if (!*de_ptr)
+		if (!de_ptr)
 			return NULL;
-		delete_parent_inode(parent_inode, *de_ptr, inode);
+		delete_parent_inode(parent_inode, de_ptr, inode);
 		rm_minode(parent_inode->sb, inode);
 	}
 
@@ -455,7 +443,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		inode = get_minode(parent_inode->sb, file_mode, type);
 		/* find */
 		/* del with this dir */
-		insert_parent_inode(parent_inode, *de_ptr, inode, dir, dir_len);
+		insert_parent_inode(parent_inode, de_ptr, inode, dir, dir_len);
 		inode->count ++;
 		/* init_inode */
 
@@ -501,3 +489,30 @@ struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr)
 	return look_up_buffer(block_num);
 }
 
+static void init_root(struct m_super_block *sb)
+{
+	root_inode = get_inode_by_idx(sb, ROOT_INODE);
+}
+
+static void init_inode(struct m_super_block *sb, struct file_operations *ops)
+{
+	init_inode_bit_map(sb);
+	init_inode_map(sb, ops, INODE_FILE);
+	init_root(sb);
+}
+
+int init_super_block(struct device *dev, struct file_operations *ops)
+{
+	if (!dev) {
+		return -1;
+
+	}
+
+    	sb = kmalloc(sizeof(*sb), 0, MEM_KERN);
+	if (!sb)
+		return -1;
+    	get_sb(dev, sb, ops);
+	init_inode(sb, ops);
+	init_block(sb);
+	return 0;
+}

@@ -89,6 +89,7 @@ struct m_inode
 
 struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type);
 int put_inode(struct m_inode *inode);
+struct m_inode *get_root_node();
 
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);
 int init_super_block(struct device *dev, struct file_operations *ops);

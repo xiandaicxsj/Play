@@ -1,0 +1,13 @@
+
+1. buffer means cache
+/*
+	1. file buffer. Buffer contain file data.
+	2. if tty need to cacahe data, how should we do this. 
+	those need to cached 
+	buffer->device->write
+*/
+
+2. buffer here only used for file sys
+
+3. 
+

@@ -73,18 +73,18 @@ int main()
 
 	memset(&rb, 0, sizeof(rb)); 
 	struct inode *id = &rb.i;
-	id->mode = 2;
 	id->type = DIR_TYPE;
-	id->index = O_RDWR;
+	id->mode = O_RDWR;
+	id->index = 0;
 	id->used = 1;
 	id->zone[0] = 14;
 
 	/* /dev */
-	id++;
+	id ++;
 	id->type = DIR_TYPE;
 	id->mode = O_RDWR;
-	id->used = 1;
 	id->index = 1;
+	id->used = 1;
 	id->zone[0] = 15;
 
 	write_block(f, 4 ,rb.b, sizeof(rb));
@@ -120,7 +120,7 @@ int main()
 	memset(&bb, 0, sizeof(bb));
 	// 1 - 13
 	bb.b[0] = 0xff;
-	bb.b[1] = 0x3f;
+	bb.b[1] = 0x7f;
 	write_block(f, 3, bb.b, sizeof(bb));
 	fclose(f);
 	return 0;

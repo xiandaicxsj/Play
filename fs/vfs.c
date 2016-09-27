@@ -371,10 +371,10 @@ int main()
 	/*
 	fd = _sys_open("/txt", O_RD);
 	printf("%d\n", ret);
+	*/
 	_sys_seek(fd, 0);
 	_sys_read(fd, k, sizeof(k));
 	printf("%s\n", k);
-	*/
 	_sys_close(fd);
 	des_devices();
 	return 0;

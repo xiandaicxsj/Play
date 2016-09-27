@@ -227,6 +227,7 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode,
 		inode->type = type;
 		inode->index = idx + sb->dev_inode_base;
 		inode->count = 0;
+		inode->sb = sb;
 
 		sb->dev_inode_used ++;
 	}
@@ -235,6 +236,7 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode,
 		set_bit(sb->inode_bit_map, idx);
 		set_bh_dirty(sb->inode_bm_bh);
 
+		inode->sb = sb;
 		sb->hsb->inode_used ++;
 		inode = sb->inode_map + idx; /* the dirty bit of struct m_inode */
 		set_bh_dirty(sb->bh);
@@ -342,8 +344,6 @@ struct m_inode *get_dir_entry_inode(char *dir, u32 dir_len, struct m_inode *inod
 		if (!r_inode) 
 			return NULL;
 
-		if ( !IS_DIR(r_inode->hinode->type) )
-			return NULL;
 		return r_inode;
 	}
 	*de_ptr = emp_de;
@@ -420,12 +420,13 @@ int put_inode(struct m_inode *inode)
 /* root inode is 0 */
 /* /dev
  * we do't need to flush to disk */
-int create_inode_dev(char *file_path, struct file_operation *ops, void *data)
+int create_inode_dev(char *file_path, struct file_operations *ops, void *data)
 {
 	create_inode(file_path, ops, data, INODE_DEV);
 
 }
-int create_inode(char *file_path, struct file_operation *ops, void *data, u32 type)
+
+int create_inode(char *file_path, struct file_operations *ops, void *data, u32 type)
 {
 	struct m_inode *inode = get_inode(file_path, O_CREATE, type);
 

@@ -2,6 +2,7 @@
 #include"char_device.h"
 #include"fs.h"
 #include"page.h"
+#include"inode.h"
 #define CONSOLE_WITH 80
 #define CONSOLE_LEN 20
 /* dev console */
@@ -19,7 +20,7 @@ struct console_device
 
 struct console_device con_dev;
 
-int con_dev_open(char *file_name, u32 attr)
+int con_dev_open(struct inode *inode, u32 attr)
 {
 
 }
@@ -121,6 +122,6 @@ void init_console()
 
 	register_char_device(dev_num, &con_dev.dev, &con_dev_ops);
 	/* create file relate ops */
-	create_inode(dev_name, &con_dev_ops, &con_dev);
+	create_inode_dev(dev_name, &con_dev_ops, &con_dev);
 }
 

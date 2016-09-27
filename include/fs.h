@@ -1,5 +1,6 @@
 #ifndef _H_FS
 #define _H_FS
+#include"inode.h"
 #define ROOT_DEV 1
 #define NONE_TYPE 0
 #define FILE_TYPE (1 << 0)
@@ -14,7 +15,7 @@
 
 struct file_operations
 {
-	int (*open)(char *file_name, u32 attr);
+	int (*open)(struct inode *inode, u32 attr);
 	int (*close)(struct file_struct *file);
 	int (*seek)(struct file_struct *file, u32 off, u32 beg);
 	int (*read)(struct file_struct *file, void *buffer, u32 size);

@@ -210,6 +210,7 @@ u32 _sys_open(char *file_path, u32 file_attr)
 		type = INODE_FILE;
 	else 
 		type = INODE_NONE;
+
 	inode = get_inode(file_path, file_attr, INODE_FILE);
 	if (!inode)
 		return fd;
@@ -376,6 +377,8 @@ int main()
 	_sys_read(fd, k, sizeof(k));
 	printf("%s\n", k);
 	_sys_close(fd);
+	fd = _sys_open("/dev/kb", O_RDWR);
+	ret = _sys_write(fd, buf, sizeof(buf));
 	des_devices();
 	return 0;
 }

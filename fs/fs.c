@@ -22,7 +22,7 @@ int fs_mkdir(char *dir_name)
 }
 
 /* not sure */
-int fs_open(char *file_path, u32 file_attr)
+int fs_open(struct inode *inode, u32 file_attr)
 {
 	return 0;
 }

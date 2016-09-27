@@ -81,7 +81,7 @@ int main()
 
 	/* /dev */
 	id ++;
-	id->type = DIR_TYPE;
+	id->type = DIR_TYPE | DEV_TYPE;
 	id->mode = O_RDWR;
 	id->index = 1;
 	id->used = 1;

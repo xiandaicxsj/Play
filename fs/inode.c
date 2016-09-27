@@ -373,8 +373,15 @@ void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_
 	/* need to change this */
 	/* change the fucntion param contain struct buffer *bh */
 	bh = look_up_buffer(pinode->hinode->zone[0]);
-	set_bh_dirty(pinode->bh);
-	set_bh_dirty(bh);
+	
+	/* dev */
+	if (IS_DIR(pinode->type) && IS_DEV(pinode->type))
+	{
+
+	} else {
+		set_bh_dirty(pinode->bh);
+		set_bh_dirty(bh);
+	}
 
 	/* refine this */
 	if (IS_FILE(inode->type) || IS_DIR(inode->type)) {
@@ -507,6 +514,7 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		/* find */
 		/* del with this dir */
 		insert_parent_inode(parent_inode, de_ptr, inode, dir, dir_len);
+
 		inode->count ++;
 		/* init_inode */
 	}
@@ -515,6 +523,8 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 
 static void set_inode_dirty(struct m_inode *inode)
 {
+	if (IS_DEV(inode->type) && IS_DIR(inode->type))
+		return ;
 	inode->dirty = 1;
 	set_bh_dirty(inode->bh);
 

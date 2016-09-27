@@ -13,6 +13,7 @@ struct m_super_block *sb;
 static struct m_inode *root_inode;
 #define ROOT_INODE 0
 #define SB_BLK_NR 0
+#define DEV_INODE_NUM 100
 
 struct m_inode *get_root_node()
 {
@@ -31,6 +32,9 @@ static void get_sb(struct device *dev, struct m_super_block *sb, struct file_ope
 	bh = look_up_buffer(SB_BLK_NR); // the first 1 super block 
 	sb->hsb = (struct super_block *)bh->data;
 	sb->bh = bh;
+
+	sb->dev_inode_base = sb->hsb->inode_num;
+	sb->dev_inode_num = DEV_INODE_NUM;
 }
 
 static void init_block_bit_map(struct m_super_block *sb)
@@ -53,16 +57,25 @@ static void init_block_bit_map(struct m_super_block *sb)
 static void init_inode_bit_map(struct m_super_block *sb)
 {
 	//struct page *page = NULL;
+	/* fs related bit map */
 	struct buffer_head *bh = NULL;
+	struct page *p;
 		
-	//page = kmalloc_page(MEM_KERN);
-
 	bh = look_up_buffer(sb->hsb->inode_bitmap_block);
 
 	sb->inode_bit_map = bh->data;
 	sb->inode_bm_bh = bh;
-	//sb->inode_bit_map = pfn_to_virt(page->pfn);
-	//memcpy(sb->inode_bit_map, bh->data, BUF_SIZE);
+
+	/* dev related bit map */
+
+	p = kalloc_page(MEM_KERN);
+#ifndef TEST_FS
+	sb->dev_inode_bit_map = phy_to_virt(pfn_to_addr(p->pfn));
+#else
+	sb->dev_inode_bit_map = p->pfn;
+#endif
+	memset(sb->dev_inode_bit_map, 0, PAGE_SIZE);
+	
 	return ;
 	/* do we need this */
 }
@@ -80,6 +93,10 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 
 	u32 block_num = sb->hsb->inode_block_num;
 	u32 block_off = sb->hsb->inode_block_off;
+
+	/* the base of inode used by inode */
+	//u32 dev_inode_base = sb->dev_inode_base;
+	u32 dev_inode_num = sb->dev_inode_num;
 
 	/* i don't know whether this isn needed */
 	u32 nr_inode_per_buf = BUF_SIZE/sizeof(struct inode);
@@ -119,7 +136,9 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 				m_head->ops = !ops ? sb->ops: ops;
 			/* data port to device */
 				m_head->data = sb->data; 
+
 				m_head->type = h_head->type;
+				m_head->index = h_head->index;
 			} else {
 
 					m_head->ops = 0;
@@ -136,21 +155,32 @@ static void init_inode_map(struct m_super_block *sb, struct file_operations *ops
 		block_num --;
 		block_off ++;
 	}
+
+	/* dev inode */
+
+	pages_num = round_up((dev_inode_num *sizeof(struct m_inode)), PAGE_SIZE) / PAGE_SIZE;
+
+	page = kalloc_pages(pages_num, MEM_KERN);
+#ifndef TEST_FS
+	sb->dev_inode_map = (struct m_inode *) phy_to_virt(page->pfn);
+#else
+	sb->dev_inode_map = (struct m_inode *) page->pfn;
+#endif
+	memset(sb->dev_inode_map, 0, PAGE_SIZE * pages_num);
+
+	m_head = sb->dev_inode_map; 
+	idx = 0;
+	while(idx < sb->dev_inode_num) {
+
+		memset(m_head, 0, sizeof(*m_head));
+		m_head->type = INODE_DEV;
+		idx++;
+		m_head ++;
+	}
+
 	return ;
 }
 
-/*
-static void init_root(struct m_super_block *sb)
-{
-	struct buffer_head *bh = NULL;
-	bh = look_up_buffer(sb->hsb->root_node); // the first 1 super block 
-	root_inode.hinode = (struct m_inode *)bh->data;
-	root_inode.sb = sb;
-	root_inode.bh = bh;
-	root_inode.count = 1;
-	root_inode.data = sb->data;
-}
-*/
 static int put_minode(struct m_super_block *sb, struct m_inode *inode)
 {
 	return 0;
@@ -188,22 +218,37 @@ static struct m_inode *get_minode(struct m_super_block *sb, u32 file_mode,
 {
 	/* dirty */
 	struct m_inode *inode;
-	u32 idx = find_first_avail_bit(sb->inode_bit_map, BUF_SIZE);
-	set_bit(sb->inode_bit_map, idx);
-	set_bh_dirty(sb->inode_bm_bh);
+	u32 idx;
+	if (type == INODE_DEV) {
+		idx = find_first_avail_bit(sb->dev_inode_bit_map, BUF_SIZE);
+		set_bit(sb->dev_inode_bit_map, idx);
+		inode = sb->dev_inode_map + idx;
 
-	sb->hsb->inode_used ++;
-	inode = sb->inode_map + idx; /* the dirty bit of struct m_inode */
-	set_bh_dirty(sb->bh);
+		inode->type = type;
+		inode->index = idx + sb->dev_inode_base;
+		inode->count = 0;
+
+		sb->dev_inode_used ++;
+	}
+	else {
+		idx = find_first_avail_bit(sb->inode_bit_map, BUF_SIZE);
+		set_bit(sb->inode_bit_map, idx);
+		set_bh_dirty(sb->inode_bm_bh);
+
+		sb->hsb->inode_used ++;
+		inode = sb->inode_map + idx; /* the dirty bit of struct m_inode */
+		set_bh_dirty(sb->bh);
 	/* init inode */	
-	memset(inode->hinode, 0, sizeof(struct inode));
-	inode->hinode->used = INODE_USED;
-	inode->hinode->mode = file_mode;
-	inode->hinode->type = type;
-	inode->hinode->index = idx;
+		memset(inode->hinode, 0, sizeof(struct inode));
+		inode->hinode->used = INODE_USED;
+		inode->hinode->mode = file_mode;
+		inode->hinode->type = type;
+		inode->hinode->index = idx;
 
-	inode->type = type;
-	set_bh_dirty(inode->bh);
+		inode->type = type;
+		inode->index = idx;
+		set_bh_dirty(inode->bh);
+        }
 
 	return inode;
 	/* this used for alloc small num of structure */
@@ -238,15 +283,26 @@ char get_char(char *array)
 /* get inode by  inode_idx */
 static struct m_inode *get_inode_by_idx(struct m_super_block *sb, u32 inode_idx)
 {
-	struct m_inode *inode;
+	struct m_inode *inode_map;
+	void *bit_map;
+	u32 idx;
 
-	if (!test_bit(sb->inode_bit_map, inode_idx))
+	if (inode_idx  < sb->dev_inode_base) {
+		idx = inode_idx;
+		inode_map = sb->inode_map;
+		bit_map = sb->inode_bit_map;
+	} else {
+	 	idx = inode_idx - sb->dev_inode_base;
+		inode_map = sb->dev_inode_map;
+		bit_map = sb->dev_inode_bit_map;
+	}
+
+	if (!test_bit(bit_map, idx))
 		return NULL;
 
-	inode = sb->inode_map + inode_idx;
 	/* how to determined whether inode is real file or not */
 	/* return inode->hinode->used ? inode: NULL; */
-	return inode;
+	return inode_map + idx;
 }
 
 /* 
@@ -309,7 +365,8 @@ void insert_parent_inode(struct m_inode *pinode, struct dir_entry *de, struct m_
 {	
 	struct buffer_head *bh;
 	memcpy(de->name, name, len);
-	de->inode_idx = inode->hinode->index;
+	//de->inode_idx = inode->hinode->index;
+	de->inode_idx = inode->index;
 	/* bugs */	
 
 	/* this bug de has not bh memeber */
@@ -356,9 +413,14 @@ int put_inode(struct m_inode *inode)
 /* root inode is 0 */
 /* /dev
  * we do't need to flush to disk */
-int create_inode(char *file_path, struct file_operation *ops, void *data)
+int create_inode_dev(char *file_path, struct file_operation *ops, void *data)
 {
-	struct m_inode *inode = get_inode(file_path, O_CREATE, INODE_DEV);
+	create_inode(file_path, ops, data, INODE_DEV);
+
+}
+int create_inode(char *file_path, struct file_operation *ops, void *data, u32 type)
+{
+	struct m_inode *inode = get_inode(file_path, O_CREATE, type);
 
 	if (!inode)
 		return -1;
@@ -447,7 +509,6 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 		insert_parent_inode(parent_inode, de_ptr, inode, dir, dir_len);
 		inode->count ++;
 		/* init_inode */
-
 	}
 	return inode;
 }

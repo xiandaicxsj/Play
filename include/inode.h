@@ -38,6 +38,7 @@ struct m_super_block
 	u32 dirty;
 	/* if this two is dirty should write back */
 	/* but how to do this */
+	/* fs related bit map */
 	void * inode_bit_map;
 	void * block_bit_map;
 	struct buffer_head *inode_bm_bh;
@@ -45,6 +46,13 @@ struct m_super_block
 	struct m_inode * inode_map;
 	struct file_operations *ops;
 	void *data;
+	/* for dev only support /dev/* */
+	/* dev related */
+	void *dev_inode_bit_map;
+	void *dev_inode_map;
+	u32 dev_inode_base;
+	u32 dev_inode_num;
+	u32 dev_inode_used;
 };
 
 #define INODE_NONE NONE_TYPE
@@ -81,6 +89,7 @@ struct m_inode
 	u32 count;
 	u32 dirty; /* the inode is dirty, not the content is dirty */
 	u32 type; /* type means whether m_inode is juest device/file */ 
+	u32 index; /* this is used for device */
 
 	/* inode_ops */
 	struct file_operations *ops;

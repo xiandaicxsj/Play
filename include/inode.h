@@ -102,4 +102,7 @@ struct m_inode *get_root_node();
 
 struct buffer_head *get_inode_bh(struct m_inode *inode, u32 block_nr, u32 attr);
 int init_super_block(struct device *dev, struct file_operations *ops);
+
+int create_inode_dev(char *file_path, struct file_operations *ops, void *data);
+int create_inode(char *file_path, struct file_operations *ops, void *data, u32 type);
 #endif

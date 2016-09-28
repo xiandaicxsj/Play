@@ -49,7 +49,7 @@ struct m_super_block
 	/* for dev only support /dev/* */
 	/* dev related */
 	void *dev_inode_bit_map;
-	void *dev_inode_map;
+	struct m_inode *dev_inode_map;
 	u32 dev_inode_base;
 	u32 dev_inode_num;
 	u32 dev_inode_used;

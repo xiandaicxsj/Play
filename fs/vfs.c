@@ -8,10 +8,11 @@
 #include"inode.h"
 //#include"vfs.h"
 #include"test.h"
+#include"bitop.h"
 
 #ifdef TEST_FS
 #include"string.h"
-static int g_fidx = 0;
+static u64 fd_bit_map; 
 struct file_struct *g_files[20];
 #endif
 
@@ -107,9 +108,21 @@ void destroy_vfs()
 
 }
 
+
+int put_file_struct(struct file_struct *f)
+{
+	if (!f)
+		return -1;
+	if (f->count > 1) {
+		f->count --;
+		return ;
+	}
+	/* just clear this */
+	memset(f, 0, sizeof(*f));
+}
 /* for file system one inode vs one file_struct */
 /* for 0-3 stdin/out/error we can duplicate this */ 
-struct file_struct * find_file_struct(struct m_inode *inode, u32 file_attr)
+struct file_struct * get_file_struct(struct m_inode *inode, u32 file_attr)
 {
 	/* find */
 	struct file_struct *f = NULL;
@@ -117,14 +130,15 @@ struct file_struct * find_file_struct(struct m_inode *inode, u32 file_attr)
 		return NULL;
 
 	f = search_file_struct(inode);
-	if (!f)
+	if (!f) 
 		return NULL;
 
-	f->type = inode->type;
-	f->ops = inode->ops;
-	f->data = inode->data;
+	if (f->count >= 1) {
+		f->count ++;
+		return f;
+	}
 
-#if 1 
+#if 0
 	/* only one can open to one file
 	 * device can be access by two more users at the same time
 	 */
@@ -133,6 +147,9 @@ struct file_struct * find_file_struct(struct m_inode *inode, u32 file_attr)
 		return NULL;
 #endif
 
+	f->type = inode->type;
+	f->ops = inode->ops;
+	f->data = inode->data;
 	f->inode = inode;
 	f->file_attr = file_attr;
 	f->pos = 0;
@@ -142,7 +159,20 @@ struct file_struct * find_file_struct(struct m_inode *inode, u32 file_attr)
 	return f;
 }
 
-u32 alloc_file_fd(struct task_struct *current)
+int put_fd(u32 fd)
+{
+#ifdef TEST_FS
+	if (!test_bit(&fd_bit_map, fd))
+		return -1;
+	clear(&fd_bit_map, fd);
+	g_file[fd] = NULL;
+#else
+
+#endif
+
+}
+
+int get_fd(struct file_struct *file)
 {
 	/* fd_count should be 3 */
 	/* 0 stdin
@@ -150,6 +180,11 @@ u32 alloc_file_fd(struct task_struct *current)
 	 * 2 stderr
 	 */
 	u32 fd;
+#ifdef TEST_FS
+	fd = find_first_avail_bit(&fd_bit_map, 64);
+	set_bit(&fd_bit_map, fd);
+	g_files[fd] = file;
+#else
 
 	if (current->fd_count >= MAX_FILE_PROCESS)
 		return -1;
@@ -159,8 +194,11 @@ u32 alloc_file_fd(struct task_struct *current)
 		return -1;
 	}
 
+	/* FIXME we should change fd in task to bitmap */
 	fd = current->fd_count;
+	current->file[fd] = file;
 	current->fd_count ++;
+#endif
 	return fd;
 }
 
@@ -182,10 +220,8 @@ u32 _sys_close(u32 fd)
 	f->ops->close(f);
 	//put_inode(f->inode);
 
-#ifndef TEST_FS
-	current->fs[fd] = NULL;
-	/* FIXME delete fd */
-#endif
+	put_file_struct(f);
+	put_fd(fd);
 }
 
 u32 _sys_mkdir(char *file_path)
@@ -222,20 +258,14 @@ int _sys_open(char *file_path, u32 file_attr)
 	}
 
 	/* do we need file , yes*/
-	file = find_file_struct(inode, file_attr);
+	file = get_file_struct(inode, file_attr);
 	if (!file)
 		return -1;
 
 #ifndef TEST_FS
-	fd = alloc_file_fd(current);
-	if (fd < 0)
-		return fd;
-	current->file[fd] = file;
-
+	fd = get_fd(file);
 #else
-	fd = g_fidx;
-	g_fidx ++;
-	g_files[fd] = file;
+	fd = get_fd(file);
 #endif
 	return fd;
 }

@@ -44,3 +44,9 @@ inode
 
 
 /dev/* /dev dir should be residence in fs/sys
+
+
+
+fs to-do-list
+1. no fs can partly work
+2. fs->count

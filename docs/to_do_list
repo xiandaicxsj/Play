@@ -1,14 +1,20 @@
-1.print_screen
+mem system
+1. add little memory allocation
+page fault
 
-task realted
+handle
 
-2. ring 0 -> ring 3 (also ring3 ->ring 0)
-3. ldt handle
+fs system
+1. more test
 
+driver system 
+1. write driver for console keyboard mouse
 
-...weeks17 status
+interrupt system
+need to write the interrupt sys
 
-2 process running and can be changed by timer
-and schduled 
+process system
+	1. only small part is write
+	2. fork
 
-
+swap system (may be);

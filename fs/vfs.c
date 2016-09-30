@@ -59,6 +59,7 @@ struct file_struct *search_file_struct(struct minode *inode)
 			empty_fs =  fs_ptr;
 
 		idx ++;
+		fs_ptr ++;
 	}
 
 	return empty_fs;
@@ -198,7 +199,7 @@ u32 _sys_mkdir(char *file_path)
 	return 0;
 }
 
-u32 _sys_open(char *file_path, u32 file_attr)
+int _sys_open(char *file_path, u32 file_attr)
 {
 	struct m_inode *inode;
 	struct file_path;
@@ -222,9 +223,13 @@ u32 _sys_open(char *file_path, u32 file_attr)
 
 	/* do we need file , yes*/
 	file = find_file_struct(inode, file_attr);
+	if (!file)
+		return -1;
 
 #ifndef TEST_FS
 	fd = alloc_file_fd(current);
+	if (fd < 0)
+		return fd;
 	current->file[fd] = file;
 
 #else
@@ -365,18 +370,15 @@ int main()
 	pre_init_devices();
 	init_fs();
 	post_init_device();
-
+	
 	fd = _sys_open("/txt", O_CREATE |O_RDWR);
 	sprintf(buf, "aaa");
 	ret = _sys_write(fd, buf, sizeof(buf));
-	/*
-	fd = _sys_open("/txt", O_RD);
-	printf("%d\n", ret);
-	*/
 	_sys_seek(fd, 0);
 	_sys_read(fd, k, sizeof(k));
 	printf("%s\n", k);
 	_sys_close(fd);
+
 	fd = _sys_open("/dev/kb", O_RDWR);
 	ret = _sys_write(fd, buf, sizeof(buf));
 	des_devices();

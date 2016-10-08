@@ -1,0 +1,7 @@
+1. process switch/schdule/...
+2. fork one process(copy on access)
+3. interrupt handler(if )
+4. kernel thread 
+
+/* next step */
+5. device related 

@@ -10,6 +10,8 @@
 #include"test.h"
 #include"bitop.h"
 #include"type.h"
+#include"vfs.h"
+#include"linkage.h"
 
 #ifdef TEST_FS
 #include"string.h"
@@ -40,6 +42,14 @@ struct file_struct *get_stderr_file_struct()
 
 }
 
+int init_task_file_struct(struct task_struct *task)
+{
+	task->file[0] = get_stdio_file_struct();
+	task->file[1] = get_stdout_file_struct();
+	task->file[2] = get_stderr_file_struct();
+	task->fd_count = 3;
+	return 0;
+}
 /* search mean we need to create if necessary */
 struct file_struct *search_file_struct(struct minode *inode)
 {
@@ -236,8 +246,9 @@ u32 _sys_mkdir(char *file_path)
 	return 0;
 }
 
-int _sys_open(char *file_path, u32 file_attr)
+asmlinkage int do_sys_open(char *file_path, u32 file_attr)
 {
+	/* file_path may be user space data, we need to copy form user */
 	struct m_inode *inode;
 	struct file_path;
 	struct file_struct *file;
@@ -271,7 +282,7 @@ int _sys_open(char *file_path, u32 file_attr)
 	return fd;
 }
 
-u32 _sys_seek(int fd, u32 off)
+asmlinkage u32 _sys_seek(int fd, u32 off)
 {
 	struct file_struct *f ;
 #ifndef TEST_FS
@@ -284,7 +295,7 @@ u32 _sys_seek(int fd, u32 off)
 	f->pos = off;
 }
 
-u32 _sys_read(int fd, void *buffer, u32 _size)
+asmlinkage u32 do_sys_read(int fd, void *buffer, u32 _size)
 {
 	struct file_struct *f ;
 	struct buffer_head *bh;
@@ -328,7 +339,7 @@ out:
 	return off;
 }
 
-u32 _sys_write(int fd, void *buffer, u32 size)
+asmlinkage u32 do_sys_write(int fd, void *buffer, u32 size)
 {
 	struct file_struct *f ;
 	struct buffer_head *bh;

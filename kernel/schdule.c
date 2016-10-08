@@ -25,17 +25,42 @@ extern test_process1();
 #define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
 #define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
 #define gdt_tss_sel(n) ((((n) << 1) + TASK_VECTOR_BASE) << 3)
-#define gdt_ldt_sel(n) ((((n) << 4) + TASK_VECTOR_BASE + 1) << 3)
+#define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
+#define LDT_SEL_RING0(n)  (LDT_SEL(n) | RPL0)
 struct task_struct *current;
-static u32 cur_pid = 0;
+static u32 *pid_bit_map;
+#define PID_MAX 1000
+int init_pid_bitmap()
+{
+	pid_bit_map = kmalloc(PID_MAX/4 + 1, 0, MEM_KERN);
+	memset(pid_bit_map, 0, PID_MAX/4 + 1);
+	if (!pid_bit_map)
+		return -1;
+}
+
+u32 alloc_pid()
+{
+	int idx = -1;
+	idx = find_first_avail_bit(pid_bit_map, PID_MAX);
+	//return 0;
+	return idx;
+}
+
+static struct task_struct task_run_list;
+static void insert_task(struct task_struct *_task)
+{
+	list_add(&_task->list, &task_run_list.list);
+	return; 
+}
+
 void init_task_file_struct(struct task_struct *task)
 {
 	/* do we really need this */
 	task->file[0] = get_stdio_file_struct();
 	task->file[1] = get_stdout_file_struct();
-	task->file[1] = get_stderr_file_struct();
+	task->file[2] = get_stderr_file_struct();
 	task->fd_count = 3;
 }
 
@@ -51,8 +76,8 @@ void switch_to(struct task_struct *prev, struct task_struct *next)
 	_tmp.b = gdt_tss_sel(next->pid);
 
 	current = next;
-	next->status = TASK_RUN;
-	prev->status = TASK_WAIT;
+	next->status = TASK_RUNNING;
+	prev->status = TASK_WAITING;
 	asm volatile(//" movl $1f, %[next_ip] \n\t"
 		     " lldt %%ax\n\t"
 		     " ljmp %[task_sec] \n\t"
@@ -93,13 +118,6 @@ static void switch_to_ring3(struct task_struct *task)
 		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
 }
 
-static struct task_struct task_run_list;
-static void insert_task(struct task_struct *_task)
-{
-	list_add(&_task->list, &task_run_list.list);
-	return; 
-}
-
 void test_switch_task()
 {
 	struct task_struct *next = container_of(&task_list->list, struct task_struct, list); 
@@ -108,6 +126,7 @@ void test_switch_task()
 	{
 		next = container_of(next->list.next, struct task_struct, list);
 	}
+
 	switch_to(current, next);
 }
 
@@ -156,14 +175,7 @@ void pre_init_task(void )
  * ss[0-3] static
  * ss/cs/ds/eip/should be set.
  */
-u32 alloc_pid()
-{
-	//return 0;
-	cur_pid ++;
-	return cur_pid;
-}
-
-void init_task(struct task_struct *task)
+int init_task(struct task_struct *task, struct task_struct *parent)
 {
 	//u32 sys_ds = (0x18 );
 	//u32 sys_cs = (0x10 );
@@ -177,27 +189,30 @@ void init_task(struct task_struct *task)
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
-	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
+	task->parent = parent;
+
 #ifdef ALLOC_COPY_CR3
 	task->task_reg.cr3 = virt_to_phy((u32)alloc_page_table());
+#else 
+	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #endif
 	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
 	/* just test */
 #ifdef test_proc
 	if (pid == 1)
-	task->task_reg.eip =  (u32) test_process; 
+		task->task_reg.eip =  (u32) test_process; 
 	else
-	task->task_reg.eip =  (u32) test_process1; 
+		task->task_reg.eip =  (u32) test_process1; 
 #endif
 
 	/* task ldt */
-	task->task_reg.ldt_sel = gdt_ldt_sel(pid);
 	task->ldt[LDT_CS].lo = 0x0000ffff; /* ldt cs */
 	task->ldt[LDT_CS].hi = 0x00cffa00;
 	task->ldt[LDT_DS].lo = 0x0000ffff; /* ldt ds */
 	task->ldt[LDT_DS].hi = 0x00cff200;
 	set_ldt(gdt_ldt_vec(pid), task->ldt, X86_GDT_LIMIT_FULL); /* not sure about the limit */ 
+	task->task_reg.ldt_sel = gdt_ldt_sel(pid);
 	
 	task->task_reg.ss2 = LDT_SEL_RING3(task_ds);
 	task->task_reg.es = LDT_SEL_RING3(task_ds); /* index in the ldt */
@@ -208,14 +223,23 @@ void init_task(struct task_struct *task)
 	task->task_reg.ss = LDT_SEL_RING3(task_ds);
 	task->task_reg.eflags = IOPL_RING3 | IF;
 	
-	list_init(&task->list);
 	set_tss(gdt_tss_vec(pid), task); 
 
-	init_task_file_struct();
+	/* related with file sys */
+	init_task_file_struct(task);
+
+	/* init signal set */
+	init_task_sig_set(task);
+
 #ifdef test_proc
 	if (pid == 1)
 		current = task;
 #endif
+
+	task->status = TASK_IDLE;
+	list_init(&task->list);
+	list_init(&task->wait_list);
+	insert_task(task);
 	/*
 	asm volatile (" ltr %%ax "
 		      ::"a"(gdt_tss_sel(pid)):);
@@ -223,7 +247,7 @@ void init_task(struct task_struct *task)
 	*/
 }
 
-static struct task_struct *get_next_proper_task()
+static struct task_struct *get_next_task()
 {
 	/* */
 	struct list_head *head =  task_run_list.next;
@@ -231,15 +255,25 @@ static struct task_struct *get_next_proper_task()
 
 	list_for_each(head, pos) {
 		task = container_of(pos, struct task_struct, wait_list);
-		if (task->status == TASK_RUNNABLE)
+		/*
+		if (task->status == TASK_INTERRUPT && there is singnal)
+			wake up this ?
+		*/
+			
+		if (task->status == TASK_WAITING)
 			return task;
 	}
 }
 
-void init_schduler(void)
+int init_schduler(void)
 {
 	list_init(&task_run_list);
+
+	if (init_pid_bitmap())
+		return -1;
 	/* do we need to add idle */
+
+	/* */
 }
 
 void schdule(void)
@@ -247,7 +281,7 @@ void schdule(void)
 	struct task_struct *next;
 	/* this need to find next task */ 
 	/* */
-	next = get_next_proper_task();
+	next = get_next_task();
 	switch_to(current, next);
 }
 
@@ -269,7 +303,7 @@ void wake_up(struct list_head  *wait_list)
 
 	list_for_each(head, pos) {
 		task =container_of(pos, struct task_struct, wait_list);
-		task->status = TASK_RUNNABLE;
+		task->status = TASK_WAITING;
 		insert_task(task);
 	}
 

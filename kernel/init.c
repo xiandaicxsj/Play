@@ -4,6 +4,7 @@
 #include"schdule.h"
 #include"page.h"
 #include"debug.h"
+#include"vfs.h"
 #define TEST_TASK
 void start_kernel(void )
 {
@@ -11,10 +12,10 @@ void start_kernel(void )
 
 	init_schuler();
 	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
-	init_task(task0);
+	init_task(task0, NULL);
 
 	struct task_struct * task1 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
-	init_task(task1);
+	init_task(task1, NULL);
 	/* test map page */ 
 	//map_page(0xcffc0, 0, MEM_KERN, &init_page_dir);
 	init_console();

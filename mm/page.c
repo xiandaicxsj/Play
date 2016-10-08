@@ -163,5 +163,6 @@ void* alloc_page_table()
 	u32 phy_addr = pfn_to_addr(page->pfn);
 
 	copy_kernel_pdt((void *)phy_to_virt(phy_addr), &init_page_dir);
+	/* we should also mask user part as non-present*/
 	return (void *)phy_to_virt(phy_addr);
 }

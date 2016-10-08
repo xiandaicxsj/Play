@@ -1,7 +1,8 @@
 #include"fork.h"
 #include"schdule.h"
+#include"sys_call.h"
 
-pid_t do_fork()
+asmlinkage pid_t do_sys_fork()
 {
 	/*struct task_struct *task = (struct task_struct *)kmalloc(PAGE_SIZE, 0, MEM_KERN);
 	 */
@@ -10,7 +11,7 @@ pid_t do_fork()
 	return 0;
 }
 
-void do_exec(char *argc)
+asmlinkage void do_sys_exec(char *argc)
 {
 	/* load certain bin file */
 }

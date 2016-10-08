@@ -1,6 +1,5 @@
 #include"bitop.h"
 
-
 #define BIT_LONG 32
 int test_bit(void *addr, int index)
 {

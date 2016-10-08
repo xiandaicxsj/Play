@@ -38,12 +38,12 @@ void copr_error();
 
 void local_irq_disable()
 {
-	                asm volatile ( "cli" );
+	asm volatile ( "cli" );
 }
 
 void local_irq_enable()
 {
-	                asm volatile ( "sti" );
+	asm volatile ( "sti" );
 }
 
 void default_handler1()
@@ -122,14 +122,10 @@ void general_protection()
 	print('b');
 	while(1);
 }
+
 void copr_error()
 {
 
-}
-
-void handle_user_int(u32 index)
-{
-	print_str("user int\n");
 }
 
 static void load_idt()

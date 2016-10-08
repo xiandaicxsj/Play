@@ -10,9 +10,10 @@ extern struct task_struct *current;
 #define MAX_FILE_PROCESS 20
 typedef u32 pid_t;
 #define TASK_RUNNING (1u<<0)
-#define TASK_RUNNABLE (1u<<1)
+#define TASK_WAITING (1u<<1)
 #define TASK_UNINTERRUPT (1u<<2)
 #define TASK_INTERRUPT (1u<<3)
+#define TASK_IDLE (1u<<4)
 
 struct wait_queue {
 	struct list_head list;
@@ -69,19 +70,19 @@ struct task_struct
 	 */
 	struct file_struct *file[MAX_FILE_PROCESS];
 	u32 fd_count;
+	u32 sig_set;
 	struct m_inode *root;
 	struct m_inode *pwd;
 	struct task_struct *next;
+	struct task_struct *parent;
 	struct list_head list;
 	struct list_head wait_list;
 };
 
 extern struct task_struct *current;
-void init_task(struct task_struct *);
+int init_task(struct task_struct *);
 void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
 void init_schduler(void);
-#define TASK_RUN (1 << 0)
-#define TASK_WAIT (1 << 1)
 #endif

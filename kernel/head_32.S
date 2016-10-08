@@ -500,7 +500,8 @@ hw45:
 hw48:
 	cli
 	push_all
-	call handle_user_int
+	/*need to change the argv*/
+	call *sys_call_table(, %eax, 8)
 	pop_all
 	sti
 	iret

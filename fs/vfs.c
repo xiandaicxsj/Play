@@ -9,10 +9,11 @@
 //#include"vfs.h"
 #include"test.h"
 #include"bitop.h"
+#include"type.h"
 
 #ifdef TEST_FS
 #include"string.h"
-static u64 fd_bit_map; 
+static u32 fd_bit_map; 
 struct file_struct *g_files[20];
 #endif
 
@@ -164,8 +165,8 @@ int put_fd(u32 fd)
 #ifdef TEST_FS
 	if (!test_bit(&fd_bit_map, fd))
 		return -1;
-	clear(&fd_bit_map, fd);
-	g_file[fd] = NULL;
+	clear_bit(&fd_bit_map, fd);
+	g_files[fd] = NULL;
 #else
 
 #endif

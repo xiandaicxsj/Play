@@ -1,6 +1,7 @@
 #include"fork.h"
 #include"schdule.h"
 #include"sys_call.h"
+#include"linkage.h"
 
 asmlinkage pid_t do_sys_fork()
 {

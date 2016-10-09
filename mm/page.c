@@ -4,7 +4,6 @@
 #include"mem.h"
 #include"debug.h"
 #include"test.h"
-#include"schdule.h"
 typedef u32 pde_t;
 typedef u32 pte_t;
 /* used the static page to the */
@@ -14,7 +13,7 @@ void page_fault(void)
 {
 	u32 fault_addr;
 	struct page *p;
-	void *cr3;
+	void *pgt;
 
 	/* FIXME why mov cause error
 	asm volatile ("movl %%cr2, %%eax"
@@ -27,14 +26,11 @@ void page_fault(void)
 		return ;
 	}
 
-	cr3 = (void *)current->cr3;
+	pgt = (void *)current->pgt;
 	if (!cr3)
 		return;
 
-	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, cr3);
-
-	print_str("page fault\n");
-	print_int(fault_addr);
+	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, pgt);
 	while(1);
 }
 
@@ -157,12 +153,17 @@ static void *copy_kernel_pdt(void *_pdt, void *pdt)
 }
 
 /* return virt addr of pg table */
-void* alloc_page_table()
+static void* alloc_page_table()
 {
 	struct page *page= kalloc_page(MEM_KERN);
 	u32 phy_addr = pfn_to_addr(page->pfn);
-
-	copy_kernel_pdt((void *)phy_to_virt(phy_addr), &init_page_dir);
-	/* we should also mask user part as non-present*/
 	return (void *)phy_to_virt(phy_addr);
+}
+
+void *copy_page_table(struct task_struct *p)
+{
+	void *new_cr3 = alloc_page_table();
+	copy_kernel_pdt(new_cr3, p->pgt);
+	/* we should also mask user part as non-present*/
+	return new_cr3;
 }

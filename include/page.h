@@ -2,6 +2,7 @@
 #define _H_PAGE
 #include"type.h"
 #include"list.h"
+#include"schdule.h"
 #include"asm/page_type.h"
 #define CR0_PG (1ull << 31)
 
@@ -44,8 +45,7 @@ struct page
     u32 order;
 };
 void page_fault();
-void* alloc_page_table();
-void *copy_page_table(void *old_page_dir);
+void *copy_page_table(struct task_struct *p);
 extern u32 init_page_dir;
 u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt);
 #endif

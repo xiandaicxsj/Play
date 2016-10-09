@@ -15,6 +15,11 @@ typedef u32 pid_t;
 #define TASK_INTERRUPT (1u<<3)
 #define TASK_IDLE (1u<<4)
 
+#define CLONE_FS (1u<<0)
+/* */
+
+#define task_fn void(*task_fn)(void *);
+
 struct wait_queue {
 	struct list_head list;
 	/*
@@ -60,7 +65,7 @@ struct task_struct
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
 	struct seg_desc ldt[3];//这里对应的是任务的ldt需要重新进行处理
 	pid_t pid;
-	u32 cr3;
+	void *pgt;
 	u32 status;
 	/*
 	 * 0 stdin

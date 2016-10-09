@@ -5,11 +5,10 @@
 
 asmlinkage pid_t do_sys_fork()
 {
-	/*struct task_struct *task = (struct task_struct *)kmalloc(PAGE_SIZE, 0, MEM_KERN);
-	 */
-	/* copy on write */
-
-	return 0;
+	struct task_struct *task = create_task(current, NULL, 0);
+	if (!task)
+		return -1;
+	return task->pid;
 }
 
 asmlinkage void do_sys_exec(char *argc)

@@ -170,18 +170,35 @@ void pre_init_task(void )
 	while(1);
 	*/
 }
-/*
- *
- * ss[0-3] static
- * ss/cs/ds/eip/should be set.
- */
-int init_task(struct task_struct *task, struct task_struct *parent)
+
+/* this is used to create kernel thread */
+int create_ktask(task_fn func)
 {
-	//u32 sys_ds = (0x18 );
-	//u32 sys_cs = (0x10 );
+	struct task_struct *task;
+
+	task = create_task(base_task, func, 0);
+
+	return task->pid;
+}
+
+/*
+ * task
+ * parent : parent task
+ * func: func to excute
+ * flags: indicate what to do with clone
+ */
+struct task_strcut create_task(struct task_struct *parent, task_fn func, u32 flags)
+{
+	struct task_struct *task;
 	u32 task_cs = LDT_CS;
 	u32 task_ds = LDT_DS;
-	u32 pid = 0;
+	u32 pid = -1;
+
+	task = kmalloc(sizeof(*task), KERN_MEM);
+	if (!task)
+		return NULL;
+	//u32 sys_ds = (0x18 );
+	//u32 sys_cs = (0x10 );
 
 	pid = alloc_pid();
 
@@ -189,22 +206,23 @@ int init_task(struct task_struct *task, struct task_struct *parent)
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
-	task->parent = parent;
+	if (!parent)
+		task->parent = parent;
+
+/* copy mem */
 
 #ifdef ALLOC_COPY_CR3
-	task->task_reg.cr3 = virt_to_phy((u32)alloc_page_table());
+	task->pgt = copy_page_table(parent);
+
+	task->task_reg.cr3 = virt_to_phy(u32 task->pgt);
 #else 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #endif
 	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
 	/* just test */
-#ifdef test_proc
-	if (pid == 1)
-		task->task_reg.eip =  (u32) test_process; 
-	else
-		task->task_reg.eip =  (u32) test_process1; 
-#endif
+	if (func)
+		task->task_reg.eip =  (u32)func; 
 
 	/* task ldt */
 	task->ldt[LDT_CS].lo = 0x0000ffff; /* ldt cs */
@@ -226,25 +244,20 @@ int init_task(struct task_struct *task, struct task_struct *parent)
 	set_tss(gdt_tss_vec(pid), task); 
 
 	/* related with file sys */
-	init_task_file_struct(task);
+	if (flags & CLONE_FS)
+		copy_task_file_struct(task, parent);
+	else
+		init_task_file_struct(task);
 
 	/* init signal set */
 	init_task_sig_set(task);
-
-#ifdef test_proc
-	if (pid == 1)
-		current = task;
-#endif
 
 	task->status = TASK_IDLE;
 	list_init(&task->list);
 	list_init(&task->wait_list);
 	insert_task(task);
-	/*
-	asm volatile (" ltr %%ax "
-		      ::"a"(gdt_tss_sel(pid)):);
-	switch_to_ring3(task);
-	*/
+
+	return task;
 }
 
 static struct task_struct *get_next_task()
@@ -272,8 +285,6 @@ int init_schduler(void)
 	if (init_pid_bitmap())
 		return -1;
 	/* do we need to add idle */
-
-	/* */
 }
 
 void schdule(void)

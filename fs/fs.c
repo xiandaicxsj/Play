@@ -3,10 +3,9 @@
 #include"schdule.h"
 #include"buffer.h"
 #include"test.h"
-
+#include"string.h"
 
 #ifdef TEST_FS
-#include"string.h"
 static int g_fidx = 0;
 struct file_struct *g_files[20];
 #endif
@@ -166,13 +165,14 @@ struct file_operations fs_ops = {
 	.seek = fs_seek,
 };
 
-void init_fs()
+int init_fs()
 {
 	struct device *dev;
 	dev = get_device(ROOT_DEV);
 	if (!dev)
-		return ;
+		return -1;
 	/* this buffer is */
 	init_buffer(dev);
 	init_super_block(dev, &fs_ops);
+	return 0;
 }

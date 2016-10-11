@@ -8,12 +8,12 @@ LDFLAGS = -m elf_i386  -T kernel.lds
 SRC_DIR = $(shell pwd)
 ASMFLAGS = -I $(SRC_DIR)/include -m32
 ## test files we need to use below
-CCFLAGS= -I $(SRC_DIR)/include -c -g -fno-builtin  -fno-stack-protector  
-#CCFLAGS= -I $(SRC_DIR)/include -c -fno-builtin -m32 -fno-stack-protector  
+##CCFLAGS= -I $(SRC_DIR)/include -c -g -fno-builtin  -fno-stack-protector  
+CCFLAGS= -I $(SRC_DIR)/include -c -fno-builtin -m32 -fno-stack-protector  
 CCFLAGS_DEP= -I $(SRC_DIR)/include
 #LDFLAGS = -m elf_i386  -Ttext 0x30400
 KERNEL_BIN:=kernel.bin
-DIRS = $(SRC_DIR)/mm $(SRC_DIR)/kernel $(SRC_DIR)/loader $(SRC_DIR)/test
+DIRS = $(SRC_DIR)/mm $(SRC_DIR)/kernel $(SRC_DIR)/loader $(SRC_DIR)/test $(SRC_DIR)/fs $(SRC_DIR)/device
 OBJS_DIR= $(SRC_DIR)/objs
 OBJS_TEST= $(SRC_DIR)/test_objs
 

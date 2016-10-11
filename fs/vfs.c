@@ -12,12 +12,12 @@
 #include"type.h"
 #include"vfs.h"
 #include"linkage.h"
-
-#ifdef TEST_FS
 #include"string.h"
+#ifdef TEST_FS
 static u32 fd_bit_map; 
 struct file_struct *g_files[20];
 #endif
+
 
 struct vfs
 {
@@ -108,7 +108,7 @@ void init_file_struct()
 	/* FIXME */
 }
 
-void init_vfs()
+int init_vfs()
 {
     init_file_struct();
     //init_std_file_struct();

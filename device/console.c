@@ -116,7 +116,10 @@ void init_console()
 	minor = alloc_minor(major);
 	dev_num = DEV_NUM(major, minor);
 
+	/* FIXME */
+	/*
 	sprintf(dev_name, "/dev/console%d", minor);
+	*/
 	/* init console specific */
 	init_console_device(&con_dev.dev);
 

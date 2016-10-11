@@ -452,8 +452,9 @@ struct m_inode *get_inode(char *file_path, u32 file_mode, u32 type)
 	u8 get_pdir_ok = 0;
 
 #ifndef TEST_FS
-	if ((c = get_char(file_path)) == '\')
-		inode = current->root_node;
+	c = get_char(file_path);
+	if (c == '/')
+		inode = current->root;
 	else
 		inode = current->pwd;
 #else

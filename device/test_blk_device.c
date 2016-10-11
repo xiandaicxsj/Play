@@ -155,8 +155,10 @@ static void init_test_blk_req()
 
 void des_test_blk_device(void)
 {
+#ifdef TEST_FS
 	if (tbd.fd)
 		fclose(tbd.fd);
+#endif
 }
 
 /* this should be call in .init */

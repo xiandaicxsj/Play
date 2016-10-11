@@ -27,7 +27,7 @@ void page_fault(void)
 	}
 
 	pgt = (void *)current->pgt;
-	if (!cr3)
+	if (!pgt)
 		return;
 
 	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, pgt);

@@ -501,7 +501,8 @@ hw48:
 	cli
 	push_all
 	/*need to change the argv*/
-	call *sys_call_table(, %eax, 8)
+	//call *sys_call_table(, %eax, 8)
+	call sys_call_depatch 
 	pop_all
 	sti
 	iret

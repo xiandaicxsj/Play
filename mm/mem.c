@@ -516,3 +516,13 @@ u32 free_page(struct page *t)
 	return 0;
 }
 #endif
+
+int copy_to_user(void *src, void *dest, u32 size)
+{
+
+}
+
+int copy_from_user(void *dest, void *src, u32 size)
+{
+
+}

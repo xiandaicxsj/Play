@@ -79,7 +79,7 @@ void timer_handler()
 {
 //	print_str("timer\n");
 	send_eoi(TIMER);
-	test_switch_task();
+	//test_switch_task();
 }
 
 void bounds_check()

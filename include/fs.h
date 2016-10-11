@@ -23,7 +23,7 @@ struct file_operations
 	int (*flush)(struct file_struct *file);
 };
 
-void init_fs();
+int init_fs();
 struct file_struct
 {
 	u32 pos;

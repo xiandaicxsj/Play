@@ -257,7 +257,7 @@ void init_buffer(struct device *dev)
 		if (!bh_page)
 			return ;
 #ifndef TEST_FS
-		addr = (void *)phy_to_virt(phy_to_addr(bh_page->pfn));  
+		addr = (void *)phy_to_virt(pfn_to_addr(bh_page->pfn));  
 #else
 		bh = (struct buffer_head *) (bh_page->pfn);
 #endif

@@ -2,6 +2,18 @@
 
 /* we can not do like this */
 
+asmlinkage sys_call_depatch(u32 arg1, u32 arg2, u32 arg3, u32 arg4, u32 arg5)
+{
+	switch(arg1) {
+
+	case _SYS_FORK:
+		do_sys_fork();
+		break;
+	default:
+		break;
+	}
+}	
+/*
 #define sys_call_ptr asmlinkage void (*_sys_call_ptr)(void)
 #define SYS_CALL(i, func) [i] = func
 
@@ -17,3 +29,4 @@ static sys_call_ptr sys_call_table [MAX_SYS_CALL_NR] =
 	SYS_CALL(_SYS_FORK, do_sys_fork),
 	SYS_CALL(_SYS_EXEC, do_sys_exec),
 }
+*/

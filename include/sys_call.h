@@ -2,6 +2,7 @@
 #define _H_SYSCALL
 
 #include"linkage.h"
+#include"schdule.h"
 /* we know only five data is used */
 #define MAX_SYS_CALL_NR 300
 
@@ -27,5 +28,5 @@
 /*
 #define SYS_CALL(i, name) extern asmlinkage do_sys_##name();
 */
-
+extern asmlinkage pid_t do_sys_fork();
 #endif

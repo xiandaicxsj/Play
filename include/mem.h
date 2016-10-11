@@ -15,5 +15,7 @@ u32 free_page(struct page*);
 void* kmalloc(u32 size, u32 align, u32 flags); /* do we need flags */
 u32 kfree(void *);
 u32 kfree_page(struct page* page);
+int copy_to_user(void *src, void *dest, u32 size);
+int copy_from_user(void *dest, void *src, u32 size);
 
 #endif

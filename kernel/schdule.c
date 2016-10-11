@@ -7,6 +7,7 @@
 #include"debug.h"
 #include"print.h"
 #include"cpu.h"
+#include"mem.h"
 #define ALLOC_COPY_CR3
 #define test_proc
 
@@ -31,6 +32,7 @@ extern test_process1();
 #define LDT_SEL_RING0(n)  (LDT_SEL(n) | RPL0)
 struct task_struct *current;
 static u32 *pid_bit_map;
+struct task_strcut *create_task(struct task_struct *parent, task_fn func, u32 flags);
 #define PID_MAX 1000
 int init_pid_bitmap()
 {
@@ -49,6 +51,26 @@ u32 alloc_pid()
 }
 
 static struct task_struct task_run_list;
+
+static struct task_struct *get_next_task()
+{
+	/* */
+	struct list_head *head =  task_run_list.next;
+	struct list_head *pos = NULL;
+	struct task_struct *task;
+
+	list_for_each(head, pos) {
+		task = container_of(pos, struct task_struct, wait_list);
+		/*
+		if (task->status == TASK_INTERRUPT && there is singnal)
+			wake up this ?
+		*/
+			
+		if (task->status == TASK_WAITING)
+			return task;
+	} 
+}
+
 static void insert_task(struct task_struct *_task)
 {
 	list_add(&_task->list, &task_run_list.list);
@@ -120,7 +142,7 @@ static void switch_to_ring3(struct task_struct *task)
 
 void test_switch_task()
 {
-	struct task_struct *next = container_of(&task_list->list, struct task_struct, list); 
+	struct task_struct *next = get_next_task(); 
 	/* we should set current to porper place */
 	while(next->pid == current->pid)
 	{
@@ -176,7 +198,7 @@ int create_ktask(task_fn func)
 {
 	struct task_struct *task;
 
-	task = create_task(base_task, func, 0);
+	task = create_task(NULL, func, 0);
 
 	return task->pid;
 }
@@ -187,14 +209,14 @@ int create_ktask(task_fn func)
  * func: func to excute
  * flags: indicate what to do with clone
  */
-struct task_strcut create_task(struct task_struct *parent, task_fn func, u32 flags)
+struct task_strcut *create_task(struct task_struct *parent, task_fn func, u32 flags)
 {
 	struct task_struct *task;
 	u32 task_cs = LDT_CS;
 	u32 task_ds = LDT_DS;
 	u32 pid = -1;
 
-	task = kmalloc(sizeof(*task), KERN_MEM);
+	task = kmalloc(sizeof(*task), 0, MEM_KERN);
 	if (!task)
 		return NULL;
 	//u32 sys_ds = (0x18 );
@@ -214,7 +236,7 @@ struct task_strcut create_task(struct task_struct *parent, task_fn func, u32 fla
 #ifdef ALLOC_COPY_CR3
 	task->pgt = copy_page_table(parent);
 
-	task->task_reg.cr3 = virt_to_phy(u32 task->pgt);
+	task->task_reg.cr3 = virt_to_phy(task->pgt);
 #else 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #endif
@@ -258,24 +280,6 @@ struct task_strcut create_task(struct task_struct *parent, task_fn func, u32 fla
 	insert_task(task);
 
 	return task;
-}
-
-static struct task_struct *get_next_task()
-{
-	/* */
-	struct list_head *head =  task_run_list.next;
-	struct list_head *post = NULL;
-
-	list_for_each(head, pos) {
-		task = container_of(pos, struct task_struct, wait_list);
-		/*
-		if (task->status == TASK_INTERRUPT && there is singnal)
-			wake up this ?
-		*/
-			
-		if (task->status == TASK_WAITING)
-			return task;
-	}
 }
 
 int init_schduler(void)

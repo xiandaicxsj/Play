@@ -18,7 +18,7 @@ typedef u32 pid_t;
 #define CLONE_FS (1u<<0)
 /* */
 
-#define task_fn void(*task_fn)(void *);
+typedef void(*task_fn)(void *);
 
 struct wait_queue {
 	struct list_head list;
@@ -89,5 +89,5 @@ int init_task(struct task_struct *);
 void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
-void init_schduler(void);
+int init_schduler(void);
 #endif

@@ -13,6 +13,8 @@
 #define O_ERROR ( ~(O_RD | O_RDWR | O_CREATE) )
 #define ERROR_FILE(file_mod) (file_mod & O_ERROR)
 
+struct file_struct;
+struct m_inode;
 struct file_operations
 {
 	int (*open)(struct inode *inode, u32 attr);

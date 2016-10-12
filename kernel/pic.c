@@ -25,7 +25,7 @@ void mask_interrupt(u32 index)
 	u8 pic_off = index < SL_INTER_BASE ? index - MS_INTER_BASE :
 		  				 index - SL_INTER_BASE;
 
-	mask = insb(port + 1);
+	mask = inb(port + 1);
 	mask &= 0 << pic_off;
 	_mask_interrupt(PIC_MASTER, mask);
 }

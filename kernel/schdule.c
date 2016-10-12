@@ -32,7 +32,7 @@ extern test_process1();
 #define LDT_SEL_RING0(n)  (LDT_SEL(n) | RPL0)
 struct task_struct *current;
 static u32 *pid_bit_map;
-struct task_strcut *create_task(struct task_struct *parent, task_fn func, u32 flags);
+struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
 #define PID_MAX 1000
 int init_pid_bitmap()
 {
@@ -75,15 +75,6 @@ static void insert_task(struct task_struct *_task)
 {
 	list_add(&_task->list, &task_run_list.list);
 	return; 
-}
-
-void init_task_file_struct(struct task_struct *task)
-{
-	/* do we really need this */
-	task->file[0] = get_stdio_file_struct();
-	task->file[1] = get_stdout_file_struct();
-	task->file[2] = get_stderr_file_struct();
-	task->fd_count = 3;
 }
 
 void switch_to(struct task_struct *prev, struct task_struct *next)
@@ -193,6 +184,11 @@ void pre_init_task(void )
 	*/
 }
 
+static int copy_task_file_struct(struct task_struct *task, struct task_struct *p)
+{
+
+	return 0;
+}
 /* this is used to create kernel thread */
 int create_ktask(task_fn func)
 {
@@ -209,7 +205,7 @@ int create_ktask(task_fn func)
  * func: func to excute
  * flags: indicate what to do with clone
  */
-struct task_strcut *create_task(struct task_struct *parent, task_fn func, u32 flags)
+struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags)
 {
 	struct task_struct *task;
 	u32 task_cs = LDT_CS;

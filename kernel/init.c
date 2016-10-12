@@ -16,7 +16,7 @@ void start_kernel(void )
 	 *init_fs();
 	 *post_init_devices();
 	 */
-	init_schuler();
+	init_schduler();
 	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	create_task(task0, NULL);
 

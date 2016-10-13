@@ -20,6 +20,8 @@ typedef u32 pid_t;
 
 typedef void(*task_fn)(void *);
 
+extern void idle_task(void *);
+
 struct wait_queue {
 	struct list_head list;
 	/*

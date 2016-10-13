@@ -47,7 +47,7 @@ u32 umap_page(u32 vpfn, void *pdt)
 	pde = (pde_t *) pdt + pde_idx;
 	/* no 4M page is support */
 	if ( *pde & PGD_P )
-		pt = phy_to_virt(PT_ADDR(*pde));
+		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	else
 		return -1;
 
@@ -95,14 +95,14 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	pde = (pde_t *) pdt + pde_idx;
 	/* no 4M page is support */
 	if ( *pde & PGD_P )
-		pt = phy_to_virt(PT_ADDR(*pde));
+		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	else 
 	{
 		struct page *page = kalloc_page(MEM_KERN);
 		/* not sure of the flags used here */
 		pde_flags |= PGD_P;
 		*pde = pfn_to_addr(page->pfn) | pde_flags;
-		pt = phy_to_virt(PT_ADDR(*pde));
+		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	}
 
 	pte_idx = INDEX(virt_addr, PTE_LEVEL);

@@ -51,7 +51,7 @@ int init_task_file_struct(struct task_struct *task)
 	return 0;
 }
 /* search mean we need to create if necessary */
-struct file_struct *search_file_struct(struct minode *inode)
+struct file_struct *search_file_struct(struct m_inode *inode)
 {
 	struct file_struct *empty_fs = NULL;
 	struct file_struct *fs_ptr = NULL;
@@ -265,7 +265,7 @@ asmlinkage int do_sys_open(char *file_path, u32 file_attr)
 		return fd;
 
 	if (IS_DEV(inode->type)) {
-		if (inode->ops->open(file_path, file_attr))
+		if (inode->ops->open(inode, file_attr))
 			return -1;
 	}
 
@@ -286,7 +286,7 @@ asmlinkage u32 _sys_seek(int fd, u32 off)
 {
 	struct file_struct *f ;
 #ifndef TEST_FS
-	f = &current->file[fd];
+	f = current->file[fd];
 #else
 	f = g_files[fd];
 #endif
@@ -312,7 +312,7 @@ asmlinkage u32 do_sys_read(int fd, void *buffer, u32 _size)
 #endif
 	p = kalloc_page(MEM_KERN);
 #ifndef TEST_FS
-	addr = phy_to_virt(pfn_to_addr(p->pfn));
+	addr = (void *)phy_to_virt(pfn_to_addr(p->pfn));
 #else
 	addr = (void *)p->pfn;
 #endif
@@ -358,7 +358,7 @@ asmlinkage u32 do_sys_write(int fd, void *buffer, u32 size)
 
 	p = kalloc_page(MEM_KERN);
 #ifndef TEST_FS
-	addr = phy_to_virt(pfn_to_addr(p->pfn));
+	addr = (void *)phy_to_virt(pfn_to_addr(p->pfn));
 #else
 	addr = (void *)p->pfn;
 #endif

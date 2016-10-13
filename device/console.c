@@ -20,7 +20,7 @@ struct console_device
 
 struct console_device con_dev;
 
-int con_dev_open(struct inode *inode, u32 attr)
+int con_dev_open(struct m_inode *inode, u32 attr)
 {
 
 }
@@ -80,7 +80,7 @@ int con_dev_write(struct file_struct *f, void *buffer, u32 size)
 	/* here we juest write to */
 }
 
-void con_dev_flush(struct file_struct *f)
+int con_dev_flush(struct file_struct *f)
 {
 
 }
@@ -121,7 +121,7 @@ void init_console()
 	sprintf(dev_name, "/dev/console%d", minor);
 	*/
 	/* init console specific */
-	init_console_device(&con_dev.dev);
+	init_console_device(&con_dev);
 
 	register_char_device(dev_num, &con_dev.dev, &con_dev_ops);
 	/* create file relate ops */

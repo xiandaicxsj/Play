@@ -55,7 +55,7 @@ void test_blk_read(struct test_blk_device *tbd, u32 block_num, void *buf)
 #endif
 }
 
-void test_blk_init(struct blk_device *device)
+int test_blk_init(struct blk_device *device)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
 	return 0;
@@ -85,7 +85,7 @@ static void test_blk_free_req(struct blk_device *device, struct blk_req *req)
 	list_add(&req->list, &tbd->free_req_list);
 }
 
-void test_blk_sub_req(struct blk_device *device, struct blk_req *req)
+int test_blk_sub_req(struct blk_device *device, struct blk_req *req)
 {
 	struct test_blk_device *tbd = container_of(device, struct test_blk_device, blk_dev);
 	switch(req->cmd) {
@@ -139,7 +139,7 @@ static void init_test_blk_req()
 #ifdef TEST_FS
 	req_addr = (struct blk_req *)(tbd.req_page->pfn);
 #else
-	req_addr = phy_to_virt(tbd.req_page->pfn);
+	req_addr = (struct blk_req *)phy_to_virt(tbd.req_page->pfn);
 #endif
 	
 	req_num = PAGE_SIZE / sizeof(*req_addr);

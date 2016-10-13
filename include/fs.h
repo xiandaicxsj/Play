@@ -17,9 +17,9 @@ struct file_struct;
 struct m_inode;
 struct file_operations
 {
-	int (*open)(struct inode *inode, u32 attr);
+	int (*open)(struct m_inode *inode, u32 attr);
 	int (*close)(struct file_struct *file);
-	int (*seek)(struct file_struct *file, u32 off, u32 beg);
+	int (*seek)(struct file_struct *file, u32 off, u32 set);
 	int (*read)(struct file_struct *file, void *buffer, u32 size);
 	int (*write)(struct file_struct *file, void *buffer, u32 size);
 	int (*flush)(struct file_struct *file);

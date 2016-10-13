@@ -70,7 +70,7 @@ static void init_inode_bit_map(struct m_super_block *sb)
 
 	p = kalloc_page(MEM_KERN);
 #ifndef TEST_FS
-	sb->dev_inode_bit_map = phy_to_virt(pfn_to_addr(p->pfn));
+	sb->dev_inode_bit_map = (void *)phy_to_virt(pfn_to_addr(p->pfn));
 #else
 	sb->dev_inode_bit_map = p->pfn;
 #endif

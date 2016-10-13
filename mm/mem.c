@@ -408,7 +408,7 @@ static void * _kmalloc(u32 size, u32 align)
 #ifdef BUDDY_ALLOC 
 		struct page * pages = _buddy_alloc(size, align);
 #endif
-	return phy_to_virt(pages->pfn << PAGE_OFFSET);
+	return (void *)phy_to_virt(pages->pfn << PAGE_OFFSET);
 }
 
 /* interface */

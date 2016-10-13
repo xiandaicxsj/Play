@@ -50,12 +50,13 @@ u32 alloc_pid()
 	return idx;
 }
 
+/* first is not used */
 static struct task_struct task_run_list;
 
 static struct task_struct *get_next_task()
 {
 	/* */
-	struct list_head *head =  task_run_list.next;
+	struct list_head *head =  task_run_list.list.next;
 	struct list_head *pos = NULL;
 	struct task_struct *task;
 
@@ -189,12 +190,17 @@ static int copy_task_file_struct(struct task_struct *task, struct task_struct *p
 
 	return 0;
 }
+
+void idle_task(void *idle)
+{
+
+}
 /* this is used to create kernel thread */
 int create_ktask(task_fn func)
 {
 	struct task_struct *task;
 
-	task = create_task(NULL, func, 0);
+	task = create_task(NULL, idle_task, 0);
 
 	return task->pid;
 }
@@ -280,7 +286,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 
 int init_schduler(void)
 {
-	list_init(&task_run_list);
+	list_init(&task_run_list.list);
 
 	if (init_pid_bitmap())
 		return -1;

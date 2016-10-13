@@ -21,15 +21,15 @@ int fs_mkdir(char *dir_name)
 }
 
 /* not sure */
-int fs_open(struct inode *inode, u32 file_attr)
+int fs_open(struct m_inode *inode, u32 file_attr)
 {
 	return 0;
 }
 
-int fs_seek(struct file_struct *f, u32 off)
+int fs_seek(struct file_struct *f, u32 off, u32 set)
 {
-	f->pos = off;
-
+	/* FIXME */
+	f->pos = set + off;
 }
 
 int fs_read(struct file_struct *f, void *buffer, u32 size)

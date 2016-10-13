@@ -7,7 +7,7 @@ struct kb_device
 
 struct kb_device kb;
 
-int kb_open(struct inode *inode, u32 attr)
+int kb_open(struct m_inode *inode, u32 attr)
 {
 	return 0;
 }	

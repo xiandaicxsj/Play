@@ -9,13 +9,6 @@
 #include"cpu.h"
 #include"mem.h"
 #define ALLOC_COPY_CR3
-#define test_proc
-
-#ifdef test_proc
-#include"test_process.h"
-extern test_process();
-extern test_process1();
-#endif
 
 #ifndef TEST_KERNEL
 #define TASK_SS 4048

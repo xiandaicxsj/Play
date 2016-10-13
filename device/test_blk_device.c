@@ -8,8 +8,15 @@
 #include<stdio.h>
 #define FILE_BACKEN "../device/test_backen.bin"
 #endif
+
+#ifdef TEST_FS
 #define TEST_DEV_BLK_SIZE 4096
 #define TEST_DEV_BLK_NUM 33
+#else
+#define TEST_DEV_BLK_SIZE 1
+#define TEST_DEV_BLK_NUM 33
+#endif
+
 #define TEST_DEV_BLK_REV 3
 #define BLOCK_ALIGN char b[TEST_DEV_BLK_SIZE]
 

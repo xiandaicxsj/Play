@@ -111,11 +111,20 @@ init_page_tbl:
 //#include "kernel.lds.h"
 #include "asm/page_type.h"
 .align 32
-.globl _start	
-.type _start, @function
-_start:
+.globl head_start	
+.type head_start, @function
+head_start:
+	
+	
+	// copy data from last data
 	//movl $_pa(init_stack), %esp
 	//movl %esp, %ebp
+
+.section .text
+.align 32
+.globl _start
+.type _start, @function
+start_:
 	cli
 	xorl %eax, %eax
 	xorl %edi, %edi

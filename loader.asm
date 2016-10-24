@@ -247,6 +247,41 @@ ALIGN	32
 
 [BITS	32]
 
+ata_indentity:
+	mov dx, 0x1f6
+	out dx, al
+
+        mov eax, 0
+        mov dx, 0x1F2
+        out dx, al
+
+        mov eax, 0
+        mov dx, 0x1F3
+        out dx, al
+
+        mov eax, 0
+        mov dx, 0x1F4
+        out dx, al
+
+        mov eax, 0
+        mov dx, 0x1F5
+        out dx, al
+
+	mov al, 0xEC            ; ATA identify command
+        mov dx, 0x1F7
+        out dx, al
+
+        mov dx, 0x1F7
+        in al, dx
+        cmp al, 0
+	je .kk
+	mov al, 0x12
+	jmp $
+.kk
+	mov al, 0x13
+	jmp $
+
+
 LABEL_PM_START:
 	mov	ax, SelectorVideo
 	mov	gs, ax
@@ -257,6 +292,10 @@ LABEL_PM_START:
 	mov	ss, ax
 	mov	esp, TopOfStack
 	
+
+	mov 	al, 0xA0
+	call ata_indentity
+	jmp  $
 	mov	word [wSectorNo], SectorNoOfRootDirectory	
 	xor	ah, ah	; ©·
 	xor	dl, dl	; ©Ç ÈíÇý¸´Î»

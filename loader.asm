@@ -65,104 +65,7 @@ LABEL_START:			; <--- 从这里开始 *************
 	mov	dword [_dwMCRNumber], 0
 .MemChkOK:
 
-	; 下面在 A 盘的根目录寻找 KERNEL.BIN
-	mov	word [wSectorNo], SectorNoOfRootDirectory	
-	xor	ah, ah	; ┓
-	xor	dl, dl	; ┣ 软驱复位
-	int	13h	; ┛
-LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
-	cmp	word [wRootDirSizeForLoop], 0	; ┓
-	jz	LABEL_NO_KERNELBIN		; ┣ 判断根目录区是不是已经读完, 如果读完表示没有找到 KERNEL.BIN
-	dec	word [wRootDirSizeForLoop]	; ┛
-	mov	ax, BaseOfKernelFile
-	mov	es, ax			; es <- BaseOfKernelFile
-	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	于是, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
-	mov	ax, [wSectorNo]		; ax <- Root Directory 中的某 Sector 号
-	mov	cl, 1
-	call	ReadSector
-
-	mov	si, KernelFileName	; ds:si -> "KERNEL  BIN"
-	mov	di, OffsetOfKernelFile	; es:di -> BaseOfKernelFile:???? = BaseOfKernelFile*10h+????
-	cld
-	mov	dx, 10h
-LABEL_SEARCH_FOR_KERNELBIN:
-	cmp	dx, 0					; ┓
-	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR	; ┣ 循环次数控制, 如果已经读完了一个 Sector, 就跳到下一个 Sector
-	dec	dx					; ┛
-	mov	cx, 11
-LABEL_CMP_FILENAME:
-	cmp	cx, 0			; ┓
-	jz	LABEL_FILENAME_FOUND	; ┣ 循环次数控制, 如果比较了 11 个字符都相等, 表示找到
-	dec	cx			; ┛
-	lodsb				; ds:si -> al
-	cmp	al, byte [es:di]	; if al == es:di
-	jz	LABEL_GO_ON
-	jmp	LABEL_DIFFERENT
-LABEL_GO_ON:
-	inc	di
-	jmp	LABEL_CMP_FILENAME	;	继续循环
-
-LABEL_DIFFERENT:
-	and	di, 0FFE0h		; else┓	这时di的值不知道是什么, di &= e0 为了让它是 20h 的倍数
-	add	di, 20h			;     ┃
-	mov	si, KernelFileName	;     ┣ di += 20h  下一个目录条目
-	jmp	LABEL_SEARCH_FOR_KERNELBIN;   ┛
-
-LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
-	add	word [wSectorNo], 1
-	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN
-
-LABEL_NO_KERNELBIN:
-	mov	dh, 2			; "No KERNEL."
-	call	DispStrRealMode		; 显示字符串
-	jmp	$			; 没有找到 KERNEL.BIN, 死循环在这里
-
-LABEL_FILENAME_FOUND:			; 找到 KERNEL.BIN 后便来到这里继续
-	mov	ax, RootDirSectors
-	and	di, 0FFF0h		; di -> 当前条目的开始
-
-	push	eax
-	mov	eax, [es : di + 01Ch]		; ┓
-	mov	dword [dwKernelSize], eax	; ┛保存 KERNEL.BIN 文件大小
-	pop	eax
-
-	add	di, 01Ah		; di -> 首 Sector
-	mov	cx, word [es:di]
-	push	cx			; 保存此 Sector 在 FAT 中的序号
-	add	cx, ax
-	add	cx, DeltaSectorNo	; 这时 cl 里面是 LOADER.BIN 的起始扇区号 (从 0 开始数的序号)
-	mov	ax, BaseOfKernelFile
-	mov	es, ax			; es <- BaseOfKernelFile
-	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	于是, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
-	mov	ax, cx			; ax <- Sector 号
-
-LABEL_GOON_LOADING_FILE:
-	push	ax			; ┓
-	push	bx			; ┃
-	mov	ah, 0Eh			; ┃ 每读一个扇区就在 "Loading  " 后面打一个点, 形成这样的效果:
-	mov	al, '.'			; ┃
-	mov	bl, 0Fh			; ┃ Loading ......
-	int	10h			; ┃
-	pop	bx			; ┃
-	pop	ax			; ┛
-
-	mov	cl, 1
-	call	ReadSector
-	pop	ax			; 取出此 Sector 在 FAT 中的序号
-	call	GetFATEntry
-	cmp	ax, 0FFFh
-	jz	LABEL_FILE_LOADED
-	push	ax			; 保存 Sector 在 FAT 中的序号
-	mov	dx, RootDirSectors
-	add	ax, dx
-	add	ax, DeltaSectorNo
-	add	bx, [BPB_BytsPerSec]
-	jmp	LABEL_GOON_LOADING_FILE
-LABEL_FILE_LOADED:
-
-	call	KillMotor		; 关闭软驱马达
-
-	mov	dh, 1			; "Ready."
+		mov	dh, 1			; "Ready."
 	call	DispStrRealMode		; 显示字符串
 	
 ; 下面准备跳入保护模式 -------------------------------------------
@@ -186,6 +89,8 @@ LABEL_FILE_LOADED:
 ; 真正进入保护模式
 	jmp	dword SelectorFlatC:(BaseOfLoaderPhyAddr+LABEL_PM_START)
 
+
+	; 下面在 A 盘的根目录寻找 KERNEL.BIN
 
 ;============================================================================
 ;变量
@@ -351,6 +256,104 @@ LABEL_PM_START:
 	mov	fs, ax
 	mov	ss, ax
 	mov	esp, TopOfStack
+	
+	mov	word [wSectorNo], SectorNoOfRootDirectory	
+	xor	ah, ah	; ┓
+	xor	dl, dl	; ┣ 软驱复位
+	int	13h	; ┛
+	jmp $
+LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
+	cmp	word [wRootDirSizeForLoop], 0	; ┓
+	jz	LABEL_NO_KERNELBIN		; ┣ 判断根目录区是不是已经读完, 如果读完表示没有找到 KERNEL.BIN
+	dec	word [wRootDirSizeForLoop]	; ┛
+	mov	ax, BaseOfKernelFile
+	mov	es, ax			; es <- BaseOfKernelFile
+	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	于是, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
+	mov	ax, [wSectorNo]		; ax <- Root Directory 中的某 Sector 号
+	mov	cl, 1
+	call	ReadSector
+
+	mov	si, KernelFileName	; ds:si -> "KERNEL  BIN"
+	mov	di, OffsetOfKernelFile	; es:di -> BaseOfKernelFile:???? = BaseOfKernelFile*10h+????
+	cld
+	mov	dx, 10h
+LABEL_SEARCH_FOR_KERNELBIN:
+	cmp	dx, 0					; ┓
+	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR	; ┣ 循环次数控制, 如果已经读完了一个 Sector, 就跳到下一个 Sector
+	dec	dx					; ┛
+	mov	cx, 11
+LABEL_CMP_FILENAME:
+	cmp	cx, 0			; ┓
+	jz	LABEL_FILENAME_FOUND	; ┣ 循环次数控制, 如果比较了 11 个字符都相等, 表示找到
+	dec	cx			; ┛
+	lodsb				; ds:si -> al
+	cmp	al, byte [es:di]	; if al == es:di
+	jz	LABEL_GO_ON
+	jmp	LABEL_DIFFERENT
+LABEL_GO_ON:
+	inc	di
+	jmp	LABEL_CMP_FILENAME	;	继续循环
+
+LABEL_DIFFERENT:
+	and	di, 0FFE0h		; else┓	这时di的值不知道是什么, di &= e0 为了让它是 20h 的倍数
+	add	di, 20h			;     ┃
+	mov	si, KernelFileName	;     ┣ di += 20h  下一个目录条目
+	jmp	LABEL_SEARCH_FOR_KERNELBIN;   ┛
+
+LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
+	add	word [wSectorNo], 1
+	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN
+
+LABEL_NO_KERNELBIN:
+	mov	dh, 2			; "No KERNEL."
+	call	DispStrRealMode		; 显示字符串
+	jmp	$			; 没有找到 KERNEL.BIN, 死循环在这里
+
+LABEL_FILENAME_FOUND:			; 找到 KERNEL.BIN 后便来到这里继续
+	mov	ax, RootDirSectors
+	and	di, 0FFF0h		; di -> 当前条目的开始
+
+	push	eax
+	mov	eax, [es : di + 01Ch]		; ┓
+	mov	dword [dwKernelSize], eax	; ┛保存 KERNEL.BIN 文件大小
+	pop	eax
+
+	add	di, 01Ah		; di -> 首 Sector
+	mov	cx, word [es:di]
+	push	cx			; 保存此 Sector 在 FAT 中的序号
+	add	cx, ax
+	add	cx, DeltaSectorNo	; 这时 cl 里面是 LOADER.BIN 的起始扇区号 (从 0 开始数的序号)
+	mov	ax, BaseOfKernelFile
+	mov	es, ax			; es <- BaseOfKernelFile
+	mov	bx, OffsetOfKernelFile	; bx <- OffsetOfKernelFile	于是, es:bx = BaseOfKernelFile:OffsetOfKernelFile = BaseOfKernelFile * 10h + OffsetOfKernelFile
+	mov	ax, cx			; ax <- Sector 号
+
+LABEL_GOON_LOADING_FILE:
+	push	ax			; ┓
+	push	bx			; ┃
+	mov	ah, 0Eh			; ┃ 每读一个扇区就在 "Loading  " 后面打一个点, 形成这样的效果:
+	mov	al, '.'			; ┃
+	mov	bl, 0Fh			; ┃ Loading ......
+	int	10h			; ┃
+	pop	bx			; ┃
+	pop	ax			; ┛
+
+	mov	cl, 1
+	call	ReadSector
+	pop	ax			; 取出此 Sector 在 FAT 中的序号
+	call	GetFATEntry
+	cmp	ax, 0FFFh
+	jz	LABEL_FILE_LOADED
+	push	ax			; 保存 Sector 在 FAT 中的序号
+	mov	dx, RootDirSectors
+	add	ax, dx
+	add	ax, DeltaSectorNo
+	add	bx, [BPB_BytsPerSec]
+	jmp	LABEL_GOON_LOADING_FILE
+LABEL_FILE_LOADED:
+
+	call	KillMotor		; 关闭软驱马达
+
 
 	push	szMemChkTitle
 	call	DispStr

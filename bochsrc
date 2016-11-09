@@ -10,10 +10,10 @@ romimage: file=/usr/share/bochs/BIOS-bochs-latest
 vgaromimage: file= /usr/share/bochs/VGABIOS-lgpl-latest
 
 # what disk images will be used
-floppya: 1_44=a.img, status=inserted
+ata0-master: type=disk, path="a.img"
 
 # choose the boot disk.
-boot: a
+boot: disk
 
 # where do we send log messages?
 log: bochsout.txt

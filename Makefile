@@ -53,10 +53,8 @@ clean:
 
 create_img:
 	dd if=$(SRC_DIR)/loader/boot.bin of=$(IMG) bs=512 count=1 conv=notrunc
-	sudo mount -o loop $(IMG) $(FLOPPY)
-	sudo cp $(SRC_DIR)/loader/loader.bin $(FLOPPY) -v
-	sudo cp $(OBJS_DIR)/$(KERNEL_BIN) $(FLOPPY) -v
-	sudo umount $(FLOPPY)
+	dd if=$(SRC_DIR)/loader/loader.bin of=$(IMG) bs=512 count=8 seek=1 conv=notrunc
+	dd if=$(OBJS_DIR)/$(KERNEL_BIN) of=$(IMG) bs=512 seek=10 conv=notrunc
 
 #export this two flags so it can be used in the subdir make
 export CC

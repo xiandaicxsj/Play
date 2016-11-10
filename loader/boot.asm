@@ -49,7 +49,7 @@ jmp .check_extend
 
 	mov bx, 0x9000
 	mov ah,	2h
-	mov al,	2h
+	mov al,	3h
 	mov ch,	0h
 	mov cl,	2h
 	mov dh,	0h

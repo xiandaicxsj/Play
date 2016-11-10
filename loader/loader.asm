@@ -18,8 +18,9 @@ GdtPtr		dw	GdtLen - 1				; 段界限
 ata_identify_structure  times  256 db 0
 ata_spt db 0 ; sector per track
 ata_head db 0 ; head num
+ata_extend db 0
 boot_disk db 80h
-kernel_size dd  50; per sector
+kernel_size dd  100; per sector
 kernel_off dd 10
 
 ; GDT 选择子 ----------------------------------------------------------------------------------
@@ -59,10 +60,18 @@ init_ata_param:
 	mov [loader_phy_addr + ata_spt], cl
 
 	mov ah, 0x0
-	mov dl, [boot_disk] 
+	mov dl, [loader_phy_addr + boot_disk] 
 	int 13h
+	
+	mov ah,41h
+	mov dl, [loader_phy_addr + boot_disk] 
+	mov bx, 55AAh
+	int 13h
+	jc .no_extend
+	mov [loader_phy_addr + ata_extend], cx
 
-.error
+.no_extend:
+.error:
 	pop sp
 	ret
 	
@@ -121,29 +130,120 @@ ALIGN	32
 [BITS	32]
 
 ata_check_address:
-	push esp
+	push ebp
 	mov ebp, esp
 
-	pop esp
+	pop ebp
 	ret
+
+ata_read_sectors_lba:
+	push ebp
+	mov ebp, esp
+	pusha
+	mov [loader_phy_addr + .sectors], ecx;
+	mov [loader_phy_addr + .lba], eax
+	mov [loader_phy_addr + .dest], edi
+
+	xor eax, eax
+	mov eax, 0x40
+	mov edx, 0x1f6
+	out dx, al
+
+	
+	mov edx, [loader_phy_addr + .sectors]
+	mov al, dh
+	mov dx, 0x1f2
+	out dx, al
+	
+	mov eax, [loader_phy_addr + .lba]
+	shr eax, 24
+	mov dx, 0x1f3
+	out dx, al
+
+	shr eax, 8
+	mov dx, 0x1f4
+	out dx, al
+
+	shr eax, 8
+	mov dx, 0x1f5
+	out dx, al
+
+	mov eax, [loader_phy_addr + .sectors]
+	mov dx, 0x1f2
+	out dx, al
+
+	mov eax, [loader_phy_addr + .lba]
+	mov dx, 0x1f3
+	out dx, al
+
+	shr eax, 8
+	mov dx, 0x1f4
+	out dx, al
+
+	shr eax, 8
+	mov dx, 0x1f5
+	out dx, al
+	
+
+	xor eax, eax
+	mov al, 0x24
+	mov dx, 0x1f7
+	out dx, al
+
+.wait_disk_1:
+
+	xor eax, eax
+	in al, dx
+	test al, 0x1
+	jnz .disk_error
+        test al, 0x80
+	jz .wait_for_data
+	jmp .wait_disk_1
+
+.disk_error
+	jmp $ 
+
+.wait_for_data:
+
+        mov edi, [loader_phy_addr + .dest]
+        mov eax, 256
+        mov ebx, [loader_phy_addr + .sectors]
+        mul ebx
+        mov ecx, eax
+	mov edx, 0x1F0
+	rep insw
+
+	popa
+	pop ebp
+	ret
+
+.sectors dd 0
+.lba dd 0
+.dest dd 0
 ;eax lba for 0 - max-1
 ;ecx sectors to read
 ;edi buffer
-ata_read_sectors:
-	push esp
+
+ata_read_sectors_legacy:
+	push ebp
 	mov ebp, esp
 	pusha
-	mov [loader_phy_addr + .sec_count], ecx;
+	mov [loader_phy_addr + .sectors], ecx;
 	mov [loader_phy_addr + .lba], eax
 	mov [loader_phy_addr + .dest], edi
 
 	call ata_lba_to_chs
-	mov ebx, 0
-	mov bl, 10
 	mov [loader_phy_addr + .chs], ebx
+	mov [loader_phy_addr + .sectors], ebx
+
+	xor eax, eax
+	mov al, bh
+	or al, 0xA0
+	mov dx, 0x1f6
+	out dx, al
 
 	mov edx, 0x1f2
-	mov eax, [loader_phy_addr + .sec_count]
+	mov eax, [loader_phy_addr + .sectors]
 	out dx, al
 	
 	mov edx, 0x1f3
@@ -164,25 +264,47 @@ ata_read_sectors:
 	mov eax, 0x20
 	out dx, al
 	
-.check_done
-	mov edx, 0x1f7
-	in al, dx 
-	and al, 0x80
+;
+	;xor ebx, ebx
+        ;add ebx, 0xff                    ; give the disk 1 second to get ready
 
-	jnz .check_done
+.wait_for_disk:
+	;dec ebx
+        ;cmp ebx, 0
+	;jnz .wait_for_disk
+        mov edx, 0x1F7
+        in al, dx
+	test al, 0x1
+	jnz .disk_error
+        test al, 0x80
+	jz .wait_for_data
+        jmp .wait_for_disk
 	
-	popa
-	pop esp
-	ret
+.disk_error
+	jmp $
 
-.sec_count db 0
+.wait_for_data:
+
+        mov edi, [loader_phy_addr + .dest]
+        mov eax, 256
+        mov ebx, [loader_phy_addr + .sectors]
+        mul ebx
+        mov ecx, eax
+        mov edx, 0x1F0
+	rep insw
+
+        popa
+        mov eax, 0
+        ret
+
+.sectors db 0
 .chs dd 0
 .lba dd 0
 .dest dd 0
 
 ;eax lab
 ata_lba_to_chs:
-	push esp
+	push ebp
 	mov ebp, esp
 
 	push edx
@@ -225,7 +347,7 @@ ata_lba_to_chs:
 	pop edx
 	mov ebx, [loader_phy_addr + .res]
 
-	pop esp
+	pop ebp
 	ret 
 
 .cylinder                       dw 0
@@ -235,10 +357,18 @@ ata_lba_to_chs:
 .tmp                            dd 0
 .res 				dd 0
 
+ata_reset:
+	push ebp
+	mov ebp, esp
+	
+	pop ebp
+	ret
+
 ata_indentity:
 
-	push esp
+	push ebp
 	mov ebp, esp
+
 	mov dx, 0x1f6
 	out dx, al
 
@@ -286,10 +416,10 @@ ata_indentity:
 	jmp .out_check
 
 .no_disk:
-        jmp $
+	jmp $
 
 .out_check:
-	pop esp
+	pop ebp
 	ret 
 
 LABEL_PM_START:
@@ -302,6 +432,7 @@ LABEL_PM_START:
 
 	mov ah, 0xa0
 	call ata_indentity
+	call ata_reset
 	jmp load_kernel
 	
 load_kernel:
@@ -312,7 +443,7 @@ load_kernel:
 	; we need to caculate the offset of sector from 0 
 	dec eax
 
-	call ata_read_sectors
+	call ata_read_sectors_lba
 
 	jmp parse_kernel
 
@@ -322,7 +453,7 @@ parse_kernel:
 	mov esi, [kernel_load_addr + elf_phoff]
 	add esi, kernel_load_addr
 	
-.begin
+.begin:
 	mov eax, [esi]
 	cmp eax,0
 	jz .next
@@ -358,7 +489,7 @@ parse_kernel:
 ;edi
 ;esi
 ;size
-mem_cpy
+mem_cpy:
 	push ebp
 	mov esp, ebp
 
@@ -388,7 +519,7 @@ mem_cpy
 	pop esi
 	pop edi
 
-	pop esp
+	pop ebp
 
 	ret
 	

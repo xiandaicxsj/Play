@@ -54,7 +54,7 @@ clean:
 create_img:
 	dd if=$(SRC_DIR)/loader/boot.bin of=$(IMG) bs=512 count=1 conv=notrunc
 	dd if=$(SRC_DIR)/loader/loader.bin of=$(IMG) bs=512 count=8 seek=1 conv=notrunc
-	dd if=$(OBJS_DIR)/$(KERNEL_BIN) of=$(IMG) bs=512 seek=10 conv=notrunc
+	dd if=$(OBJS_DIR)/$(KERNEL_BIN) of=$(IMG) bs=512 seek=9 conv=notrunc
 
 #export this two flags so it can be used in the subdir make
 export CC

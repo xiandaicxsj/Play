@@ -480,9 +480,8 @@ parse_kernel:
 
 
 .kernel_begin:
-	mov eax, 0x99999
-	jmp $
-	jmp SelectorFlatC:0
+
+	jmp SelectorFlatC:0x100000
 
 	
 	

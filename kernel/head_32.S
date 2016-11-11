@@ -3,7 +3,7 @@
 .equ GDTNUM, 0x10
 .equ _video_offset, 0xb8000
 .equ IDT_ATTR, 0x8600
-.equ mem_size, 0x200000 /* 2M */
+.equ mem_size, 0x300000 /* 2M */
 .extern start_kernel
 
 .macro push_all
@@ -105,8 +105,8 @@ init_page_tbl:
 .fill 4096, 1, 0
 	
 /*;.globl make func available external
- ; loader: 1.make 16 bit ->32 bit 2. make it run into proteced model. should run into proteced model
- ; kernel: 1.will setup the pagingn 2.others do other basic initialition, kernel asm will setup man one-one map*/
+ ; loader: 1.make 16 bit ->32 bit 
+ ; kernel: 1.will setup the pagingn 2. also run into protected model 2.others do other basic initialition, kernel asm will setup man one-one map*/
 .section .head.text
 //#include "kernel.lds.h"
 #include "asm/page_type.h"
@@ -114,6 +114,8 @@ init_page_tbl:
 .globl head_start	
 .type head_start, @function
 head_start:
+	jmp _start
+	/* setup paging */
 	
 	
 	// copy data from last data
@@ -124,7 +126,7 @@ head_start:
 .align 32
 .globl _start
 .type _start, @function
-start_:
+_start:
 	cli
 	xorl %eax, %eax
 	xorl %edi, %edi
@@ -269,6 +271,7 @@ init_pic_as:
 	nop
 	nop
 	nop
+	jmp .
 	call start_kernel
 	
 .type _default_inter_handler, @function

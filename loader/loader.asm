@@ -449,7 +449,7 @@ load_kernel:
 
 parse_kernel:
 
-	mov ecx, [kernel_load_addr + elf_phnum]
+	mov cx, [kernel_load_addr + elf_phnum]
 	mov esi, [kernel_load_addr + elf_phoff]
 	add esi, kernel_load_addr
 	
@@ -491,7 +491,7 @@ parse_kernel:
 ;size
 mem_cpy:
 	push ebp
-	mov esp, ebp
+	mov ebp, esp
 
 	push edi
 	push esi

@@ -1,7 +1,7 @@
 ENTRY(_start)
 SECTIONS
 {
-	. = 0xc0000000;
+	. = 0xc0000000 + 0x100000;
 	_text_start = .;
 	.text : AT(ADDR(.text) - 0xc0000000) 
 	{

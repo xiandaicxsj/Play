@@ -22,6 +22,7 @@ ata_extend db 0
 boot_disk db 80h
 kernel_size dd  100; per sector
 kernel_off dd 10
+mcr_number db 0
 
 ; GDT 选择子 ----------------------------------------------------------------------------------
 SelectorFlatC		equ	LABEL_DESC_FLAT_C	- LABEL_GDT
@@ -84,29 +85,38 @@ LABEL_START:			; <--- 从这里开始 *************
 	mov	ss, ax
 	mov	sp, BaseOfStack
 
-	; 得到内存数
-;
-;	mov	ebx, 0			; ebx = 后续值, 开始时需为 0
-;	mov	di, _MemChkBuf		; es:di 指向一个地址范围描述符结构（Address Range Descriptor Structure）
-;.MemChkLoop:
-;	mov	eax, 0E820h		; eax = 0000E820h
-;	mov	ecx, 20			; ecx = 地址范围描述符结构的大小
-;	mov	edx, 0534D4150h		; edx = 'SMAP'
-;	int	15h			; int 15h
-;	jc	.MemChkFail
-;	add	di, 20
-;	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS 的个数
-;	cmp	ebx, 0
-;	jne	.MemChkLoop
-;	jmp	.MemChkOK
-;.MemChkFail:
-;	mov	dword [_dwMCRNumber], 0
-;.MemChkOK:
-;
-;		mov	dh, 1			; "Ready."
-;	call	DispStrRealMode		; 显示字符串
-	
 
+
+;	mov	bx, 0	
+;	mov	di, hw_info_addr
+;	push di
+;	mov 	al , 1
+;	mov     [di], al
+;	inc di
+;	mov 	al, 0
+;	mov     [di], al
+;	inc di
+
+;.mem_loop:
+;	mov	eax, 0E820h	
+;	mov	ecx, 20	
+;	mov	edx, 0534D4150h
+;	int	15h	
+;	jc	.mem_fail
+;	add	di, 20
+;	inc	byte [loader_phy_addr + mcr_number]	; dwMCRNumber = ARDS 的个数
+;	cmp	ebx, 0
+;	jne	.mem_loop
+;	jmp	.mem_ok
+
+;.mem_fail:
+;	jmp $
+
+;.mem_ok:
+;	pop di
+;	mov al, [loader_phy_addr + mcr_number]
+;	mov [di], al
+	
 	call init_ata_param
 	lgdt	[loader_phy_addr + GdtPtr]
 
@@ -200,7 +210,7 @@ ata_read_sectors_lba:
 	jz .wait_for_data
 	jmp .wait_disk_1
 
-.disk_error
+.disk_error:
 	jmp $ 
 
 .wait_for_data:
@@ -280,7 +290,7 @@ ata_read_sectors_legacy:
 	jz .wait_for_data
         jmp .wait_for_disk
 	
-.disk_error
+.disk_error:
 	jmp $
 
 .wait_for_data:

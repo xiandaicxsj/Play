@@ -7,4 +7,5 @@ ph_file_off equ 4h
 ph_size equ  10h
 ph_vaddr equ  8h
 kernel_offset equ 0c0000000h
+hw_info_addr equ 10000h
 

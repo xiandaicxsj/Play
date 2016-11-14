@@ -3,7 +3,6 @@
 #define CR0_PG ( 1 << 31 )
 #define KERNEL_OFFSET 0xc0000000
 #define _pa(addr) (addr - KERNEL_OFFSET) 
-#define PAGE_SIZE ( 1 << PAGE_OFFSET ) 
 #endif
 
 

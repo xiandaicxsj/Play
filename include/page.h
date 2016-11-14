@@ -7,7 +7,6 @@
 #define CR0_PG (1ull << 31)
 
 typedef u32 addr_t;
-#define PAGE_OFFSET 12
 #define KERNEL_OFFSET 0xc0000000
 #define KERNEL_ADDR(addr) (KERNEL_OFFSET + (addr_t)addr)
 #define PHY_ADDR(addr) ((addr_t)addr - KERNEL_OFFSET)
@@ -15,9 +14,7 @@ typedef u32 addr_t;
 #define virt_to_phy(addr) (((addr_t)addr) - KERNEL_OFFSET)
 #define pfn_to_addr(pfn) ((addr_t)((pfn) << PAGE_OFFSET))
 #define addr_to_pfn(addr) (((addr_t)addr) >> PAGE_OFFSET)
-#define PAGE_SIZE ( 1 << PAGE_OFFSET ) 
 #define _SIZE(level) (1 << 12 * (level))
-#define PAGE_MASK (PAGE_SIZE -1)
 #define ALIGN(addr, size) (((addr_t)addr) & ~((size) - 1))
 #define PAGE_ALIGN(addr) ALIGN((addr_t)addr, PAGE_SIZE)
 #define PTE_PRESENT  (1 << 0)
@@ -32,8 +29,8 @@ typedef u32 addr_t;
 #define PDE_SIZE 1024
 #define PTE_OFFSET 1024
 #define PDE_OFFSET 1024
-#define PAGE_SHIFT(level)	( level == 1 ? 12 : 22 )
-#define INDEX(addr, level) (((((addr_t)addr) >> PAGE_SHIFT(level)) & 0x3ff))
+#define PGDT_SHIFT(level)	( level == 1 ? 12 : 22 )
+#define INDEX(addr, level) (((((addr_t)addr) >> PGDT_SHIFT(level)) & 0x3ff))
 #define PDE_ADDR(entry) ((entry) & ~PAGE_MASK)
 #define PT_ADDR(entry) ((entry) & ~PAGE_MASK)
 #define PG_ADDR(entry) ((entry) & ~PAGE_MASK)

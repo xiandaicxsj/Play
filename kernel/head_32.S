@@ -102,7 +102,7 @@ init_page_dir:
 /* 0xc[1100] 0000000 */
 .fill 4096, 1, 0
 init_page_tbl:
-.fill 4096, 1, 0
+.fill 4096, 2, 0
 	
 /*;.globl make func available external
  ; loader: 1.make 16 bit ->32 bit 
@@ -145,18 +145,127 @@ _start:
 	movw %ax, %gs 
 	movw %ax, %fs 
 	movw %ax, %ss 
+	movl $_pa(init_stack), %esp
+	movl %esp, %ebp
+
 	ljmp $_kernel_cs, $_pa(setup_paging)
 
+map_page:
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+
+	movl %eax, %edx
+	
+	shrl $PGD_SHIFT, %eax
+	mov %eax, %ecx
+
+        movl $_pa(init_page_dir), %edi
+	shll $PDE_SHIFT, %eax
+	addl %eax, %edi
+
+	movl (%edi), %ebx
+	testb $PGD_P, %bl
+	jnz 1f
+	movl %ecx, %eax
+	// not sure
+	cmp $INIT_PGD_TABLE, %eax
+	jl 2f
+	jmp .
+2:	
+	shll $PAGE_OFFSET, %eax
+	addl $_pa(init_page_tbl), %eax
+        orl  $PGT_P, %eax
+        orl  $PGT_U, %eax
+        orl  $PGT_S, %eax
+        orl  $PGT_W, %eax
+
+	movl %eax, 0xc00(%edi)
+	stosl
+	
+	movl %eax, %ebx
+/* */
+1:
+	andl $PAGE_MASK, %ebx
+	movl %ebx, %edi
+	/* edi */
+
+	movl %edx, %eax
+        orl  $PGT_P, %eax
+        orl  $PGT_U, %eax
+        orl  $PGT_S, %eax
+        orl  $PGT_W, %eax
+
+	andl $PDE_ADDR_MASK, %edx
+	shrl $PGT_SHIFT, %edx
+	shll $PTE_SHIFT, %edx
+	addl %edx, %edi
+	
+        stosl
+
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+
+	popl %ebp
+	ret 
+
+/* eax : start phy
+   ecx : size
+ */
+map_pages:
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl 8(%ebp), %ecx
+	movl 12(%ebp), %eax
+	
+	xorl %edx, %edx
+	movl %eax, %edx
+	addl %ecx, %edx
+
+	/* 
+	   eax: begin phy address
+	   edx: end phy address
+	   ecx: size 
+	*/
+1:
+	cmp %eax, %edx
+	jl 2f
+	call map_page
+	addl $PAGE_SIZE, %eax
+	jmp 1b
+	
+2:
+	popl %ebp
+	ret
+
 setup_paging:
+
 	movw $_kernel_cs, %ax;
 	movw %ax, _pa(sys_cs) 
 	movw $_kernel_ds, %ax;
 	movw %ax, _pa(sys_ds) 
 	movl $_pa(_bss_end), %ecx
-	subl $_pa(_text_start), %ecx
-	movl $mem_size, %ecx
-	//movl $0x00300000, %ecx
+	/* ecx have the size of img */	
 
+	movl $0, %eax
+	pushl %eax
+
+	andl $PAGE_MASK, %ecx 
+	addl $PAGE_SIZE, %ecx
+	pushl %ecx
+	call map_pages
+	popl %ecx
+	popl %eax
+	
+	
+/*
 	movl %ecx, %edx
 	movl %ecx, %eax
 	shrl $22, %ecx
@@ -169,14 +278,15 @@ setup_paging:
 	movl $_pa(init_page_tbl), %eax
 	orl  $PGT_P, %eax
 	orl  $PGT_U, %eax
-/* nowday we use user page to test */
-//	orl  $PGT_S, %eax
+	orl  $PGT_S, %eax
 	orl  $PGT_W, %eax
 	movl $_pa(init_page_dir), %edi
 1:
 	movl %eax, 0xc00(%edi)
 	stosl
-	addl $4096, %eax
+
+	addl $PAGE_SIZE, %eax
+
 	decl %ecx
 	jnz 1b
 
@@ -186,27 +296,33 @@ setup_paging:
 	shrl $12, %ecx
 	xorl %eax, %eax
 	orl  $PGT_P, %eax
-	//orl  $PGT_S, %eax
+	orl  $PGT_S, %eax
 	orl  $PGT_U, %eax
 	orl  $PGT_W, %eax
 	movl $_pa(init_page_tbl), %edi
 2: 
 	stosl
-	addl $4096, %eax
+	addl $PAGE_SIZE, %eax
 	decl %ecx
 	jnz 2b
 
-
+*/
 	movl $_pa(init_page_dir), %eax
 	movl %eax, %cr3
 	movl %cr0, %eax
-	movl %cr4, %edx
 	orl  $0x80000000, %eax
 	movl %eax, %cr0
-	movl $init_stack, %esp
-	movl %esp, %ebp
+
 	ljmp $_kernel_cs, $1f	
 1:
+	movl %esp, %eax
+	addl $KERNEL_OFFSET, %eax
+	movl %eax, %esp
+
+	movl %ebp, %eax
+	addl $KERNEL_OFFSET, %eax
+	movl %eax, %ebp
+
 	jmp init_pic_as
 init_pic_as:
 	movb $0x11, %al
@@ -271,7 +387,6 @@ init_pic_as:
 	nop
 	nop
 	nop
-	jmp .
 	call start_kernel
 	
 .type _default_inter_handler, @function

@@ -177,7 +177,7 @@ map_page:
 	jl 2f
 	jmp .
 2:	
-	shll $PAGE_OFFSET, %eax
+	shll $PAGE_SHIFT, %eax
 	addl $_pa(init_page_tbl), %eax
         orl  $PGT_P, %eax
         orl  $PGT_U, %eax
@@ -190,7 +190,7 @@ map_page:
 	movl %eax, %ebx
 /* */
 1:
-	andl $PAGE_MASK, %ebx
+	andl $MASK_PAGE, %ebx
 	movl %ebx, %edi
 	/* edi */
 
@@ -257,7 +257,7 @@ setup_paging:
 	movl $0, %eax
 	pushl %eax
 
-	andl $PAGE_MASK, %ecx 
+	andl $MASK_PAGE, %ecx 
 	addl $PAGE_SIZE, %ecx
 	pushl %ecx
 	call map_pages

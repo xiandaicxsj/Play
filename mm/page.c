@@ -79,6 +79,9 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	u32 pte_flags;
 	u32 user_flag;
 
+	if (!pdt)
+		pdt = &init_page_dir;
+
 	if (flags & MEM_USER)
 		user_flag = PGT_U;
 	else

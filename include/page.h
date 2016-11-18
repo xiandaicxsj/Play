@@ -12,8 +12,8 @@ typedef u32 addr_t;
 #define PHY_ADDR(addr) ((addr_t)addr - KERNEL_OFFSET)
 #define phy_to_virt(addr) (((addr_t)addr) + KERNEL_OFFSET)
 #define virt_to_phy(addr) (((addr_t)addr) - KERNEL_OFFSET)
-#define pfn_to_addr(pfn) ((addr_t)((pfn) << PAGE_OFFSET))
-#define addr_to_pfn(addr) (((addr_t)addr) >> PAGE_OFFSET)
+#define pfn_to_addr(pfn) ((addr_t)((pfn) << PAGE_SHIFT))
+#define addr_to_pfn(addr) (((addr_t)addr) >> PAGE_SHIFT)
 #define _SIZE(level) (1 << 12 * (level))
 #define ALIGN(addr, size) (((addr_t)addr) & ~((size) - 1))
 #define PAGE_ALIGN(addr) ALIGN((addr_t)addr, PAGE_SIZE)
@@ -22,7 +22,7 @@ typedef u32 addr_t;
 #define PE_SIZE 512
 #define PE_MASK (PE_SIZE - 1)
 /* no use now ,should use addr_to_pfh */
-#define PFN(addr) (((addr_t)addr) >> PAGE_OFFSET)
+#define PFN(addr) (((addr_t)addr) >> PAGE_SHIFT)
 #define PDE_LEVEL (2)
 #define PTE_LEVEL (1)
 #define PTE_SIZE 1024

@@ -8,9 +8,7 @@
 #include"test_process.h"
 void start_kernel(void )
 {
-	while(1);
 	setup_memory();
-
 	/*
 	 *init_vfs();
 	 *pre_init_devices();
@@ -18,6 +16,7 @@ void start_kernel(void )
 	 *post_init_devices();
 	 */
 
+			
 	init_schduler();
 	struct task_struct * task0 = (struct task_struct *) kmalloc(PAGE_SIZE, 0, MEM_KERN); /* should be page align */
 	create_task(task0, test_process);

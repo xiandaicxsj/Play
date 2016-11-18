@@ -61,7 +61,7 @@ void init_buddy(u32 mem_size)
 
 	/*  if we want to use 4K  */
 	order = 0;
-	nr_pages = mem_size >> PAGE_OFFSET;
+	nr_pages = mem_size >> PAGE_SHIFT;
 	while (order < MAX_ORDER )
 	{
 		area = &(pgp.free_area[order]);
@@ -284,18 +284,18 @@ static u32 link_pages(struct page *head, u32 nr_pages)
 
 static u32 init_pages_list(u32 mem_size)
 {
-	u32 nr_pages = mem_size >> PAGE_OFFSET;
+	u32 nr_pages = mem_size >> PAGE_SHIFT;
 	u32 struct_size = nr_pages * sizeof(struct page);
-	u32 nr_pages_s = struct_size & PAGE_MASK ? (struct_size >> PAGE_OFFSET) + 1: (struct_size >> PAGE_OFFSET);
-	pages_list = (struct page *)kmalloc(nr_pages_s << PAGE_OFFSET, 0, MEM_KERN);
+	u32 nr_pages_s = struct_size & PAGE_MASK ? (struct_size >> PAGE_SHIFT) + 1: (struct_size >> PAGE_SHIFT);
+	pages_list = (struct page *)kmalloc(nr_pages_s << PAGE_SHIFT, 0, MEM_KERN);
 	/* no need to link page here */
-	link_pages(pages_list, mem_size >> PAGE_OFFSET);
+	link_pages(pages_list, mem_size >> PAGE_SHIFT);
 }
 
 static void merge_low_memory()
 {
 	u32 p_low_mem = virt_to_phy(low_mem_end);
-	u32 nr_pages = p_low_mem & PAGE_MASK ? (p_low_mem >> PAGE_OFFSET) + 1: (p_low_mem >> PAGE_OFFSET);
+	u32 nr_pages = p_low_mem & PAGE_MASK ? (p_low_mem >> PAGE_SHIFT) + 1: (p_low_mem >> PAGE_SHIFT);
 	/* we use the alloc here,  mark this page to be used*/
 	/* map is no needed here, because kmalloc_low_mem has mapped the memory*/
 	while(nr_pages)
@@ -389,7 +389,7 @@ static void* kmalloc_low_mem(u32 size, u32 align)
 static struct page * _buddy_alloc(u32 size, u32 align)
 {
 	/* align is useless */
-	u32 nr_pages = size >> PAGE_OFFSET;
+	u32 nr_pages = size >> PAGE_SHIFT;
 	nr_pages += (size & PAGE_MASK ? 1 : 0);
 	return _buddy_alloc_pages(nr_pages);
 }
@@ -408,13 +408,20 @@ static void * _kmalloc(u32 size, u32 align)
 #ifdef BUDDY_ALLOC 
 		struct page * pages = _buddy_alloc(size, align);
 #endif
-	return (void *)phy_to_virt(pages->pfn << PAGE_OFFSET);
+	return (void *)phy_to_virt(pages->pfn << PAGE_SHIFT);
 }
 
 /* interface */
 struct page *kalloc_page(u32 flags)
 {
-	kalloc_pages(1, flags);
+	struct page *pg;
+
+	pg = kalloc_pages(1, flags);
+	/* map page */
+
+	if (flags & MEM_KERN)
+		map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pg->pfn))), pg->pfn, flags, NULL);
+	return pg;
 }
 
 struct page *kalloc_pages(u32 nr, u32 flags)
@@ -444,12 +451,25 @@ u32 kfree_page(struct page* page)
 void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 {
 	void * addr ;
+	u32 aj_addr;
+	u32 aj_size;
+
 	if ( low_mem_alloc_used )
 		addr = kmalloc_low_mem(size, align);
 	else
 		addr = _kmalloc(size, align);
-	/* need map */
-	if (flags & MEM_KERN)
+
+	aj_addr = round_down((u32) addr, PAGE_SIZE);
+	aj_size = round_up((u32)addr + size, PAGE_SIZE) - aj_addr;
+
+	if (flags & MEM_KERN) {
+
+		while(aj_size > 0) {
+			map_page(addr_to_pfn(aj_addr), virt_to_phy(addr_to_pfn(aj_addr)), flags, NULL);
+			aj_addr += PAGE_SIZE;
+			aj_size -= PAGE_SIZE;
+		}
+	}
 
 	return addr;
 		/* bugs */
@@ -457,6 +477,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 
 u32 static get_mem_size()
 {
+	/* here we juest write */
 	return 256*1024*1024;
 }
 /* now the memory is not set properily */

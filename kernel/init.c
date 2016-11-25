@@ -8,6 +8,7 @@
 #include"test_process.h"
 void start_kernel(void )
 {
+	setup_interrupt();
 	setup_memory();
 	/*
 	 *init_vfs();

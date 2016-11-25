@@ -4,6 +4,7 @@
 #include"mem.h"
 #include"debug.h"
 #include"test.h"
+#ifndef TEST_MEM
 typedef u32 pde_t;
 typedef u32 pte_t;
 /* used the static page to the */
@@ -169,3 +170,4 @@ void *copy_page_table(struct task_struct *p)
 	/* we should also mask user part as non-present*/
 	return new_cr3;
 }
+#endif

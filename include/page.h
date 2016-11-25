@@ -1,9 +1,12 @@
 #ifndef _H_PAGE
 #define _H_PAGE
+#include"test.h"
 #include"type.h"
 #include"list.h"
-#include"schdule.h"
 #include"asm/page_type.h"
+#ifndef TEST_MEM
+	#include"schdule.h"
+#endif
 #define CR0_PG (1ull << 31)
 
 typedef u32 addr_t;
@@ -43,9 +46,11 @@ struct page
     u32 order;
 };
 void page_fault();
+#ifndef TEST_MEM
 void *copy_page_table(struct task_struct *p);
 extern u32 init_page_dir;
 u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt);
+#endif
 #endif
 
 

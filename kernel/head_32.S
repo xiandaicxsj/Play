@@ -14,6 +14,7 @@
 	pushl %edi
 	pushl %esi
 
+/*
 	xorl %eax, %eax
 	movw %ds, %ax
 	pushl %eax
@@ -34,10 +35,12 @@
         movw %ax, %ds
         movw %ax, %es
         movw %ax, %gs
+*/
 .endm
  
 
 .macro pop_all
+/*
 	popl %eax
 	movw %ax, %fs
 	popl %eax
@@ -46,6 +49,7 @@
 	movw %ax, %es
 	popl %eax
 	movw %ax, %ds
+*/
 
 	popl %esi
 	popl %edi

@@ -82,7 +82,7 @@ void init_buddy(u32 mem_size)
 	area = &(pgp.free_area[order]);
 	area->nr_free = nr_pages >> order;
 	pages_idx = pfn >> order;
-	while( pages_idx < (nr_pages >>order) )
+	while( pages_idx < (nr_pages >> order) )
 	{
 		pages = pfn_to_page(pfn);
 		pages->order = order;
@@ -249,6 +249,7 @@ static struct page * _buddy_alloc_pages(u32 num)
 		else
 			area->free_pages = container_of(tmp->list.next, struct page, list);
 		list_del(&tmp->list);
+
 		/* map is not used for order = MAX_ORDER -1 */
 		if (cur_order != MAX_ORDER -1)
 			clear_bit(area->map, tmp->pfn >> (cur_order + 1));
@@ -351,7 +352,6 @@ void show_buddy_info()
 }
 
 */
-/*
 int main()
 {
 	struct page *pages;
@@ -373,7 +373,6 @@ int main()
 	show_buddy_info();
 	return 0;
 }
-*/
 
 static void* kmalloc_low_mem(u32 size, u32 align)
 {
@@ -419,8 +418,10 @@ struct page *kalloc_page(u32 flags)
 	pg = kalloc_pages(1, flags);
 	/* map page */
 
+#ifndef TEST_MEM
 	if (flags & MEM_KERN)
 		map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pg->pfn))), pg->pfn, flags, NULL);
+#endif
 	return pg;
 }
 
@@ -459,6 +460,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 	else
 		addr = _kmalloc(size, align);
 
+#ifndef TEST_MEM
 	aj_addr = round_down((u32) addr, PAGE_SIZE);
 	aj_size = round_up((u32)addr + size, PAGE_SIZE) - aj_addr;
 
@@ -470,6 +472,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 			aj_size -= PAGE_SIZE;
 		}
 	}
+#endif
 
 	return addr;
 		/* bugs */

@@ -43,6 +43,7 @@ test_device:
 
 test_mem:
 	$(MAKE) -C mm/ test_mem
+	$(MAKE) -C kernel/ test_mem
 
 test_kernel:
 	$(MAKE) -C kernel/ test_kernel

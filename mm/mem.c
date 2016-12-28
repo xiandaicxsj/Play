@@ -49,11 +49,22 @@ struct page *pfn_to_page(u32 pfn)
 	return pages_list + pfn;
 }
 
+static void add_area_pages(struct free_area_t *area, struct page *pages)
+{
+	if(!area->free_pages) {
+		/*suppose*/
+		area->free_pages = pages;
+	} else
+		list_add(&(pages->list), &(area->free_pages->list));
+	area->nr_free ++;
+}
+
 void init_buddy(u32 mem_size)
 {
 	u32 order;
 	u32 nr_pages;
 	u32 pages_idx;
+	u32 size;
 	struct free_area_t *area;
 	struct page *pages;
 
@@ -62,7 +73,8 @@ void init_buddy(u32 mem_size)
 	nr_pages = mem_size >> PAGE_SHIFT;
 
 	/* we need to set the order files of each page to be -1 */
-	zero_all_pages_order(nr_pages);
+	//zero_all_pages_order(nr_pages);
+	/* this is done at init_page_struct */
 
 	while (order <= MAX_ORDER) {
 		area = &(pgp.free_area[order]);
@@ -128,13 +140,13 @@ static struct page *adjust_pages(struct page *pages, u32 lo_order, u32 hi_order,
 	while(lo_order < hi_order) {
 		area --;
 		hi_order --;
-		size >> = 1;
+		size >>= 1;
 
 		/* get the next page */
-		tmp_pages = pages[size];
+		tmp_pages = &pages[size];
 		tmp_pages->order = hi_order;
 
-		add_area_page(area, tmp_pages);
+		add_area_pages(area, tmp_pages);
 	}
 	/* very important */
 out:
@@ -151,25 +163,17 @@ static u32 check_buddy(struct page *pages, struct page *buddy, u32 order)
 	return buddy->order == order ? 1: 0;
 }
 
-static void add_area_pages(struct free_area_t *area, struct page *pages)
-{
-	if(!area->free_pages) {
-		list_init(&pages->list);
-		area->free_pages = page;
-	} else
-		list_add(&(page->list), &(area->free_pages->list));
-	area->nr_free ++;
-}
-
 static u32 del_area_pages(struct free_area_t *area, struct page *pages)
 {
-	ASSERT(!area->nr_free);
+	/* ASSERT(!area->nr_free); */
 	area->nr_free--;
 	if (!area->nr_free)
 		area->free_pages = NULL;
-	else if (area->free_pages == buddy_pages)
+	else 
 		area->free_pages = container_of(pages->list.next, struct page, list);
 	list_del(&(pages->list));
+	/* we need this reset this port to itself*/
+	list_init(&(pages->list));
 }
 
 static zero_page_order(struct page *pages)
@@ -180,7 +184,7 @@ static zero_page_order(struct page *pages)
 static void _buddy_free_pages(struct page *pages)
 {
 	struct  free_area_t *area;
-	struct page *buddy_page;
+	struct page *buddy_pages;
 	u32 order = pages->order;
 	u32 page_idx;
 	u32 buddy_idx;
@@ -198,17 +202,17 @@ static void _buddy_free_pages(struct page *pages)
 		page_idx = pages->pfn;
 
 		buddy_idx = get_buddy_idx(page_idx, order);
-		buddy_page = pfn_to_page(buddy_idx);
+		buddy_pages = pfn_to_page(buddy_idx);
 
-		if (!check_buddy(buddy_page, pages,order)) {
+		if (!check_buddy(buddy_pages, pages,order)) {
 			pages->order = order;
-			add_area_page(area, pages);
+			add_area_pages(area, pages);
 			break;
 		}
 
 		zero_page_order(pages);	
 
-		zero_page_order(buddy_page);	
+		zero_page_order(buddy_pages);	
 		del_area_pages(area, buddy_pages);
 
 		c_idx = page_idx & buddy_idx;
@@ -223,7 +227,7 @@ static struct page * _buddy_alloc_pages(u32 num)
 {
 	/* need add _log function */
 	u32 lo_order = _log(num);
-	u32 hi_order = order;
+	u32 hi_order = lo_order;
 	struct page *pages;
 	struct free_area_t *area;
 	while(hi_order < MAX_ORDER) {
@@ -240,7 +244,7 @@ static struct page * _buddy_alloc_pages(u32 num)
 		if (!area->free_pages)
 			return NULL;
 		pages = area->free_pages; 
-		del_area_page(area, tmp);
+		del_area_pages(area, pages);
 
 		return adjust_pages(pages, lo_order, hi_order, area);
  	}

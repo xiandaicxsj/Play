@@ -92,4 +92,5 @@ void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
 int init_schduler(void);
+void switch_to_ring3(struct task_struct *task);
 #endif

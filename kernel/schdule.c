@@ -98,7 +98,7 @@ void switch_to(struct task_struct *prev, struct task_struct *next)
  * if we ltr, the des of the tss > type field will be 11
  * not 9. Then load will error
  */
-static void switch_to_ring3(struct task_struct *task) 
+void switch_to_ring3(struct task_struct *task) 
 { 
 	u32 lldt_sel = gdt_ldt_sel(task->pid);
 	u32 ts_sel = gdt_tss_sel(task->pid);
@@ -261,10 +261,12 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	set_tss(gdt_tss_vec(pid), task); 
 
 	/* related with file sys */
+	/*
 	if (flags & CLONE_FS)
 		copy_task_file_struct(task, parent);
 	else
 		init_task_file_struct(task);
+	*/
 
 	/* init signal set */
 	init_task_sig_set(task);

@@ -20,7 +20,7 @@ ata_spt db 0 ; sector per track
 ata_head db 0 ; head num
 ata_extend db 0
 boot_disk db 80h
-kernel_size dd  100; per sector
+kernel_size dd  300; per sector
 kernel_off dd 10
 mcr_number db 0
 
@@ -154,17 +154,19 @@ ata_read_sectors_lba:
 	mov [loader_phy_addr + .lba], eax
 	mov [loader_phy_addr + .dest], edi
 
+	; send master
 	xor eax, eax
 	mov eax, 0x40
 	mov edx, 0x1f6
 	out dx, al
 
-	
+	; sector count hign byte
 	mov edx, [loader_phy_addr + .sectors]
 	mov al, dh
 	mov dx, 0x1f2
 	out dx, al
 	
+	;lab 4 bit for 24
 	mov eax, [loader_phy_addr + .lba]
 	shr eax, 24
 	mov dx, 0x1f3
@@ -223,6 +225,7 @@ ata_read_sectors_lba:
 	mov edx, 0x1F0
 	rep insw
 
+	jmp $
 	popa
 	pop ebp
 	ret
@@ -440,12 +443,16 @@ LABEL_PM_START:
 	mov gs, eax
 	xor eax, eax
 
+	call ata_reset
 	mov ah, 0xa0
 	call ata_indentity
-	call ata_reset
 	jmp load_kernel
 	
 load_kernel:
+
+	xor eax, eax
+	cmp eax, 0
+	je atapi_read
 	mov ecx, [loader_phy_addr + kernel_size]
 	mov edi, kernel_load_addr
 
@@ -454,7 +461,12 @@ load_kernel:
 	dec eax
 
 	call ata_read_sectors_lba
+	jmp parse_kernel
 
+atapi_read:
+	
+	
+	call ata_read_sector_pi
 	jmp parse_kernel
 
 parse_kernel:
@@ -491,6 +503,7 @@ parse_kernel:
 
 .kernel_begin:
 
+	jmp $
 	jmp SelectorFlatC:0x100000
 
 	
@@ -521,6 +534,7 @@ mem_cpy:
 	inc edi
 	
 	dec ecx
+	jmp $
 	jnz  .m1
 
 .m2:

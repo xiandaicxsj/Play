@@ -31,7 +31,7 @@ void start_kernel(void )
 	 *	init_console();
 	 */
 
-	switch_to_test(task0);
+	switch_to_ring3(task0);
 	while(1);
 	setup_interrupt();
 

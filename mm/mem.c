@@ -1,6 +1,5 @@
 #include"math.h"
 #include"bitop.h"
-#include"test.h"
 #include"mem.h"
 #include"debug.h"
 #include"kernel.lds.h"
@@ -431,7 +430,8 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 u32 static get_mem_size()
 {
 	/* here we juest write */
-	return 256*1024*1024;
+	/* 32 MB */
+	return 32*1024*1024;
 }
 /* now the memory is not set properily */
 void setup_memory()

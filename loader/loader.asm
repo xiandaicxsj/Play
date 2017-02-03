@@ -450,9 +450,9 @@ LABEL_PM_START:
 	
 load_kernel:
 
-	xor eax, eax
-	cmp eax, 0
-	je atapi_read
+	;xor eax, eax
+	;cmp eax, 0
+	;je atapi_read
 	mov ecx, [loader_phy_addr + kernel_size]
 	mov edi, kernel_load_addr
 
@@ -465,8 +465,7 @@ load_kernel:
 
 atapi_read:
 	
-	
-	call ata_read_sector_pi
+	; call ata_read_sector_pi
 	jmp parse_kernel
 
 parse_kernel:

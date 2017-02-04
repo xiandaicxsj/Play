@@ -225,7 +225,6 @@ ata_read_sectors_lba:
 	mov edx, 0x1F0
 	rep insw
 
-	jmp $
 	popa
 	pop ebp
 	ret
@@ -502,7 +501,6 @@ parse_kernel:
 
 .kernel_begin:
 
-	jmp $
 	jmp SelectorFlatC:0x100000
 
 	

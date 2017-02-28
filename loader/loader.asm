@@ -531,7 +531,6 @@ mem_cpy:
 	inc edi
 	
 	dec ecx
-	jmp $
 	jnz  .m1
 
 .m2:

@@ -77,7 +77,6 @@ jmp .check_extend
 	jmp $
 
 .loader
-	jmp $
 	jmp 0:0x80100
 
 ;ecx number of the sector:w

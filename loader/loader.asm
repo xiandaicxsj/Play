@@ -20,7 +20,7 @@ ata_spt db 0 ; sector per track
 ata_head db 0 ; head num
 ata_extend db 0
 boot_disk db 80h
-kernel_size dd  300; per sector
+kernel_size dd  300; per sector this should be changed due to ..kernel.bin become large
 kernel_off dd 10
 mcr_number db 0
 
@@ -452,14 +452,26 @@ load_kernel:
 	;xor eax, eax
 	;cmp eax, 0
 	;je atapi_read
-	mov ecx, [loader_phy_addr + kernel_size]
+	mov edx, [loader_phy_addr + kernel_size]
+	mov ecx, 1
 	mov edi, kernel_load_addr
 
 	mov eax, [loader_phy_addr + kernel_off]
 	; we need to caculate the offset of sector from 0 
 	dec eax
 
+;in order to support qemu, read sector one by one
+tmp_read_sector:
+
 	call ata_read_sectors_lba
+	
+	inc eax
+	add edi, 512 ; FIXME not sure bit per sector
+	dec edx
+
+	cmp edx, 0
+	jne tmp_read_sector
+	
 	jmp parse_kernel
 
 atapi_read:

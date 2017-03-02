@@ -14,7 +14,7 @@
 #define TASK_SS 4048
 #define LDT_CS 0
 #define LDT_DS 1
-#define HW_TASK_SWITCH
+#define HW_SWITCH
 #define TASK_VECTOR_BASE 6
 #define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
 #define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
@@ -70,8 +70,9 @@ static void insert_task(struct task_struct *_task)
 	list_add(&_task->list, &task_run_list.list);
 	return; 
 }
-
-void switch_to(struct task_struct *prev, struct task_struct *next)
+#define HW_SWITCH
+#ifdef HW_SWITCH
+void switch_to_hw(struct task_struct *prev, struct task_struct *next)
 {
 	u32 ldt_sec = gdt_ldt_sel(next->pid);
 
@@ -92,7 +93,40 @@ void switch_to(struct task_struct *prev, struct task_struct *next)
 		     ://[next_ip] "=m" (prev->task_reg.eip)
 		     :[task_sec] "m" (*&_tmp.a),  "a" (ldt_sec));
 }
+#else
+void switch_to_sw(struct task_struct *prev, struct task_struct *next)
+{
+	asm vplatile ("movl %[ESP], \n\t"
+		      "pushad\n\t"
+		      "movl \n\t");
+/*
+	asm volatile("pushl "
+		     "lldt %[LDT] \n\t"
+		     " pushl %[SS] \n\t" 
+		     " pushl %[ESP] \n\t" 
+		     " pushfl \n\t"
+		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
+		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
+		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
+}
+*/
 
+	/* using sw to switch cpu*/
+	/* save context of pre task*/
+	/* how to change into using eip */
+	/* restore context of next task */
+
+}
+#endif
+
+void switch_to(struct task_struct *prev, struct task_struct *next)
+{
+#ifdef HW_SWITCH
+switch_to_hw(prev, next);
+#else
+switch_to_sw(prev, next);
+#endif
+}
 /* bug
  * when call s_t_r3  whether we need to ltr the task ?
  * if we ltr, the des of the tss > type field will be 11
@@ -100,21 +134,47 @@ void switch_to(struct task_struct *prev, struct task_struct *next)
  */
 void switch_to_ring3(struct task_struct *task) 
 { 
+
+	/* asm volatile ("movw $1, %%bx\n\t"
+		      "movl %[IP], %%ax\n\t"
+		      "movl %[CS], %%bx\n\t"
+		      "jmp ."
+		      ::[IP] "m" (task->task_reg.eip), [CS] "m" (task->task_reg.cs));
+	*/
+	
 	u32 lldt_sel = gdt_ldt_sel(task->pid);
 	u32 ts_sel = gdt_tss_sel(task->pid);
 	asm volatile("ltr %[TS_SEL]\n\t"
 		     "lldt %[LDT] \n\t"
-		     " pushl %[SS] \n\t" 
-		     " pushl %[ESP] \n\t" 
+		     " xorl %%eax, %%eax\n\t"
+		     " movw %[SS], %%eax\n\t"
+		     " push %%eax\n\t"
+		     //" pushl %[SS] \n\t" 
+		     //" pushl %[ESP] \n\t" 
+		     " xorl %%eax, %%eax\n\t"
+		     " movw %[ESP], %%eax\n\t"
+		     " push %%eax\n\t"
 		     " pushfl \n\t"
 		     //" pushw %[EFLAGS] \n\t"
-		     " pushl %[CS] \n\t"
+		     //" pushl %[CS] \n\t"
+		     " xorl %%eax, %%eax\n\t"
+		     " movw %[CS], %%eax\n\t"
+		     " push %%eax\n\t"
 		     //" pushl $1f \n\t"
-		     " pushl %[IP] \n\t"
+		     //" pushl %[IP] \n\t"
+		     " xorl %%eax, %%eax\n\t"
+		     " movw %[IP], %%eax\n\t"
+		     " push %%eax\n\t"
+		     " jmp .\n\t"
+		     //" movw %[CS], %%ax\n\t"
+		     //" movw %[IP], %%bx\n\t"
+		     //" movw %[ESP], %%cx\n\t"
+		     //" movw %[SS], %%dx\n\t"
+		     //" jmp .\n\t"
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"
-		     " movw %[DS] ,%%ax\n\t"
+		     //" movw %[DS] ,%%ax\n\t"
 		     " movw %%ax, %%ds\n\t"
 		     " movw %%ax, %%es\n\t"
 		     " movw %%ax, %%fs\n\t"
@@ -122,7 +182,7 @@ void switch_to_ring3(struct task_struct *task)
 		     " jmp ."
 		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
 		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
-		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
+		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):); 
 }
 
 void test_switch_task()
@@ -223,7 +283,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
-	if (!parent)
+	if (parent)
 		task->parent = parent;
 
 /* copy mem */
@@ -238,9 +298,9 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
 	/* just test */
-	if (func)
+	//if (func)
 		task->task_reg.eip =  (u32)func; 
-
+	
 	/* task ldt */
 	task->ldt[LDT_CS].lo = 0x0000ffff; /* ldt cs */
 	task->ldt[LDT_CS].hi = 0x00cffa00;

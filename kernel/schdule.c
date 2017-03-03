@@ -135,37 +135,41 @@ switch_to_sw(prev, next);
 void switch_to_ring3(struct task_struct *task) 
 { 
 
-	/* asm volatile ("movw $1, %%bx\n\t"
-		      "movl %[IP], %%ax\n\t"
-		      "movl %[CS], %%bx\n\t"
+	/*
+	 asm volatile ("movw $1, %%bx\n\t"
+		      "mov %[IP], %%ax\n\t"
+		      "mov %[CS], %%bx\n\t"
 		      "jmp ."
 		      ::[IP] "m" (task->task_reg.eip), [CS] "m" (task->task_reg.cs));
-	*/
+		    */
+	
 	
 	u32 lldt_sel = gdt_ldt_sel(task->pid);
 	u32 ts_sel = gdt_tss_sel(task->pid);
 	asm volatile("ltr %[TS_SEL]\n\t"
 		     "lldt %[LDT] \n\t"
+		     " mov %[IP], %%eax\n\t"
+		     " jmp .\n\t"
 		     " xorl %%eax, %%eax\n\t"
-		     " movw %[SS], %%eax\n\t"
+		     " mov %[SS], %%eax\n\t"
 		     " push %%eax\n\t"
 		     //" pushl %[SS] \n\t" 
 		     //" pushl %[ESP] \n\t" 
 		     " xorl %%eax, %%eax\n\t"
-		     " movw %[ESP], %%eax\n\t"
+		     " mov %[ESP], %%eax\n\t"
 		     " push %%eax\n\t"
-		     " pushfl \n\t"
+		     " pushf \n\t"
 		     //" pushw %[EFLAGS] \n\t"
 		     //" pushl %[CS] \n\t"
 		     " xorl %%eax, %%eax\n\t"
-		     " movw %[CS], %%eax\n\t"
+		     " mov %[CS], %%eax\n\t"
 		     " push %%eax\n\t"
 		     //" pushl $1f \n\t"
 		     //" pushl %[IP] \n\t"
 		     " xorl %%eax, %%eax\n\t"
-		     " movw %[IP], %%eax\n\t"
-		     " push %%eax\n\t"
+		     " mov %[IP], %%eax\n\t"
 		     " jmp .\n\t"
+		     " push %%eax\n\t"
 		     //" movw %[CS], %%ax\n\t"
 		     //" movw %[IP], %%bx\n\t"
 		     //" movw %[ESP], %%cx\n\t"
@@ -298,7 +302,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
 	/* just test */
-	//if (func)
+	if (func)
 		task->task_reg.eip =  (u32)func; 
 	
 	/* task ldt */

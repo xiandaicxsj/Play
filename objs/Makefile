@@ -6,6 +6,6 @@ all: $(SRCS)
 	@echo $(KERNEL_BIN)
 	$(LD) $(LDFLAGS) -o $(KERNEL_BIN) $^
 clean: 
-	-rm *.o
-	-rm $(KERNLE_BIN)
+	rm *.o
+	rm $(KERNEL_BIN)
 

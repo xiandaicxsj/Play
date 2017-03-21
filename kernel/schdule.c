@@ -213,9 +213,9 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 {
 	struct task_struct *task;
 	u32 pid = -1;
-	u32 sys_ds = (0x18 );
+	u32 sys_ds = 0x18;
 
-	task = kmalloc(sizeof(*task), 0, MEM_KERN);
+	task = (struct task_strcut *)kmalloc(PAGE_SIZE, 0, MEM_KERN);
 	if (!task)
 		return NULL;
 
@@ -243,10 +243,12 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	if (func)
 		task->task_reg.eip =  (u32)func; 
 	
+	/*
 	if (flags & CLONE_FS)
 		copy_task_file_struct(task, parent);
 	else
 		init_task_file_struct(task);
+	*/
 
 	/* init signal set */
 	init_task_sig_set(task);

@@ -37,10 +37,8 @@ void start_kernel(void )
 		      ::[IP] "m" (task0->task_reg.eip), [CS] "m" (task0->task_reg.cs));
 		     */
 
+	local_irq_enable();
 	switch_to_ring3(task0);
-	setup_interrupt();
-
 	while(1);
-	return ;
 }
 

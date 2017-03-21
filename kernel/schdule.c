@@ -70,63 +70,37 @@ static void insert_task(struct task_struct *_task)
 	list_add(&_task->list, &task_run_list.list);
 	return; 
 }
-#define HW_SWITCH
-#ifdef HW_SWITCH
-void switch_to_hw(struct task_struct *prev, struct task_struct *next)
+/* make sure param is passed by register eax, edx */
+__attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {
-	u32 ldt_sec = gdt_ldt_sel(next->pid);
-
-	struct tmp{
-	long a;
-	long b;
-	};
-	struct tmp _tmp;
-	_tmp.b = gdt_tss_sel(next->pid);
-
-	current = next;
-	next->status = TASK_RUNNING;
-	prev->status = TASK_WAITING;
-	asm volatile(//" movl $1f, %[next_ip] \n\t"
-		     " lldt %%ax\n\t"
-		     " ljmp %[task_sec] \n\t"
-		     " 1: "
-		     ://[next_ip] "=m" (prev->task_reg.eip)
-		     :[task_sec] "m" (*&_tmp.a),  "a" (ldt_sec));
+	/* we need to chaneg the sp0 */
 }
-#else
-void switch_to_sw(struct task_struct *prev, struct task_struct *next)
+
+int switch_to(struct task_struct *prev, struct task_struct *next)
 {
-	asm vplatile ("movl %[ESP], \n\t"
-		      "pushad\n\t"
-		      "movl \n\t");
-/*
-	asm volatile("pushl "
-		     "lldt %[LDT] \n\t"
-		     " pushl %[SS] \n\t" 
-		     " pushl %[ESP] \n\t" 
+	/* rax is the ret of task */
+	asm volatile(" pushl %%ebp\n\t"
+		     " movl %%esp, %%ebp\n\t"
 		     " pushfl \n\t"
-		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
-		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
-		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):);
+		     " pushl %%ebx \n\t"
+		     " pushl %%ecx \n\t"
+		     " pushl %%edx \n\t"
+		     " pushl %%esi \n\t"
+		     " pushl %%edi \n\t"
+		     " movl %%esp, %[PREV_ESP]\n\t"
+		     " movl %[NEXT_ESP], %%esp\n\t"
+		     " call switch_to_sw\n\t"
+		     " popl %%edi \n\t"
+		     " popl %%esi \n\t"
+		     " popl %%edx \n\t"
+		     " popl %%ecx \n\t"
+		     " popl %%ebx \n\t"
+		     " popfl\n\t"
+		     " popl %%ebp"
+		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (next->task_reg.esp0), "a" (prev), "d" (next):);
+	return ;
 }
-*/
 
-	/* using sw to switch cpu*/
-	/* save context of pre task*/
-	/* how to change into using eip */
-	/* restore context of next task */
-
-}
-#endif
-
-void switch_to(struct task_struct *prev, struct task_struct *next)
-{
-#ifdef HW_SWITCH
-switch_to_hw(prev, next);
-#else
-switch_to_sw(prev, next);
-#endif
-}
 /* bug
  * when call s_t_r3  whether we need to ltr the task ?
  * if we ltr, the des of the tss > type field will be 11
@@ -135,46 +109,13 @@ switch_to_sw(prev, next);
 void switch_to_ring3(struct task_struct *task) 
 { 
 
-	/*
-	 asm volatile ("movw $1, %%bx\n\t"
-		      "mov %[IP], %%ax\n\t"
-		      "mov %[CS], %%bx\n\t"
-		      "jmp ."
-		      ::[IP] "m" (task->task_reg.eip), [CS] "m" (task->task_reg.cs));
-		    */
-	
-	
-	u32 lldt_sel = gdt_ldt_sel(task->pid);
-	u32 ts_sel = gdt_tss_sel(task->pid);
-	asm volatile("ltr %[TS_SEL]\n\t"
-		     "lldt %[LDT] \n\t"
-		     " mov %[IP], %%eax\n\t"
-		     " jmp .\n\t"
-		     " xorl %%eax, %%eax\n\t"
-		     " mov %[SS], %%eax\n\t"
-		     " push %%eax\n\t"
-		     //" pushl %[SS] \n\t" 
-		     //" pushl %[ESP] \n\t" 
-		     " xorl %%eax, %%eax\n\t"
-		     " mov %[ESP], %%eax\n\t"
-		     " push %%eax\n\t"
-		     " pushf \n\t"
-		     //" pushw %[EFLAGS] \n\t"
-		     //" pushl %[CS] \n\t"
-		     " xorl %%eax, %%eax\n\t"
-		     " mov %[CS], %%eax\n\t"
-		     " push %%eax\n\t"
-		     //" pushl $1f \n\t"
-		     //" pushl %[IP] \n\t"
-		     " xorl %%eax, %%eax\n\t"
-		     " mov %[IP], %%eax\n\t"
-		     " jmp .\n\t"
-		     " push %%eax\n\t"
-		     //" movw %[CS], %%ax\n\t"
-		     //" movw %[IP], %%bx\n\t"
-		     //" movw %[ESP], %%cx\n\t"
-		     //" movw %[SS], %%dx\n\t"
-		     //" jmp .\n\t"
+	int ts_sel = 0;
+	asm volatile(//"ltr %[TS_SEL]\n\t"
+		     " pushl %[SS] \n\t" 
+		     " pushl %[ESP] \n\t" 
+		     " pushw %[EFLAGS] \n\t"
+		     " pushl %[CS] \n\t"
+		     " pushl %[IP] \n\t"
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"
@@ -186,7 +127,7 @@ void switch_to_ring3(struct task_struct *task)
 		     " jmp ."
 		     ::[SS] "m" (task->task_reg.ss2), [ESP] "m"(task->task_reg.esp2),
 		       [EFLAGS] "m" (task->task_reg.eflags), [CS] "m"(task->task_reg.cs),
-		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [LDT] "m"(lldt_sel), [TS_SEL] "m"(ts_sel):); 
+		       [IP] "m" (task->task_reg.eip), [DS] "m" (task->task_reg.ds), [TS_SEL] "m"(ts_sel):); 
 }
 
 void test_switch_task()
@@ -271,19 +212,16 @@ int create_ktask(task_fn func)
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags)
 {
 	struct task_struct *task;
-	u32 task_cs = LDT_CS;
-	u32 task_ds = LDT_DS;
 	u32 pid = -1;
+	u32 sys_ds = (0x18 );
 
 	task = kmalloc(sizeof(*task), 0, MEM_KERN);
 	if (!task)
 		return NULL;
-	//u32 sys_ds = (0x18 );
-	//u32 sys_cs = (0x10 );
 
 	pid = alloc_pid();
-
 	task->pid = pid;
+
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
 
@@ -305,32 +243,10 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	if (func)
 		task->task_reg.eip =  (u32)func; 
 	
-	/* task ldt */
-	task->ldt[LDT_CS].lo = 0x0000ffff; /* ldt cs */
-	task->ldt[LDT_CS].hi = 0x00cffa00;
-	task->ldt[LDT_DS].lo = 0x0000ffff; /* ldt ds */
-	task->ldt[LDT_DS].hi = 0x00cff200;
-	set_ldt(gdt_ldt_vec(pid), task->ldt, X86_GDT_LIMIT_FULL); /* not sure about the limit */ 
-	task->task_reg.ldt_sel = gdt_ldt_sel(pid);
-	
-	task->task_reg.ss2 = LDT_SEL_RING3(task_ds);
-	task->task_reg.es = LDT_SEL_RING3(task_ds); /* index in the ldt */
-	task->task_reg.cs = LDT_SEL_RING3(task_cs);
-	task->task_reg.ds = LDT_SEL_RING3(task_ds);
-	task->task_reg.fs = LDT_SEL_RING3(task_ds);
-	task->task_reg.gs = LDT_SEL_RING3(task_ds);
-	task->task_reg.ss = LDT_SEL_RING3(task_ds);
-	task->task_reg.eflags = IOPL_RING3 | IF;
-	
-	set_tss(gdt_tss_vec(pid), task); 
-
-	/* related with file sys */
-	/*
 	if (flags & CLONE_FS)
 		copy_task_file_struct(task, parent);
 	else
 		init_task_file_struct(task);
-	*/
 
 	/* init signal set */
 	init_task_sig_set(task);

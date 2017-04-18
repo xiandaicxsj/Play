@@ -23,6 +23,7 @@
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 #define LDT_SEL_RING0(n)  (LDT_SEL(n) | RPL0)
+#define GDT_SEL_RING3(n) (n | RPL3)
 struct task_struct *current;
 static u32 *pid_bit_map;
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
@@ -111,11 +112,11 @@ void switch_to_ring3(struct task_struct *task)
 
 	int ts_sel = 0;
 	asm volatile(//"ltr %[TS_SEL]\n\t"
-		     " pushl %[SS] \n\t" 
-		     " pushl %[ESP] \n\t" 
-		     " pushw %[EFLAGS] \n\t"
-		     " pushl %[CS] \n\t"
-		     " pushl %[IP] \n\t"
+                    " pushl %[SS] \n\t" 
+                    " pushl %[ESP] \n\t" 
+                    " pushl %[EFLAGS] \n\t"
+                    " pushl %[CS] \n\t"
+                    " pushl %[IP] \n\t"
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"
@@ -212,8 +213,8 @@ int create_ktask(task_fn func)
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags)
 {
 	struct task_struct *task;
+	struct page *pg;
 	u32 pid = -1;
-	u32 sys_ds = 0x18;
 
 	task = (struct task_strcut *)kmalloc(PAGE_SIZE, 0, MEM_KERN);
 	if (!task)
@@ -228,21 +229,29 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	if (parent)
 		task->parent = parent;
 
-/* copy mem */
-
 #ifdef ALLOC_COPY_CR3
 	task->pgt = copy_page_table(parent);
 
+/* this is not useable for we don't use hardware switch */
 	task->task_reg.cr3 = virt_to_phy(task->pgt);
 #else 
 	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
 #endif
-	task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
+	//task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 
-	/* just test */
-	if (func)
+	if (func) {
+		/* 
+		 * this part is for return_to_ring3
+		 * current just for test:
+		 * ss2/esp2 using the same stack of ss0/esp0 
+		 * this should not be the real case
+		 */
 		task->task_reg.eip =  (u32)func; 
-	
+		task->task_reg.cs = GDT_SEL_RING3(user_cs);
+		task->task_reg.ss2 = GDT_SEL_RING3(user_ds);
+		task->task_reg.esp2 = (u32) task + PAGE_SIZE -1;
+	}
+	task->task_reg.eflags = 0;
 	/*
 	if (flags & CLONE_FS)
 		copy_task_file_struct(task, parent);

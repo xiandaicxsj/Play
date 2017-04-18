@@ -10,9 +10,11 @@ void delay()
 }
 void test_process(void *args)
 {
+	while(1);
 	/* */
 	  //enable_interrupt();
 	 
+	/*
 	int a=0;		
 	int b=0;
 	int c=0;
@@ -25,6 +27,7 @@ void test_process(void *args)
 				c = i+j;
 		print('a');
 	}
+	*/
 /*
 #ifdef TEST_USER_INT
 	asm volatile ("movw $23, %%ax\n\t"

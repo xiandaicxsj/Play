@@ -99,8 +99,7 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	/* no 4M page is support */
 	if ( *pde & PGD_P )
 		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
-	else 
-	{
+	else {
 		struct page *page = kalloc_page(MEM_KERN);
 		/* not sure of the flags used here */
 		pde_flags |= PGD_P;
@@ -111,13 +110,11 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	pte_idx = INDEX(virt_addr, PTE_LEVEL);
 	pte = pt + pte_idx;
 
-	if ( *pte & PGT_P)
-	{
-		/* if p is set, how could this happen ? crash */
-		/* we del with flags here */ 
+	if ( *pte & PGT_P) {
+		/* in this case the page is mapped */
+		return 0;
 	}
-	else
-	{
+	else {
 		pte_flags |= PGT_P;
 		*pte = pfn_to_addr(ppfn) | pte_flags;
 	}

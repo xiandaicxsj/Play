@@ -24,6 +24,8 @@
 extern void *gdt;
 extern u32 sys_cs;
 extern u32 sys_ds;
+extern u32 user_ds;
+extern u32 user_cs;
 #define TASK_VECTOR_EMP 0x4
 #define TASK_VECTOR 0x5
 #endif

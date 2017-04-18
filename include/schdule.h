@@ -31,6 +31,8 @@ struct wait_queue {
 	int flag;
 };
 
+#pragma pack(push)
+#pragma pack(1)
 typedef struct tss_reg
 {
 	u32 previous_link;
@@ -61,6 +63,7 @@ typedef struct tss_reg
 	u32 io;
 	u32 tss;
 }tss_reg;
+#pragma pack(push)
 
 struct task_struct
 {
@@ -85,7 +88,6 @@ struct task_struct
 	struct list_head list;
 	struct list_head wait_list;
 };
-
 extern struct task_struct *current;
 int init_task(struct task_struct *);
 void pre_init_task(void );

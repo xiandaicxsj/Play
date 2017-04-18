@@ -71,6 +71,10 @@ sys_data:
 .quad  0x00cf92000000ffff
 sys_video:
 .quad  0x0040920b8000ffff
+user_code:
+.quad  0x00cffa000000ffff
+user_data:
+.quad  0x00cff2000000ffff
 default2:
 .quad  0
 .quad  0
@@ -88,12 +92,21 @@ gdt_base:
 /* #include "head_32.h" */
 .global sys_cs
 .global sys_ds
+.global user_ds
+.global user_cs
 sys_cs:
 .word 0
 sys_ds:
 .word 0
+user_cs:
+.word 0
+user_ds:
+.word 0
+
 .equ _kernel_cs, sys_code - gdt
 .equ _kernel_ds, sys_data - gdt
+.equ _user_cs, user_code - gdt
+.equ _user_ds, user_data - gdt
 
 .fill 4096, 1, 0
 init_stack:
@@ -251,9 +264,14 @@ map_pages:
 
 setup_paging:
 
-	movw $_kernel_cs, %ax;
+	movw $_user_cs, %ax
+	movw %ax, _pa(user_cs) 
+	movw $_user_ds, %ax
+	movw %ax, _pa(user_ds) 
+
+	movw $_kernel_cs, %ax
 	movw %ax, _pa(sys_cs) 
-	movw $_kernel_ds, %ax;
+	movw $_kernel_ds, %ax
 	movw %ax, _pa(sys_ds) 
 	movl $_pa(_bss_end), %ecx
 	/* ecx have the size of img */	

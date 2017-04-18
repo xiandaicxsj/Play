@@ -417,7 +417,7 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 	if (flags & MEM_KERN) {
 
 		while(aj_size > 0) {
-			map_page(addr_to_pfn(aj_addr), virt_to_phy(addr_to_pfn(aj_addr)), flags, NULL);
+			map_page(addr_to_pfn(aj_addr), addr_to_pfn(virt_to_phy(aj_addr)), flags, NULL);
 			aj_addr += PAGE_SIZE;
 			aj_size -= PAGE_SIZE;
 		}
@@ -438,6 +438,9 @@ void setup_memory()
 {
 	setup_low_memory();
 	mem_size = get_mem_size();
+//	mmap_pages(mem_size);
+//	
+	
 	init_pages_list(mem_size);
 	init_buddy(mem_size);
 	return ;

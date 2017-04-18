@@ -20,12 +20,11 @@ void start_kernel(void )
 	 *init_fs();
 	 *post_init_devices();
 	 *init_schduler();
+	 *init_console();
 	 */
 
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
 
-	init_console();
-	
 	/* local_irq_enable(); */
 	switch_to_ring3(task0);
 	while(1);

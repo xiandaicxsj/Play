@@ -29,4 +29,5 @@
 #define SYS_CALL(i, name) extern asmlinkage do_sys_##name();
 */
 extern asmlinkage pid_t do_sys_fork();
+extern __attribute__((regparm(2))) int sys_call(u32 arg1, u32 arg2);
 #endif

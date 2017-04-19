@@ -2,7 +2,7 @@
 
 /* we can not do like this */
 
-asmlinkage sys_call_depatch(u32 arg1, u32 arg2, u32 arg3, u32 arg4, u32 arg5)
+ __attribute__((regparm(2))) int sys_call(u32 arg1, u32 arg2)
 {
 	switch(arg1) {
 

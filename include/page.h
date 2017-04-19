@@ -45,7 +45,7 @@ struct page
     u32 pfn;
     u32 order;
 };
-void page_fault();
+__attribute__((regparm(1))) void page_fault(u32 fault_addr);
 #ifndef TEST_MEM
 void *copy_page_table(struct task_struct *p);
 extern u32 init_page_dir;

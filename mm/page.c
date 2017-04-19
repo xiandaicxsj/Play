@@ -7,31 +7,22 @@
 #ifndef TEST_MEM
 typedef u32 pde_t;
 typedef u32 pte_t;
-/* used the static page to the */
 
-void page_fault(void)
+/* force using eax to pass the parm */
+ __attribute__((regparm(1))) void page_fault(u32 fault_addr)
 {
-	u32 fault_addr;
 	struct page *p;
 	void *pgt;
 
-	/* FIXME why mov cause error
-	asm volatile ("movl %%cr2, %%eax"
-		      :"=a"(fault_addr)::);
-	*/
-
+	//ASSERT(fault_addr < KERNEL_OFFSET);
 	p = kalloc_page(MEM_USER);
-	if (!p)  {
-		/* may need release some page */
+	if (!p) 
 		return ;
-	}
 
 	pgt = (void *)current->pgt;
 	if (!pgt)
 		return;
-
 	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, pgt);
-	while(1);
 }
 
 /* umap_page not done where to use it ? */

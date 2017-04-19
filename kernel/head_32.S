@@ -484,6 +484,13 @@ _setup_idt:
 .global hw46
 .global hw48
 
+.type hw48, @function
+hw48:
+	push_all
+	call sys_call
+	pop_all
+	iret
+
 .type hw0, @function
 hw0:
 	push_all
@@ -583,13 +590,12 @@ hw13:
 	pop_all
 	iret
 
+/* we need to do this stack */
 .type hw14, @function
 hw14:
 	push_all
 	movl %cr2, %eax
-	pushl %eax
 	call page_fault
-	popl %eax
 	pop_all
 	iret
 
@@ -645,14 +651,14 @@ hw44:
 hw45:
 	iret
 
+/*
 .type hw48, @function
 hw48:
 	cli
 	push_all
-	/*need to change the argv*/
-	//call *sys_call_table(, %eax, 8)
-	call sys_call_depatch 
+	call sys_call 
 	pop_all
 	sti
 	iret
+*/
 

@@ -72,6 +72,7 @@ struct task_struct
 	pid_t pid;
 	void *pgt;
 	u32 status;
+	u32 task_type;
 	/*
 	 * 0 stdin
 	 * 1 stdout

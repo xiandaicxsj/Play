@@ -76,6 +76,15 @@ static void insert_task(struct task_struct *_task)
 /* make sure param is passed by register eax, edx */
 __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {
+	/*
+	 * this is del with ioctl/interrupt which cause stack switch
+	 * if (next->type = TASK_KERN)
+	 * 	NOTHING
+	 * else
+	 *	set_tss(TSS_VECTOR, &(next->task_reg)); 
+	 *
+	 *
+	 */
 	/* we need to chaneg the sp0 */
 }
 

@@ -26,8 +26,8 @@ void set_idt(struct idt_desc *idt, int vector, void (*func)(), u16 type, u16 dpl
 
 void set_tss(int vector, void *base_addr)
 {
-  set_gdt_seg((void *)(&gdt), vector, base_addr, X86_GDT_TSS | X86_GDT_DPL0 | X86_GDT_P, 0, X86_GDT_LIMIT_FULL)    ;
- return ;
+	set_gdt_seg((void *)(&gdt), vector, base_addr, X86_GDT_TSS | X86_GDT_DPL0 | X86_GDT_P, 0, X86_GDT_LIMIT_FULL)    ;
+	return ;
 }
 
 int set_ldt(int vector, void* base_addr, u32 seg_limit)

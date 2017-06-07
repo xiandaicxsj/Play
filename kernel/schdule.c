@@ -115,12 +115,17 @@ void switch_to_ring3(struct task_struct *task)
 	int ts_sel = 0;
 	set_tss(TSS_VECTOR, &(task->task_reg));
 	ts_sel = gdt_tss_sel(TSS_VECTOR);
-	asm volatile("ltr %[TS_SEL]\n\t"
+	asm volatile( "ltr %[TS_SEL]\n\t"
                     " pushl %[SS] \n\t" 
                     " pushl %[ESP] \n\t" 
                     " pushl %[EFLAGS] \n\t"
                     " pushl %[CS] \n\t"
                     " pushl %[IP] \n\t"
+		     " movw %[DS], %%ax\n\t"
+		     " movw %%ax, %%ds\n\t"
+		     " movw %%ax, %%es\n\t"
+		     " movw %%ax, %%fs\n\t"
+		     " movw %%ax, %%gs\n\t"
 		     " iret \n\t" 
 		     " 1: \n\t"
 		     " cli\n\t"

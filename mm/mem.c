@@ -360,7 +360,7 @@ static void setup_low_memory()
 static void * _kmalloc(u32 size, u32 align)
 {
 	struct page * pages = _buddy_alloc(size, align);
-	return (void *)phy_to_virt(pages->pfn << PAGE_SHIFT);
+	return (void *)phy_to_virt(pfn_to_addr(pages->pfn));
 }
 
 /* interface */
@@ -379,14 +379,19 @@ struct page *kalloc_page(u32 flags)
 struct page *kalloc_pages(u32 nr, u32 flags)
 {
 	struct page *pages;
+	int i = 0;
+
 	if (low_mem_alloc_used)
 		pages = kmalloc_low_mem(nr * PAGE_SIZE, PAGE_SIZE);
 	else
 		pages = _buddy_alloc_pages(nr);
-	/*
-	if (flags & MEM_KERN)
-		return NULL; */
-		/* bugs */
+
+	if (flags & MEM_KERN) {
+		while(i < nr) {
+			map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pages[i].pfn))), pages[i].pfn, flags, NULL);
+			i ++;
+		}
+	}
 	return pages;
 }
 

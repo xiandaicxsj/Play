@@ -71,6 +71,7 @@ static void insert_task(struct task_struct *_task)
 	list_add(&_task->list, &task_run_list.list);
 	return; 
 }
+
 /* make sure param is passed by register eax, edx */
 __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {

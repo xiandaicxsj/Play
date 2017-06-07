@@ -12,7 +12,7 @@ void start_kernel(void )
 	setup_interrupt();
 	setup_memory();
 	/* disable irq */
-	local_irq_enable();
+	local_irq_disable();
 
 	/*
 	 *init_vfs();

@@ -50,6 +50,9 @@ u32 umap_page(u32 vpfn, void *pdt)
 	else
 		return -1;
 }
+#define MAP_EXIT 1
+#define MAP_FAIL 2
+#define MAP_OK	3 
 /* vpfn : virtaddress pfn
  * ppfn :  current alloc pfn
  * flags : page table attr
@@ -67,9 +70,9 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	pde_t *pde;
 	pte_t *pte;
 	pte_t *pt;
-	u32 pde_flags;
-	u32 pte_flags;
-	u32 user_flag;
+	u32 pde_flags = 0;
+	u32 pte_flags = 0;
+	u32 user_flag = 0;
 
 	if (!pdt)
 		pdt = &init_page_dir;
@@ -103,13 +106,14 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 
 	if ( *pte & PGT_P) {
 		/* in this case the page is mapped */
-		return 0;
+		return MAP_EXIT;
 	}
 	else {
 		pte_flags |= PGT_P;
 		*pte = pfn_to_addr(ppfn) | pte_flags;
+		return MAP_OK;
 	}
-	return 0;
+	return MAP_FAIL;
 }
 
 /*  copy only kernel part of the pgd */

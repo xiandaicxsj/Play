@@ -15,10 +15,11 @@
 #define LDT_CS 0
 #define LDT_DS 1
 #define HW_SWITCH
+#define TSS_VECTOR 10
 #define TASK_VECTOR_BASE 6
 #define gdt_tss_vec(n) (((n) << 1) + TASK_VECTOR_BASE)
 #define gdt_ldt_vec(n) (((n) << 1) + TASK_VECTOR_BASE + 1)
-#define gdt_tss_sel(n) ((((n) << 1) + TASK_VECTOR_BASE) << 3)
+#define gdt_tss_sel(n) ((n) << 3)
 #define gdt_ldt_sel(n) ((((n) << 1) + TASK_VECTOR_BASE + 1) << 3)
 #define LDT_SEL(n)  ((n << 3) | TI_LDT)
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
@@ -112,7 +113,9 @@ void switch_to_ring3(struct task_struct *task)
 { 
 
 	int ts_sel = 0;
-	asm volatile(//"ltr %[TS_SEL]\n\t"
+	set_tss(TSS_VECTOR, &(task->task_reg));
+	ts_sel = gdt_tss_sel(TSS_VECTOR);
+	asm volatile("ltr %[TS_SEL]\n\t"
                     " pushl %[SS] \n\t" 
                     " pushl %[ESP] \n\t" 
                     " pushl %[EFLAGS] \n\t"

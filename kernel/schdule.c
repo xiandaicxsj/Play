@@ -273,7 +273,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 		task->task_reg.eip =  (u32)func; 
 		task->task_reg.cs = GDT_SEL_RING3(user_cs);
 		task->task_reg.ss2 = GDT_SEL_RING3(user_ds);
-		task->task_reg.esp2 = (u32) task + PAGE_SIZE -1;
+		task->task_reg.esp2 = 0x1000;
 	}
 	task->task_reg.eflags = 0;
 	/*

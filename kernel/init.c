@@ -25,7 +25,7 @@ void start_kernel(void )
 	init_schduler();
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
 
-	/* local_irq_enable(); */
+	local_irq_enable();
 	switch_to_ring3(task0);
 	local_irq_disable();
 	while(1);

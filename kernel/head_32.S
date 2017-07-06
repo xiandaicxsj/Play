@@ -286,49 +286,6 @@ setup_paging:
 	popl %ecx
 	popl %eax
 	
-	
-/*
-	movl %ecx, %edx
-	movl %ecx, %eax
-	shrl $22, %ecx
-
-	andl $0x003fffff, %eax
-	cmp %eax, 0
-	je 3f
-	incl %ecx
-3:
-	movl $_pa(init_page_tbl), %eax
-	orl  $PGT_P, %eax
-	orl  $PGT_U, %eax
-	orl  $PGT_S, %eax
-	orl  $PGT_W, %eax
-	movl $_pa(init_page_dir), %edi
-1:
-	movl %eax, 0xc00(%edi)
-	stosl
-
-	addl $PAGE_SIZE, %eax
-
-	decl %ecx
-	jnz 1b
-
-
-	movl %edx, %ecx
-	andl $0x003fffff, %ecx
-	shrl $12, %ecx
-	xorl %eax, %eax
-	orl  $PGT_P, %eax
-	orl  $PGT_S, %eax
-	orl  $PGT_U, %eax
-	orl  $PGT_W, %eax
-	movl $_pa(init_page_tbl), %edi
-2: 
-	stosl
-	addl $PAGE_SIZE, %eax
-	decl %ecx
-	jnz 2b
-
-*/
 	movl $_pa(init_page_dir), %eax
 	movl %eax, %cr3
 	movl %cr0, %eax

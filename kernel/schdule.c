@@ -118,6 +118,12 @@ int switch_to(struct task_struct *prev, struct task_struct *next)
  * if we ltr, the des of the tss > type field will be 11
  * not 9. Then load will error
  */
+/* switch to ring3 will cause error because
+ * 1. when return to ring3, ebp/esp register remain the kernel side. this will cause page fault, but
+ *    we didn't handle page fault at this point. 
+ * 2. We should thing a better way to do this, as all the ring3 process's userspace stack should not be
+ *    the same with kernel space
+ */
 void switch_to_ring3(struct task_struct *task) 
 { 
 
@@ -130,7 +136,7 @@ void switch_to_ring3(struct task_struct *task)
                     " pushl %[EFLAGS] \n\t"
                     " pushl %[CS] \n\t"
                     " pushl %[IP] \n\t"
-		     " movw %[DS], %%ax\n\t"
+		     " movw %[SS], %%ax\n\t"
 		     " movw %%ax, %%ds\n\t"
 		     " movw %%ax, %%es\n\t"
 		     " movw %%ax, %%fs\n\t"

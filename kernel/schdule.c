@@ -8,6 +8,7 @@
 #include"print.h"
 #include"cpu.h"
 #include"mem.h"
+#include"processor.h"
 #define ALLOC_COPY_CR3
 
 #ifndef TEST_KERNEL
@@ -275,7 +276,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 		task->task_reg.ss2 = GDT_SEL_RING3(user_ds);
 		task->task_reg.esp2 = 0x1000;
 	}
-	task->task_reg.eflags = 0;
+	task->task_reg.eflags = EF_IF;
 	/*
 	if (flags & CLONE_FS)
 		copy_task_file_struct(task, parent);

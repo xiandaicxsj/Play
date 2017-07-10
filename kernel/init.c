@@ -6,13 +6,13 @@
 #include"debug.h"
 #include"vfs.h"
 #include"test_process.h"
+#include"timer.h"
 void start_kernel(void )
 {
 	struct task_struct * task0;
+	local_irq_disable();
 	setup_interrupt();
 	setup_memory();
-	/* disable irq */
-	local_irq_disable();
 
 	/*
 	 *init_vfs();
@@ -25,7 +25,7 @@ void start_kernel(void )
 	init_schduler();
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
 
-	local_irq_enable();
+	init_timer();
 	switch_to_ring3(task0);
 	local_irq_disable();
 	while(1);

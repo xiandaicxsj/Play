@@ -138,7 +138,6 @@ static void load_idt()
 void setup_interrupt()
 {
 
-	init_pic();
 	setup_interrupt_handler(idt, DEBUG);
 	setup_interrupt_handler(idt, NMI);
 	setup_interrupt_handler(idt, BREAKPOINT);
@@ -157,4 +156,5 @@ void setup_interrupt()
 	/* set_up int used for usespace application */
 	set_idt(idt, INT_USER, HW_VC(48), DA_386TGate, 3);
 	load_idt();
+	init_pic();
 }

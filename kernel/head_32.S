@@ -195,7 +195,7 @@ map_page:
 	shll $PAGE_SHIFT, %eax
 	addl $_pa(init_page_tbl), %eax
         orl  $PGT_P, %eax
-        //orl  $PGT_U, %eax
+        orl  $PGT_U, %eax
         orl  $PGT_S, %eax
         orl  $PGT_W, %eax
 
@@ -211,7 +211,7 @@ map_page:
 
 	movl %edx, %eax
         orl  $PGT_P, %eax
-        //orl  $PGT_U, %eax
+        orl  $PGT_U, %eax
         orl  $PGT_S, %eax
         orl  $PGT_W, %eax
 

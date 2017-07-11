@@ -14,7 +14,7 @@ ata0-master: type=disk, path="a.img"
 
 # choose the boot disk.
 boot: disk
-cpuid: apic=NONE
+#cpuid: apic=NONE
 
 # where do we send log messages?
 log: bochsout.txt

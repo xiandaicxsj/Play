@@ -10,7 +10,7 @@
 void start_kernel(void )
 {
 	struct task_struct * task0;
-	struct task_struct * task1;
+	//struct task_struct * task1;
 	local_irq_disable();
 	setup_interrupt();
 	setup_memory();
@@ -25,7 +25,7 @@ void start_kernel(void )
 
 	init_schduler();
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
-	task1 = (struct task_struct *) create_task(NULL, test_process1, 1);
+	//task1 = (struct task_struct *) create_task(NULL, test_process1, 1);
 
 	init_timer();
 	switch_to_ring3(task0);

@@ -328,7 +328,6 @@ void schdule(void)
 	/* */
 	next = get_next_task(TASK_WAITING);
 	if (!next) {
-		while(1);
 		return;
 	}
 	switch_to(current, next);

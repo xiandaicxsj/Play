@@ -6,15 +6,15 @@
 /* we know only five data is used */
 #define MAX_SYS_CALL_NR 300
 
-#define _SYS_OPEN	(1<<0)
-#define _SYS_READ	(1<<1)
-#define _SYS_WRITE	(1<<2)
-#define _SYS_CLOSE	(1<<3)
-#define _SYS_SEEK	(1<<4)
-#define _SYS_IOCTL	(1<<5)
+#define _SYS_OPEN	(1)
+#define _SYS_READ	(2)
+#define _SYS_WRITE	(3)
+#define _SYS_CLOSE	(4)
+#define _SYS_SEEK	(5)
+#define _SYS_IOCTL	(6)
 
-#define _SYS_FORK 	(1<<6)
-#define _SYS_EXEC 	(1<<7)
+#define _SYS_FORK 	(7)
+#define _SYS_EXEC 	(8)
 
 #define P(t,s) t s
 #define VAR_5 VAR_4, P(t5, s5)
@@ -29,5 +29,5 @@
 #define SYS_CALL(i, name) extern asmlinkage do_sys_##name();
 */
 extern asmlinkage pid_t do_sys_fork();
-extern __attribute__((regparm(2))) int sys_call(u32 arg1, u32 arg2);
+extern __attribute__((regparm(4))) int sys_call(u32 arg1, u32 arg2, u32 arg3, u32 arg4);
 #endif

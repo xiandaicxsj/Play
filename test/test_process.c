@@ -10,6 +10,7 @@ void delay()
 }
 void test_process(void *args)
 {
+	asm volatile("int $0x30":::);
 	while(1);
 	/* */
 	  //enable_interrupt();

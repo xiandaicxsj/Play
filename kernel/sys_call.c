@@ -2,8 +2,9 @@
 
 /* we can not do like this */
 
- __attribute__((regparm(2))) int sys_call(u32 arg1, u32 arg2)
+ __attribute__((regparm(4))) int sys_call(u32 arg1, u32 arg2, u32 arg3, u32 arg4)
 {
+	return;
 	switch(arg1) {
 
 	case _SYS_FORK:

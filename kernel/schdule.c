@@ -46,37 +46,44 @@ u32 alloc_pid()
 	return idx;
 }
 
+static void set_task_status(struct task_struct *task, u8 status) {
+	task->status = status;
+}
+
 /* first is not used */
 static struct task_struct task_run_list;
 
-static struct task_struct *get_next_task()
+static struct task_struct *get_next_task(u32 status_mask)
 {
 	/* */
-	struct list_head *head =  task_run_list.list.next;
+	struct list_head *head =  &task_run_list.list;
 	struct list_head *pos = NULL;
 	struct task_struct *task;
 
 	list_for_each(head, pos) {
-		task = container_of(pos, struct task_struct, wait_list);
+		task = container_of(pos, struct task_struct, list);
 		/*
 		if (task->status == TASK_INTERRUPT && there is singnal)
 			wake up this ?
 		*/
 			
-		if (task->status == TASK_WAITING)
+		if (task->status & status_mask)
 			return task;
 	} 
+	return NULL;
 }
 
-static void insert_task(struct task_struct *_task)
+static void insert_task(struct task_struct *task)
 {
-	list_add(&_task->list, &task_run_list.list);
+	list_add(&task->list, &task_run_list.list);
 	return; 
 }
 
 /* make sure param is passed by register eax, edx */
 __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {
+	while(1);
+	set_tss(TSS_VECTOR, &(next->task_reg));
 	/*
 	 * this is del with ioctl/interrupt which cause stack switch
 	 * if (next->type = TASK_KERN)
@@ -87,10 +94,14 @@ __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct ta
 	 *
 	 */
 	/* we need to chaneg the sp0 */
+	set_task_status(prev, TASK_WAITING);
+	set_task_status(next, TASK_RUNNING);
 }
 
 int switch_to(struct task_struct *prev, struct task_struct *next)
 {
+	if (!prev || !next)
+		return;
 	/* rax is the ret of task */
 	asm volatile(" pushl %%ebp\n\t"
 		     " movl %%esp, %%ebp\n\t"
@@ -110,7 +121,7 @@ int switch_to(struct task_struct *prev, struct task_struct *next)
 		     " popl %%ebx \n\t"
 		     " popfl\n\t"
 		     " popl %%ebp"
-		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (next->task_reg.esp0), "a" (prev), "d" (next):);
+		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (prev->task_reg.esp0), "a" (prev), "d" (next):);
 	return ;
 }
 
@@ -131,6 +142,8 @@ void switch_to_ring3(struct task_struct *task)
 	int ts_sel = 0;
 	set_tss(TSS_VECTOR, &(task->task_reg));
 	ts_sel = gdt_tss_sel(TSS_VECTOR);
+	current = task;
+	set_task_status(task, TASK_RUNNING);
 	asm volatile( "ltr %[TS_SEL]\n\t"
                     " pushl %[SS] \n\t" 
                     " pushl %[ESP] \n\t" 
@@ -158,7 +171,7 @@ void switch_to_ring3(struct task_struct *task)
 
 void test_switch_task()
 {
-	struct task_struct *next = get_next_task(); 
+	struct task_struct *next = get_next_task(TASK_WAITING); 
 	/* we should set current to porper place */
 	while(next->pid == current->pid)
 	{
@@ -217,6 +230,7 @@ static int copy_task_file_struct(struct task_struct *task, struct task_struct *p
 
 void idle_task(void *idle)
 {
+	while(1);
 
 }
 /* this is used to create kernel thread */
@@ -274,7 +288,10 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 		task->task_reg.eip =  (u32)func; 
 		task->task_reg.cs = GDT_SEL_RING3(user_cs);
 		task->task_reg.ss2 = GDT_SEL_RING3(user_ds);
-		task->task_reg.esp2 = 0x1000;
+		if (!flags)
+			task->task_reg.esp2 = 0x1000;
+		else 
+			task->task_reg.esp2 = 0x2000;
 	}
 	task->task_reg.eflags = EF_IF;
 	/*
@@ -287,7 +304,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	/* init signal set */
 	init_task_sig_set(task);
 
-	task->status = TASK_IDLE;
+	set_task_status(task, TASK_WAITING);
 	list_init(&task->list);
 	list_init(&task->wait_list);
 	insert_task(task);
@@ -309,7 +326,11 @@ void schdule(void)
 	struct task_struct *next;
 	/* this need to find next task */ 
 	/* */
-	next = get_next_task();
+	next = get_next_task(TASK_WAITING);
+	if (!next) {
+		while(1);
+		return;
+	}
 	switch_to(current, next);
 }
 

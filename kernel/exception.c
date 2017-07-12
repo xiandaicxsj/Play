@@ -77,9 +77,12 @@ void overflow()
 
 void timer_handler()
 {
+	local_irq_disable();
 //	print_str("timer\n");
-	send_eoi(TIMER);
 	//test_switch_task();
+	schdule();
+	send_eoi(TIMER);
+	local_irq_enable();
 }
 
 void bounds_check()

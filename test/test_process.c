@@ -40,6 +40,8 @@ void test_process1(void *args)
 {
 	/* */
 	  //enable_interrupt();
+	  local_irq_disable();
+	 while(1);
 	 
 	int a=0;		
 	int b=0;

@@ -55,7 +55,7 @@ static struct task_struct task_run_list;
 
 static struct task_struct *get_next_task(u32 status_mask)
 {
-	/* */
+	/* this we need to write schduler */
 	struct list_head *head =  &task_run_list.list;
 	struct list_head *pos = NULL;
 	struct task_struct *task;

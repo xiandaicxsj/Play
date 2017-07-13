@@ -2,3 +2,22 @@
 nasm -I include/ -f elf -o kernel.o kernel.asm 
 ld -s -Ttext 0x30400 -o kernel.bin kernel.o  test.o  
 gcc -I include/ -c -fno-builtin -o test.o test.c
+
+
+
+TODO
+
+0. stdio/serial support
+1. Refactor task switch and control part. We need a schduler
+2. when task1 is first iretd. So what ?
+3. mem:
+	1. memory map. Current when kalloc memory used by kernel we will map into kernel. 
+	2. the mem size get by using e820 table.
+	3. when malloc small size memory need to handle this.
+
+
+4. irq:
+	1. abstract irq chip support.
+	2. irq handler support
+
+5. device irq support ... this is ..

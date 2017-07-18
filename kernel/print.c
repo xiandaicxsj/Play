@@ -11,7 +11,7 @@ static u32 cal_cur_off()
 		r = 0;
 		c = 0;
 	}
-	return VBUFFER + (r * 80 + c)*2;
+	return VBUFFER + (r * 80 + c ) * 2 + 0xc0000000;
 }
 
 static new_line()
@@ -39,9 +39,11 @@ static update_r_c()
 void print(char b)
 {
 	u32 offset = cal_cur_off();
-        asm volatile ( "movb 0xf0, %%ah \n\t"
-		       "movw %%eax, (%%edi)"
-		       :: "a"(b), "D"(offset):);
+	u8 *buffer = (u8 *)offset;
+	*buffer = b;
+	buffer ++;
+	*buffer = 0x7;
+	
 	update_r_c();
 }
 

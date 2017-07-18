@@ -13,6 +13,8 @@ typedef u32 pte_t;
 {
 	struct page *p;
 	void *pgt;
+	print_str("in page\n");
+	while(1);
 
 	//ASSERT(fault_addr < KERNEL_OFFSET);
 	p = kalloc_page(MEM_USER);
@@ -23,6 +25,23 @@ typedef u32 pte_t;
 	if (!pgt)
 		return;
 	map_page(addr_to_pfn(fault_addr), p->pfn, MEM_USER, pgt);
+}
+
+int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt) {
+	u32 vpfn = start_vpfn;
+	u32 ppfn = start_ppfn;
+	u32 pidx = 0;
+	int ret = 0;
+
+	while(pidx < nr_pages) {
+		ret = map_page(vpfn, ppfn, flags, pgt);
+		if (ret)
+			return ret;
+		vpfn ++;
+		ppfn ++;
+		pidx ++;
+	}
+	return ret;
 }
 
 /* umap_page not done where to use it ? */

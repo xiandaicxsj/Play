@@ -7,13 +7,14 @@
 #include"vfs.h"
 #include"test_process.h"
 #include"timer.h"
+#include"print.h"
 void start_kernel(void )
 {
 	struct task_struct * task0;
 	//struct task_struct * task1;
+	setup_memory();
 	local_irq_disable();
 	setup_interrupt();
-	setup_memory();
 
 	/*
 	 *init_vfs();

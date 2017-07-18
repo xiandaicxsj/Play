@@ -10,6 +10,8 @@ static u32 low_mem_begin;
 static u32 low_mem_end;
 static u32 low_mem_alloc_used;
 static u32 mem_size;
+static u32 max_low_pfn;
+static u32 max_pfn;
 
 
 #define MAX_ORDER 10
@@ -48,10 +50,9 @@ static void add_area_pages(struct free_area_t *area, struct page *pages)
 	area->nr_free ++;
 }
 
-void init_buddy(u32 mem_size)
+void init_buddy(u32 nr_pages)
 {
 	u32 order;
-	u32 nr_pages;
 	u32 pages_idx;
 	u32 size;
 	struct free_area_t *area;
@@ -59,7 +60,6 @@ void init_buddy(u32 mem_size)
 
 	/*  if we want to use 4K  */
 	order = 0;
-	nr_pages = mem_size >> PAGE_SHIFT;
 
 	/* we need to set the order files of each page to be -1 */
 	//zero_all_pages_order(nr_pages);
@@ -262,14 +262,13 @@ static u32 link_pages(struct page *head, u32 nr_pages)
 	}
 }
 
-static u32 init_pages_list(u32 mem_size)
+static u32 init_pages_list(u32 nr_pages)
 {
-	u32 nr_pages = mem_size >> PAGE_SHIFT;
 	u32 struct_size = nr_pages * sizeof(struct page);
 	u32 nr_pages_s = struct_size & PAGE_MASK ? (struct_size >> PAGE_SHIFT) + 1: (struct_size >> PAGE_SHIFT);
 	pages_list = (struct page *)kmalloc(nr_pages_s << PAGE_SHIFT, 0, MEM_KERN);
 	/* no need to link page here */
-	link_pages(pages_list, mem_size >> PAGE_SHIFT);
+	link_pages(pages_list, nr_pages);
 }
 
 static void merge_low_memory()
@@ -368,12 +367,7 @@ struct page *kalloc_page(u32 flags)
 {
 	struct page *pg;
 
-	pg = kalloc_pages(1, flags);
-	/* map page */
-
-	if (flags & MEM_KERN)
-		map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pg->pfn))), pg->pfn, flags, NULL);
-	return pg;
+	return kalloc_pages(1, flags);
 }
 
 struct page *kalloc_pages(u32 nr, u32 flags)
@@ -381,17 +375,19 @@ struct page *kalloc_pages(u32 nr, u32 flags)
 	struct page *pages;
 	int i = 0;
 
-	if (low_mem_alloc_used)
+	if (low_mem_alloc_used) {
 		pages = kmalloc_low_mem(nr * PAGE_SIZE, PAGE_SIZE);
+
+		if (flags & MEM_KERN) {
+			while(i < nr) {
+				map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pages[i].pfn))), pages[i].pfn, flags, NULL);
+				i ++;
+			}
+		}
+	}
 	else
 		pages = _buddy_alloc_pages(nr);
 
-	if (flags & MEM_KERN) {
-		while(i < nr) {
-			map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pages[i].pfn))), pages[i].pfn, flags, NULL);
-			i ++;
-		}
-	}
 	return pages;
 }
 
@@ -411,43 +407,78 @@ void* kmalloc(u32 size, u32 align, u32 flags)// virtual addr
 	u32 aj_addr;
 	u32 aj_size;
 
-	if ( low_mem_alloc_used )
+	if (low_mem_alloc_used) {
+
 		addr = kmalloc_low_mem(size, align);
-	else
-		addr = _kmalloc(size, align);
+		aj_addr = round_down((u32) addr, PAGE_SIZE);
+		aj_size = round_up((u32)addr + size, PAGE_SIZE) - aj_addr;
+		if (flags & MEM_KERN) {
 
-	aj_addr = round_down((u32) addr, PAGE_SIZE);
-	aj_size = round_up((u32)addr + size, PAGE_SIZE) - aj_addr;
-
-	if (flags & MEM_KERN) {
-
-		while(aj_size > 0) {
-			map_page(addr_to_pfn(aj_addr), addr_to_pfn(virt_to_phy(aj_addr)), flags, NULL);
-			aj_addr += PAGE_SIZE;
-			aj_size -= PAGE_SIZE;
+			while(aj_size > 0) {
+				map_page(addr_to_pfn(aj_addr), addr_to_pfn(virt_to_phy(aj_addr)), flags, NULL);
+				aj_addr += PAGE_SIZE;
+				aj_size -= PAGE_SIZE;
+			}
 		}
 	}
+	else
+		addr = _kmalloc(size, align);
 
 	return addr;
 		/* bugs */
 }
 
-u32 static get_mem_size()
+void setup_kernel_mapping(u32 max_pfn)
+{
+	u32 kernel_start  = 0;
+	u32 kernel_end = (u32)_bss_end;
+	u32 kernel_end_pfn = addr_to_pfn(virt_to_phy(kernel_end)) + ((kernel_end & PAGE_MASK) ? 1: 0);
+	u32 extral_start_pfn;
+
+	if (max_pfn < addr_to_pfn(kernel_end))
+		return;
+
+	map_pages(0, 0, kernel_end_pfn, MEM_KERN, init_page_dir);
+
+	extral_start_pfn = kernel_end_pfn + 1;
+	map_pages(pfn_to_vfn(extral_start_pfn), extral_start_pfn, max_pfn - extral_start_pfn, MEM_KERN, init_page_dir); 
+	print_int(extral_start_pfn);
+	print_int(pfn_to_vfn(extral_start_pfn));
+	print_int(max_pfn);
+	while(1);
+}
+
+static u32 get_max_pfn()
 {
 	/* here we juest write */
 	/* 32 MB */
-	return 32*1024*1024;
+	mem_size = 32*1024*1024;
+
+	return mem_size >> PAGE_SHIFT;
 }
+
+static u32 get_max_low_pfn()
+{
+	/* 3G - 3G + 512M */ 
+	u32 limit_size = 0x020000000 ;
+	u32 limit_pfn = limit_size >> PAGE_SHIFT;
+
+	return limit_pfn > max_pfn ? max_pfn : limit_pfn;
+}
+
 /* now the memory is not set properily */
 void setup_memory()
 {
 	setup_low_memory();
-	mem_size = get_mem_size();
+	max_pfn = get_max_pfn();
+	max_low_pfn = get_max_low_pfn();
+
+	setup_kernel_mapping(max_low_pfn);
 //	mmap_pages(mem_size);
 //	
 	
-	init_pages_list(mem_size);
-	init_buddy(mem_size);
+	init_pages_list(max_pfn);
+	init_buddy(max_pfn);
 	return ;
 }
 

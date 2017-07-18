@@ -117,7 +117,7 @@ init_page_dir:
 /* 0xc[1100] 0000000 */
 .fill 4096, 1, 0
 init_page_tbl:
-.fill 4096, 2, 0
+.fill 4096, 10, 0
 	
 /*;.globl make func available external
  ; loader: 1.make 16 bit ->32 bit 
@@ -149,11 +149,8 @@ _start:
 	movl $_pa(gdt_base), %edi 
 	movl $_pa(gdt), %eax
 	movl %eax, 2(%edi)
-	/* ecx is the size of kernel */
 	lgdt _pa(gdt_base)
 
-	/*jmp $_kernel_cs, $1f
-1:      */
 	movw $_kernel_ds, %ax
 	movw %ax, %ds 
 	movw %ax, %es 
@@ -187,7 +184,6 @@ map_page:
 	testb $PGD_P, %bl
 	jnz 1f
 	movl %ecx, %eax
-	// not sure
 	cmp $INIT_PGD_TABLE, %eax
 	jl 2f
 	jmp .
@@ -300,6 +296,7 @@ setup_paging:
 	addl $KERNEL_OFFSET, %eax
 	movl %eax, %ebp
 
+/*
 	jmp init_pic_as
 init_pic_as:
 	movb $0x11, %al
@@ -364,6 +361,7 @@ init_pic_as:
 	nop
 	nop
 	nop
+*/
 	call start_kernel
 	
 .type _default_inter_handler, @function

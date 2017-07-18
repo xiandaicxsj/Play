@@ -16,6 +16,8 @@ typedef u32 addr_t;
 #define phy_to_virt(addr) (((addr_t)addr) + KERNEL_OFFSET)
 #define virt_to_phy(addr) (((addr_t)addr) - KERNEL_OFFSET)
 #define pfn_to_addr(pfn) ((addr_t)((pfn) << PAGE_SHIFT))
+#define pfn_to_vfn(pfn)	(addr_to_pfn(phy_to_virt(pfn_to_addr(pfn))))
+#define vfn_to_pfn(vfn)	(addr_to_pfn(virt_to_phy(pfn_to_addr(vfn))))
 #define addr_to_pfn(addr) (((addr_t)addr) >> PAGE_SHIFT)
 #define _SIZE(level) (1 << 12 * (level))
 #define ALIGN(addr, size) (((addr_t)addr) & ~((size) - 1))
@@ -50,6 +52,7 @@ __attribute__((regparm(1))) void page_fault(u32 fault_addr);
 void *copy_page_table(struct task_struct *p);
 extern u32 init_page_dir;
 u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt);
+int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt);
 #endif
 #endif
 

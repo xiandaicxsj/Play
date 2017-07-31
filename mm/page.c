@@ -7,6 +7,9 @@
 #ifndef TEST_MEM
 typedef u32 pde_t;
 typedef u32 pte_t;
+#define MAP_FAIL -1
+#define MAP_EXIT 1
+#define MAP_OK 2
 
 /* force using eax to pass the parm */
  __attribute__((regparm(1))) void page_fault(u32 fault_addr)
@@ -35,7 +38,7 @@ int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt
 
 	while(pidx < nr_pages) {
 		ret = map_page(vpfn, ppfn, flags, pgt);
-		if (ret)
+		if (ret == MAP_FAIL)
 			return ret;
 		vpfn ++;
 		ppfn ++;
@@ -69,9 +72,6 @@ u32 umap_page(u32 vpfn, void *pdt)
 	else
 		return -1;
 }
-#define MAP_EXIT 1
-#define MAP_FAIL 2
-#define MAP_OK	3 
 /* vpfn : virtaddress pfn
  * ppfn :  current alloc pfn
  * flags : page table attr

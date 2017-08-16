@@ -33,6 +33,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 int init_pid_bitmap()
 {
 	pid_bit_map = kmalloc(PID_MAX/4 + 1, 0, MEM_KERN);
+	asm volatile(""::"a"((u32)pid_bit_map):);
 	memset(pid_bit_map, 0, PID_MAX/4 + 1);
 	if (!pid_bit_map)
 		return -1;

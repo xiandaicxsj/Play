@@ -362,6 +362,23 @@ static void * _kmalloc(u32 size, u32 align)
 	return (void *)phy_to_virt(pfn_to_addr(pages->pfn));
 }
 
+u32 kalloc_page_frame(u32 flags) {
+
+	struct page *pg;
+	u32 pfn;
+	u32 vfn;
+
+	if (low_mem_alloc_used) {
+		vfn = addr_to_pfn(((u32 )kmalloc_low_mem(PAGE_SIZE, PAGE_SIZE)));
+		pfn = vfn_to_pfn(vfn);
+		map_page(vfn, pfn, flags, NULL);
+
+		return pfn;
+	} 
+	pg = kalloc_page(flags);
+
+	return pg->pfn;
+}
 /* interface */
 struct page *kalloc_page(u32 flags)
 {
@@ -376,14 +393,7 @@ struct page *kalloc_pages(u32 nr, u32 flags)
 	int i = 0;
 
 	if (low_mem_alloc_used) {
-		pages = kmalloc_low_mem(nr * PAGE_SIZE, PAGE_SIZE);
-
-		if (flags & MEM_KERN) {
-			while(i < nr) {
-				map_page(addr_to_pfn(phy_to_virt(pfn_to_addr(pages[i].pfn))), pages[i].pfn, flags, NULL);
-				i ++;
-			}
-		}
+		asm volatile ("jmp ."::"a"(0xffff):);
 	}
 	else
 		pages = _buddy_alloc_pages(nr);
@@ -434,18 +444,14 @@ void setup_kernel_mapping(u32 max_pfn)
 	u32 kernel_end = (u32)_bss_end;
 	u32 kernel_end_pfn = addr_to_pfn(virt_to_phy(kernel_end)) + ((kernel_end & PAGE_MASK) ? 1: 0);
 	u32 extral_start_pfn;
-	int ret1 = 0;
-	int ret2 = 0;
 
 	if (max_pfn < kernel_end_pfn)
 		return;
 
-	ret1 = map_pages(pfn_to_vfn(0), 0, kernel_end_pfn, MEM_KERN, init_page_dir);
+	map_pages(pfn_to_vfn(0), 0, kernel_end_pfn, MEM_KERN, init_page_dir);
 	
 	extral_start_pfn = kernel_end_pfn + 1;
-	ret2 = map_pages(pfn_to_vfn(extral_start_pfn), extral_start_pfn, max_pfn - extral_start_pfn, MEM_KERN, init_page_dir); 
-	asm volatile ("jmp ."
-			::"a" (ret1), "b"(ret2):);
+	map_pages(pfn_to_vfn(extral_start_pfn), extral_start_pfn, max_pfn - extral_start_pfn + 1, MEM_KERN, init_page_dir); 
 }
 
 static u32 get_max_pfn()

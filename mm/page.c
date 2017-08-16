@@ -38,8 +38,12 @@ int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt
 
 	while(pidx < nr_pages) {
 		ret = map_page(vpfn, ppfn, flags, pgt);
-		if (ret == MAP_FAIL)
+		if (ret == MAP_FAIL) {
+	       asm volatile ("jmp ."
+                         ::"a" (vpfn), "b"(ppfn):);
+
 			return ret;
+		}
 		vpfn ++;
 		ppfn ++;
 		pidx ++;
@@ -92,6 +96,7 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	u32 pde_flags = 0;
 	u32 pte_flags = 0;
 	u32 user_flag = 0;
+	u32 pfn = 0;
 
 	if (!pdt)
 		pdt = &init_page_dir;
@@ -113,10 +118,11 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	if ( *pde & PGD_P )
 		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	else {
-		struct page *page = kalloc_page(MEM_KERN);
+		pfn = kalloc_page_frame(MEM_KERN);
 		/* not sure of the flags used here */
+		asm volatile (""::"a"(pfn):);
 		pde_flags |= PGD_P;
-		*pde = pfn_to_addr(page->pfn) | pde_flags;
+		*pde = pfn_to_addr(pfn) | pde_flags;
 		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	}
 

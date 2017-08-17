@@ -353,6 +353,7 @@ void wake_up(struct list_head  *wait_list)
 	list_for_each(head, pos) {
 		task =container_of(pos, struct task_struct, wait_list);
 		task->status = TASK_WAITING;
+		list_del(&task->wait_list);
 		insert_task(task);
 	}
 

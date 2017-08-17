@@ -53,6 +53,7 @@ void *copy_page_table(struct task_struct *p);
 extern u32 init_page_dir;
 u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt);
 int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt);
+u32 get_global_page_dir();
 #endif
 #endif
 

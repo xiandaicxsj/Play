@@ -444,15 +444,18 @@ void setup_kernel_mapping(u32 max_pfn)
 	u32 kernel_end = (u32)_bss_end;
 	u32 kernel_end_pfn = addr_to_pfn(virt_to_phy(kernel_end)) + ((kernel_end & PAGE_MASK) ? 1: 0);
 	u32 extral_start_pfn;
+	int ret;
 
 	if (max_pfn < kernel_end_pfn)
 		return;
 
-	map_pages(pfn_to_vfn(0), 0, kernel_end_pfn, MEM_KERN, init_page_dir);
+	map_pages(pfn_to_vfn(0), 0, kernel_end_pfn, MEM_KERN, NULL);
 	
 	extral_start_pfn = kernel_end_pfn + 1;
-	map_pages(pfn_to_vfn(extral_start_pfn), extral_start_pfn, max_pfn - extral_start_pfn + 1, MEM_KERN, init_page_dir); 
+	map_pages(pfn_to_vfn(extral_start_pfn), extral_start_pfn, max_pfn - extral_start_pfn + 1, MEM_KERN, NULL); 
+
 }
+
 
 static u32 get_max_pfn()
 {

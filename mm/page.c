@@ -11,6 +11,16 @@ typedef u32 pte_t;
 #define MAP_EXIT 1
 #define MAP_OK 2
 
+u32 get_global_page_dir()
+{
+	return &init_page_dir;
+}
+
+void flush_tlb()
+{
+	asm volatile ("movl %%cr3, %%eax\n\t"
+		      "movl %%eax, %%cr3":::);
+}
 /* force using eax to pass the parm */
  __attribute__((regparm(1))) void page_fault(u32 fault_addr)
 {
@@ -39,15 +49,15 @@ int map_pages(u32 start_vpfn, u32 start_ppfn, u32 nr_pages, u32 flags, void *pgt
 	while(pidx < nr_pages) {
 		ret = map_page(vpfn, ppfn, flags, pgt);
 		if (ret == MAP_FAIL) {
-	       asm volatile ("jmp ."
-                         ::"a" (vpfn), "b"(ppfn):);
-
+	       		asm volatile ("jmp ."
+                               ::"a" (vpfn), "b"(ppfn):);
 			return ret;
 		}
 		vpfn ++;
 		ppfn ++;
 		pidx ++;
 	}
+	flush_tlb(pgt);
 	return ret;
 }
 
@@ -113,14 +123,13 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	else if(flags & MEM_RDWR)
 		pte_flags |= PGT_W;
 
-	pde = (pde_t *) pdt + pde_idx;
+	pde = ((pde_t *) pdt) + pde_idx;
 	/* no 4M page is support */
 	if ( *pde & PGD_P )
 		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
 	else {
 		pfn = kalloc_page_frame(MEM_KERN);
 		/* not sure of the flags used here */
-		asm volatile (""::"a"(pfn):);
 		pde_flags |= PGD_P;
 		*pde = pfn_to_addr(pfn) | pde_flags;
 		pt = (pte_t *)phy_to_virt(PT_ADDR(*pde));
@@ -136,6 +145,7 @@ u32 map_page(u32 vpfn, u32 ppfn, u32 flags, void *pdt)
 	else {
 		pte_flags |= PGT_P;
 		*pte = pfn_to_addr(ppfn) | pte_flags;
+		flush_tlb();
 		return MAP_OK;
 	}
 	return MAP_FAIL;

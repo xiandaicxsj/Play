@@ -126,10 +126,12 @@ int put_file_struct(struct file_struct *f)
 		return -1;
 	if (f->count > 1) {
 		f->count --;
-		return ;
+		return 0;
 	}
 	/* just clear this */
 	memset(f, 0, sizeof(*f));
+	return 0;
+	
 }
 /* for file system one inode vs one file_struct */
 /* for 0-3 stdin/out/error we can duplicate this */ 

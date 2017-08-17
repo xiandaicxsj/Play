@@ -2,6 +2,8 @@
 #include"test.h"
 #include"type.h"
 #include"char_device.h"
+#include"bitop.h"
+#include"blk_device.h"
 struct device_head
 {
 	u16 dev_num_bit_map;
@@ -29,11 +31,13 @@ int register_device(dev_t dev_num, struct device *dev)
 	list_add(&dev->list, &dh->list); 
 }
 
+#define MINOR_LIMIT 8
+#define MAJOR_LIMIT 8
 int alloc_minor(u8 major)
 {
 	struct device_head * dh ;
 	dh =  &dev_type_list[major];
-	return find_first_avail_bit(&dh->dev_num_bit_map);
+	return find_first_avail_bit(&dh->dev_num_bit_map, MINOR_LIMIT);
 }
 
 static void init_device_inode()

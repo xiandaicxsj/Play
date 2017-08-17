@@ -9,6 +9,7 @@
 #include"cpu.h"
 #include"mem.h"
 #include"processor.h"
+#include"bitop.h"
 #define ALLOC_COPY_CR3
 
 #ifndef TEST_KERNEL
@@ -102,7 +103,7 @@ __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct ta
 int switch_to(struct task_struct *prev, struct task_struct *next)
 {
 	if (!prev || !next)
-		return;
+		return -1;
 	/* rax is the ret of task */
 	asm volatile(" pushl %%ebp\n\t"
 		     " movl %%esp, %%ebp\n\t"
@@ -123,7 +124,7 @@ int switch_to(struct task_struct *prev, struct task_struct *next)
 		     " popfl\n\t"
 		     " popl %%ebp"
 		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (prev->task_reg.esp0), "a" (prev), "d" (next):);
-	return ;
+	return 0;
 }
 
 /* bug
@@ -303,7 +304,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	*/
 
 	/* init signal set */
-	init_task_sig_set(task);
+	//init_task_sig_set(task);
 
 	set_task_status(task, TASK_WAITING);
 	list_init(&task->list);

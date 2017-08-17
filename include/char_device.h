@@ -14,4 +14,5 @@ struct char_device
 	struct list_head req_list;
 };
 void init_char_devices();
+void register_char_device(dev_t dev_num, struct char_device *cdev, struct char_device_ops *ops);
 #endif

@@ -2,9 +2,8 @@
 
 /* we can not do like this */
 
- __attribute__((regparm(4))) int sys_call(u32 arg1, u32 arg2, u32 arg3, u32 arg4)
+ __attribute__((regparm(3))) int sys_call(u32 arg1, u32 arg2, u32 arg3)
 {
-	return;
 	switch(arg1) {
 
 	case _SYS_FORK:
@@ -13,6 +12,7 @@
 	default:
 		break;
 	}
+	return 0;
 }	
 /*
 #define sys_call_ptr asmlinkage void (*_sys_call_ptr)(void)

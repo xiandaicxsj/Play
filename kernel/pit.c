@@ -1,6 +1,7 @@
 #include"pit.h"
 #include"type.h"
 #include"port.h"
+#include"irq.h"
 
 static void pit_set_chanel_mode(u8 ch, u8 opera_mode, u8 access_mode)
 {
@@ -21,7 +22,7 @@ static void pit_set_reload_value(u8 ch, u16 value)
 	outb(PIT_CH0_PORT + ch, data); 
 }
 
-static get_timer_interval(void)
+static u16 get_timer_interval(void)
 {
 	return 0;
 }

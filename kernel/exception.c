@@ -4,6 +4,8 @@
 #include "pic.h"
 #include "print.h"
 #include "head_32.h"
+#include "irq.h"
+#include "schdule.h"
 #define setup_interrupt_handler(idt, index) \
 	do { \
 		set_idt(idt, index, HW_VC(index), DA_386IGate, 0); \
@@ -35,16 +37,6 @@ void segment_not_present();
 void stack_exception();
 void general_protection();
 void copr_error();
-
-void local_irq_disable()
-{
-	asm volatile ( "cli" );
-}
-
-void local_irq_enable()
-{
-	asm volatile ( "sti" );
-}
 
 void default_handler1()
 {

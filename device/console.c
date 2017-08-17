@@ -30,11 +30,11 @@ int con_dev_read(struct file_struct *f, void *buffer, u32 size)
 	return 0;
 }
 
-static scroll(struct console_device *dev)
+static void scroll(struct console_device *dev)
 {
 }
 
-static con_dev_new_line(struct console_device *dev)
+static void con_dev_new_line(struct console_device *dev)
 {
 	dev->c_colum = 0;
 	dev->c_row ++;
@@ -44,7 +44,7 @@ static con_dev_new_line(struct console_device *dev)
 	/* we need to update c_cur */
 }
 
-static con_dev_out_char(struct console_device *dev, char a)
+static void con_dev_out_char(struct console_device *dev, char a)
 {
 	u32 off = dev->c_base + dev->c_cur;
 
@@ -123,7 +123,7 @@ void init_console()
 	/* init console specific */
 	init_console_device(&con_dev);
 
-	register_char_device(dev_num, &con_dev.dev, &con_dev_ops);
+	//register_char_device(dev_num, &con_dev.dev, &con_dev_ops);
 	/* create file relate ops */
 	create_inode_dev(dev_name, &con_dev_ops, &con_dev);
 }

@@ -96,4 +96,7 @@ void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
 int init_schduler(void);
 void switch_to_ring3(struct task_struct *task);
+void wait_on(struct list_head *wait_list, struct task_struct *next, u32 flags);
+void wake_up(struct list_head  *wait_list);
+struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
 #endif

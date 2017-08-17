@@ -164,7 +164,7 @@ static u32 del_area_pages(struct free_area_t *area, struct page *pages)
 	list_init(&(pages->list));
 }
 
-static zero_page_order(struct page *pages)
+static void zero_page_order(struct page *pages)
 {
 	pages->order = -1;
 }

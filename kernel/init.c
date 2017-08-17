@@ -8,6 +8,7 @@
 #include"test_process.h"
 #include"timer.h"
 #include"print.h"
+#include"irq.h"
 void start_kernel(void )
 {
 	struct task_struct * task0;

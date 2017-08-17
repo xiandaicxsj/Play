@@ -1,5 +1,6 @@
 #include"char_device.h"
 #include"fs.h"
+#include"keyboard.h"
 struct kb_device 
 {
 	struct char_device dev;

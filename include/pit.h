@@ -24,5 +24,5 @@
 #define PIT_ACM_LO 1
 #define PIT_ACM_HO 2
 #define PIT_ACM_LH 3
-
+void init_pit(void);
 #endif

@@ -104,7 +104,7 @@ int test_blk_sub_req(struct blk_device *device, struct blk_req *req)
 		break;
 	}
 	test_blk_free_req(device, req);
-	return ;
+	return 0;
 }
 
 struct blk_device_ops test_blk_ops =

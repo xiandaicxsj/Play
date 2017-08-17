@@ -14,13 +14,13 @@ static u32 cal_cur_off()
 	return VBUFFER + (r * 80 + c ) * 2 + 0xc0000000;
 }
 
-static new_line()
+static void new_line()
 {
 	r++;
 	c = 0;
 }
 
-static update_r_c()
+static void update_r_c()
 {
 	if (c + 1 >= 80)
 	{

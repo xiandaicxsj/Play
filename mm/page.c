@@ -13,7 +13,7 @@ typedef u32 pte_t;
 
 u32 get_global_page_dir()
 {
-	return &init_page_dir;
+	return (u32)&init_page_dir;
 }
 
 void flush_tlb()

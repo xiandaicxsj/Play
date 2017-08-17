@@ -1,5 +1,6 @@
 #include"blk_device.h"
 #include"test.h"
+#include"test_blk_device.h"
 
 void init_blk_devices()
 {

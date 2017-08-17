@@ -1,4 +1,7 @@
 #include"test_process.h"
+#include"print.h"
+#include"irq.h"
+
 void delay()
 {
 	int c;

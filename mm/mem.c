@@ -483,8 +483,6 @@ void setup_memory()
 	max_low_pfn = get_max_low_pfn();
 
 	setup_kernel_mapping(max_low_pfn);
-//	mmap_pages(mem_size);
-//	
 	
 	init_pages_list(max_pfn);
 	init_buddy(max_pfn);

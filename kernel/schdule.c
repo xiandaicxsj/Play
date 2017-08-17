@@ -275,7 +275,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 /* this is not useable for we don't use hardware switch */
 	task->task_reg.cr3 = virt_to_phy(task->pgt);
 #else 
-	task->task_reg.cr3 = virt_to_phy((u32)&init_page_dir);  
+	task->task_reg.cr3 = virt_to_phy(get_global_page_dir());  
 #endif
 	//task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
 

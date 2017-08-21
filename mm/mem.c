@@ -13,6 +13,7 @@ static u32 mem_size;
 static u32 max_low_pfn;
 static u32 max_pfn;
 
+//#define SLAB  
 
 #define MAX_ORDER 10
 struct free_area_t
@@ -486,6 +487,9 @@ void setup_memory()
 	
 	init_pages_list(max_pfn);
 	init_buddy(max_pfn);
+#ifdef SLAB
+	init_slab();
+#endif
 	return ;
 }
 

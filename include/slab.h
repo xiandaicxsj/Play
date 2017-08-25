@@ -21,5 +21,6 @@ struct slab_mem_cache{
 
 	struct list_head list; /* slab cacahe list */
 	u32 nr_slab;
+	struct slab_cache *cur_cache;
 };
 #endif

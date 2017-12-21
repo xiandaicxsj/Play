@@ -1,5 +1,5 @@
 #include"slab.h"
 int main()
 {
-	init_slab();
+	init_mem_cache();
 }

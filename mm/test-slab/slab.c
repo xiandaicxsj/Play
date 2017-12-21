@@ -4,68 +4,80 @@
 #include"mem.h"
 #include"bitop.h"
 #define TEST_SLAB
-#define SLAB_CACHE_NR  11
 #ifdef TEST_SLAB
 #include<string.h>
 #endif
-static struct slab_mem_cache mem_caches[SLAB_CACHE_NR];
+#define NORMAL_MEM_CACHE_NR  11
+static struct slab_mem_cache normal_mem_caches[NORMAL_MEM_CACHE_NR];
+struct slab_mem_cache_head mem_caches;
 
 static u32 obj_size[] = {
 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048
 };
+
+static u32 order_size[] = {
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 static u32 obj_size_to_idx(int size)
 {
 	return _log(size)-1;
 }
 
-static u32 idx_to_obj_size(int idx)
+static u32 idx_to_size(int idx)
 {
 	return obj_size[idx];
 }
 
-static int init_per_slab(u32 idx)
+static u32 idx_to_order(int idx)
 {
-	struct slab_mem_cache *smc;
-
-	if(idx >= SLAB_CACHE_NR)
-		return -1;
-	smc = &mem_caches[idx];
-	memset(smc, 0, sizeof(*smc));
-	smc->objs_size = idx_to_obj_size(idx);
-	list_init(&smc->list);
-	return 0;
+	return order_size[idx];
 }
 
+
+static int init_slab_mem_cache(struct slab_mem_cache *smc, u32 obj_size)
+{
+	if (!smc)
+		return -1;
+
+	memset(smc, 0, sizeof(*smc));
+	smc->obj_size = obj_size;
+
+	list_init(&smc->sc_list);
+	list_init(&smc->page_list);
+	list_init(&smc->list);
+	list_add(&mem_caches.mem_cache_list, &smc->list);
+	return 0;
+}
 static u32 slab_align(u32 offset)
 {
 	return offset;
 }
 
-static int init_slab_area(struct slab_mem_cache *smc, struct slab_cache *sc, u32 order)
+static int init_slab_area(struct slab_mem_cache *smc, struct slab_cache *sc)
 {
 	u32 remain;
 	u32 offset;
+	u32 order;
 
+	order = _log(smc->obj_size);
 	/* the offset align is wrong, the alignment should be based on addr + offset */
 	remain = PAGE_SIZE;
 	offset = 0;
 
 	remain -= sizeof(*sc);
 	offset += sizeof(*sc);
-	
+
+	/* this seems wrong */
 	sc->bit_map = (u8 *)sc + offset;
-	/* FIXME
 	sc->bit_map_size = bit_map_needed[order];
 
 	offset += bit_map_needed[order];
-	*/
 	offset = slab_align(offset);
 	
 	remain -= offset ;
 	remain += sizeof(*sc);
 
-	sc->objs_num = sc->objs_free = (remain / smc->objs_size);
+	sc->objs_num = sc->objs_free = (remain / smc->obj_size);
 	sc->objs_map = (u8 *)sc + offset;
 	sc->owner = smc;
 
@@ -73,12 +85,12 @@ static int init_slab_area(struct slab_mem_cache *smc, struct slab_cache *sc, u32
 	return 0;
 }
 
-static int alloc_slab(struct slab_mem_cache *smc, u32 order)
+static int alloc_slab(struct slab_mem_cache *smc)
 {
 	struct page *pg;
 	struct slab_cache *sc;
 
-	if (smc->objs_size != smc->objs_used)
+	if (smc->obj_size != smc->objs_used)
 		return 0;
 	
 	pg = kalloc_page(MEM_KERN);
@@ -93,9 +105,10 @@ static int alloc_slab(struct slab_mem_cache *smc, u32 order)
 	memset(sc, 0, sizeof(*sc));
 	sc->pg = pg;
 
-	init_slab_area(smc, sc, order);
+	init_slab_area(smc, sc);
 
-	list_add(&smc->list, &sc->list);
+	list_add(&smc->sc_list, &sc->list);
+	list_add(&smc->page_list, &pg->list);
 	smc->objs_all += sc->objs_num;
 	smc->nr_slab ++;
 	smc->cur_cache = sc;
@@ -103,10 +116,34 @@ static int alloc_slab(struct slab_mem_cache *smc, u32 order)
 	return 0;
 }
 
-static void update_slab_cache(struct slab_mem_cache *smc)
+static int update_slab_cache(struct slab_mem_cache *smc)
 {
-	return;
+	struct list_head *head = &smc->sc_list;
+	struct list_head *pos = NULL;
+
+	struct slab_cache *sc;
+	struct slab_cache *sc_update = NULL;
+
+	u32 objs_free_max = 0;
+	
+	list_for_each(head, pos) {
+  		sc = container_of(pos, struct slab_cache, list);
+		if (sc->objs_free > objs_free_max) {
+			sc_update = sc;
+			objs_free_max = sc->objs_free;
+		}
+        }
+
+	if (!sc_update) {
+		smc->cur_cache = NULL;
+		return -1;
+	}
+
+	smc->cur_cache = sc_update;
+
+	return 0;
 }
+
 
 static void *alloc_from_slab(struct slab_cache *sc)
 {
@@ -116,11 +153,37 @@ static void *alloc_from_slab(struct slab_cache *sc)
 
 	sc->objs_free --;
 	sc->owner->objs_used ++;
-	return sc->objs_map + (obj_idx * sc->owner->objs_size);
+	return sc->objs_map + (obj_idx * sc->owner->obj_size);
 }
 
 /* align is not del in this cache */
-void *_kmalloc_from_slab(u32 size, u32 align) {
+void *kmalloc_from_mem_cache(struct slab_mem_cache *smc)
+{
+	struct slab_cache *sc;
+	if (!smc)
+		return NULL;
+
+	if (!smc->nr_slab || (smc->objs_all == smc->objs_used))
+		alloc_slab(smc);
+
+	sc = smc->cur_cache;
+	if (!sc)
+		return NULL;
+
+	if (!sc->objs_free) {
+
+		if(update_slab_cache(smc) < 0)
+			return NULL;
+
+		sc = smc->cur_cache;
+	}
+
+	return alloc_from_slab(sc);
+}
+
+
+void *kmalloc_from_normal_slab(u32 size, u32 align)
+{
 	struct slab_mem_cache *smc;
 	struct slab_cache *sc;
 	u32 order;
@@ -129,36 +192,115 @@ void *_kmalloc_from_slab(u32 size, u32 align) {
 	while(size > (1 << order))
 		order ++;
 	/* order is what we want */
-	smc = &mem_caches[order];
-
-	if (!smc->nr_slab || (smc->objs_all == smc->objs_used))
-		alloc_slab(smc, order);
-	sc = smc->cur_cache;
-	if (!sc)
-		return NULL;
-
-	if (!sc->objs_free) {
-		update_slab_cache(smc);
-		sc = smc->cur_cache;
-	}
-
-	return alloc_from_slab(sc);
+	smc = &normal_mem_caches[order];
+	
+	return kmalloc_from_mem_cache(smc);
 }
 
-int _free_from_slab(void *addr)
+static int free_slab_cache(struct slab_cache *sc)
 {
-	/* how to determine the addr belong to */
+	struct slab_mem_cache *smc;
+	struct page * pg = sc->pg;
+
+	smc = sc->owner;
+	if (sc->objs_free != sc->objs_num)
+		return -1;
+
+	if((smc->objs_all - smc->objs_used) - sc->objs_num < sc->objs_num)
+		return 0;
+
+	list_del(&sc->list);
+	list_del(&sc->pg->list);
+
+	smc->objs_all -= sc->objs_num;
+	smc->nr_slab --;
+	if (smc->cur_cache == sc)
+		update_slab_cache(smc);
+
+	free_page(pg);
 	return 0;
 }
 
-void init_slab(void)
+static int free_from_slab(struct slab_cache *sc, void *addr) {
+
+	u32 idx ;
+	u32 obj_size = sc->owner->obj_size;
+
+	if (!sc)
+		return -1;
+
+	idx = ((u32)addr - (u32)sc->objs_map)/obj_size;
+	sc->objs_free ++;
+	sc->owner->objs_used --;
+	clear_bit(sc->bit_map, idx);
+
+	if (sc->objs_free == sc->objs_num)
+		free_slab_cache(sc);
+		/* we don need to free the slab page */
+	return 0;
+}
+
+static int free_addr_match_slab(struct slab_cache *sc, void *addr)
 {
-	u32 idx = 0;
-	int ret = 0;
-	for(idx; idx< SLAB_CACHE_NR; idx++) {
-		ret = init_per_slab(idx);
-		if (ret < 0)
-			return;
+	/* current on slab one page */
+	if ((u32)addr > (u32) sc &&  (u32)addr < ((u32) sc + PAGE_SIZE));
+		return;
+}
+
+static int try_free_from(struct slab_mem_cache *smc, void *addr)
+{
+	struct list_head *head = &smc->sc_list;
+	struct list_head *pos = NULL;
+	struct slab_cache *sc;
+
+	list_for_each(head, pos) {
+		sc = container_of(pos, struct slab_cache, list);
+		if (free_addr_match_slab(sc, addr))
+			return free_from_slab(sc, addr);
 	}
+
+	return -1;
+}
+
+int free_from_mem_cache(void *addr)
+{
+	struct list_head *head = &mem_caches.mem_cache_list;
+	struct list_head *pos = NULL;
+
+	struct slab_mem_cache *smc;
+
+	list_for_each(head, pos) {
+		smc = container_of(pos, struct slab_mem_cache, list);
+		if (!try_free_from(smc, addr))
+			return 0;
+	}
+	/* how to determine the addr belong to */
+	return - 1;
+}
+
+static int init_normal_mem_cache(void)
+{
+	int idx = 0;
+	int ret = 0;
+
+	for(idx; idx< NORMAL_MEM_CACHE_NR; idx++) {
+
+		struct slab_mem_cache *smc = &normal_mem_caches[idx];
+
+		ret = init_slab_mem_cache(smc, idx_to_size(idx));
+		if (ret < 0)
+			return ret;
+	}
+}
+
+void create_mem_cache(char *name, u32 obj_size) {
+	/* one question how mem_cache struct should be a cache two ...*/
+
+}
+
+int init_mem_cache(void)
+{
+	list_init(&mem_caches.mem_cache_list);
+	init_normal_mem_cache();
 }
 

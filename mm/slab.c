@@ -1,6 +1,6 @@
 #include"slab.h"
 #define NORMAL_MEM_CACHE_NR  11
-static struct normal_mem_caches[NORMAL_MEM_CACHE_NR];
+static struct slab_mem_cache normal_mem_caches[NORMAL_MEM_CACHE_NR];
 struct slab_mem_cache_head mem_caches;
 
 static u32 obj_size[] = {
@@ -179,7 +179,7 @@ void *kmalloc_from_normal_slab(u32 size, u32 align)
 	while(size > (1 << order))
 		order ++;
 	/* order is what we want */
-	smc = normal_mem_caches[order];
+	smc = &normal_mem_caches[order];
 
 	return kmalloc_from_slab(smc);
 }
@@ -271,7 +271,7 @@ void int init_normal_mem_cache()
 
 	for(idx; idx< NORMAL_MEM_CACHE_NR; idx++) {
 
-		struct slab_mem_cache *smc = normal_mem_caches[idx];
+		struct slab_mem_cache *smc = &normal_mem_caches[idx];
 
 		ret = init_slab_mem_cache(smc, idx_to_obj(idx));
 		if (ret < 0)
@@ -281,7 +281,6 @@ void int init_normal_mem_cache()
 
 void create_mem_cache(char *name, u32 obj_size) {
 	/* one question how mem_cache struct should be a cache two ...*/
-
 }
 
 void init_mem_cache()

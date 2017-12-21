@@ -28,9 +28,7 @@ struct slab_mem_cache{
 };
 
 struct slab_mem_cache_head {
-
 	u32 mem_cache_num;
 	struct list_head mem_cache_list;
-
 };
 #endif

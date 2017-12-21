@@ -15,12 +15,13 @@ typedef u32 pid_t;
 #define TASK_INTERRUPT (1u<<3)
 #define TASK_IDLE (1u<<4)
 
-#define CLONE_FS (1u<<0)
+/* flags used to fork or task */
+#define CLONE_FS (1u << 0)
+#define KERNEL_THREAD (1u << 1)
+
 /* */
 
 typedef void(*task_fn)(void *);
-
-extern void idle_task(void *);
 
 struct wait_queue {
 	struct list_head list;

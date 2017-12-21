@@ -29,7 +29,9 @@ void start_kernel(void )
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
 	//task1 = (struct task_struct *) create_task(NULL, test_process1, 1);
 
+	//create_ktask(test1);
 	init_timer();
+	init_idle_task();
 	switch_to_ring3(task0);
 	local_irq_disable();
 	while(1);

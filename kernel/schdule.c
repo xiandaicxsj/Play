@@ -27,6 +27,7 @@
 #define LDT_SEL_RING3(n)  (LDT_SEL(n) | RPL3)
 #define LDT_SEL_RING0(n)  (LDT_SEL(n) | RPL0)
 #define GDT_SEL_RING3(n) (n | RPL3)
+#define GDT_SEL_RING0(n) (n | RPL0)
 struct task_struct *current;
 static u32 *pid_bit_map;
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
@@ -108,11 +109,14 @@ int switch_to(struct task_struct *prev, struct task_struct *next)
 	asm volatile(" pushl %%ebp\n\t"
 		     " movl %%esp, %%ebp\n\t"
 		     " pushfl \n\t"
+		     " pushl %%eax \n\t"
 		     " pushl %%ebx \n\t"
 		     " pushl %%ecx \n\t"
 		     " pushl %%edx \n\t"
 		     " pushl %%esi \n\t"
 		     " pushl %%edi \n\t"
+		     " movl %[PREV], %%eax\n\t"
+		     " movl %[NEXT], %%edx\n\t"
 		     " movl %%esp, %[PREV_ESP]\n\t"
 		     " movl %[NEXT_ESP], %%esp\n\t"
 		     " call switch_to_sw\n\t"
@@ -121,9 +125,10 @@ int switch_to(struct task_struct *prev, struct task_struct *next)
 		     " popl %%edx \n\t"
 		     " popl %%ecx \n\t"
 		     " popl %%ebx \n\t"
+		     " pushl %%eax \n\t"
 		     " popfl\n\t"
 		     " popl %%ebp"
-		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (prev->task_reg.esp0), "a" (prev), "d" (next):);
+		     ::[NEXT_ESP] "m"(next->task_reg.esp0) ,[PREV_ESP] "m" (prev->task_reg.esp0), [PREV] "m"(prev), [NEXT] "m"(next):);
 	return 0;
 }
 
@@ -230,17 +235,48 @@ static int copy_task_file_struct(struct task_struct *task, struct task_struct *p
 	return 0;
 }
 
-void idle_task(void *idle)
+void idle_task_func(void *idle)
 {
 	while(1);
-
 }
+
+/* only used for first ide task */
+union task_frame {
+	struct task_struct idle_task_struct;
+	u8 stack[PAGE_SIZE];
+};
+
+static union task_frame idle_task;
+
+void prepare_kernel_thread_stack(struct task_struct *task)
+{
+	return;
+}
+
+void init_idle_task(void) {
+	struct task_struct *task;
+
+	task = &idle_task.idle_task_struct;
+
+	task->pid = 0;
+	task->task_reg.ss0 = sys_ds;
+	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
+	task->task_reg.cr3 = virt_to_phy(get_global_page_dir());  
+	task->task_reg.eip =  idle_task_func; 
+	task->task_reg.cs = GDT_SEL_RING0(sys_cs);
+
+	set_task_status(task, TASK_WAITING);
+	list_init(&task->list);
+	list_init(&task->wait_list);
+	insert_task(task);
+}
+
 /* this is used to create kernel thread */
 int create_ktask(task_fn func)
 {
 	struct task_struct *task;
 
-	task = create_task(NULL, idle_task, 0);
+	task = create_task(NULL, func, KERNEL_THREAD);
 
 	return task->pid;
 }

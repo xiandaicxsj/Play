@@ -45,7 +45,7 @@ static int init_slab_mem_cache(struct slab_mem_cache *smc, u32 obj_size)
 	list_init(&smc->sc_list);
 	list_init(&smc->page_list);
 	list_init(&smc->list);
-	list_add(&mem_caches.mem_cache_list, &smc->list);
+	list_add(&smc->list, &mem_caches.mem_cache_list);
 	return 0;
 }
 static u32 slab_align(u32 offset)
@@ -53,44 +53,46 @@ static u32 slab_align(u32 offset)
 	return offset;
 }
 
+static void init_free_objs(struct slab_cache *sc)
+{
+	struct list_head *head;
+	int idx = sc->objs_num - 1;
+	u32 obj_size = sc->owner->obj_size;
+
+	while(idx >= 0) {
+
+		head = (struct list_head *)(sc->objs_base_addr + idx * obj_size);
+		list_init(head);
+		list_add(head, &sc->free_objs_list);
+		idx --;
+	}
+
+	return;
+}
+
 static int init_slab_area(struct slab_mem_cache *smc, struct slab_cache *sc)
 {
 	u32 remain;
-	u32 offset;
-	u32 order;
 
-	order = _log(smc->obj_size);
 	/* the offset align is wrong, the alignment should be based on addr + offset */
 	remain = PAGE_SIZE;
-	offset = 0;
-
 	remain -= sizeof(*sc);
-	offset += sizeof(*sc);
-
 	/* this seems wrong */
-	sc->bit_map = (u8 *)sc + offset;
-	sc->bit_map_size = bit_map_needed[order];
-
-	offset += bit_map_needed[order];
-	offset = slab_align(offset);
-	
-	remain -= offset ;
-	remain += sizeof(*sc);
-
 	sc->objs_num = sc->objs_free = (remain / smc->obj_size);
-	sc->objs_map = (u8 *)sc + offset;
 	sc->owner = smc;
-
+	sc->objs_base_addr = (void *)sc + sizeof(*sc);
+	list_init(&sc->free_objs_list);
 	list_init(&sc->list);
+	init_free_objs(sc);
 	return 0;
 }
 
-static int alloc_slab(struct slab_mem_cache *smc)
+static int alloc_slab_cache(struct slab_mem_cache *smc)
 {
 	struct page *pg;
 	struct slab_cache *sc;
 
-	if (smc->obj_size != smc->objs_used)
+	if (smc->objs_all != smc->objs_used)
 		return 0;
 	
 	pg = kalloc_page(MEM_KERN);
@@ -107,8 +109,8 @@ static int alloc_slab(struct slab_mem_cache *smc)
 
 	init_slab_area(smc, sc);
 
-	list_add(&smc->sc_list, &sc->list);
-	list_add(&smc->page_list, &pg->list);
+	list_add(&sc->list, &smc->sc_list);
+	list_add(&pg->list, &smc->page_list);
 	smc->objs_all += sc->objs_num;
 	smc->nr_slab ++;
 	smc->cur_cache = sc;
@@ -145,15 +147,16 @@ static int update_slab_cache(struct slab_mem_cache *smc)
 }
 
 
-static void *alloc_from_slab(struct slab_cache *sc)
+static void *alloc_from_slab_cache(struct slab_cache *sc)
 {
-	u32 obj_idx = find_first_avail_bit(sc->bit_map, sc->bit_map_size);
-
-	set_bit(sc->bit_map, obj_idx);
+	struct list_head *pos;
+	pos = sc->free_objs_list.next;
+	list_del(pos);
 
 	sc->objs_free --;
 	sc->owner->objs_used ++;
-	return sc->objs_map + (obj_idx * sc->owner->obj_size);
+
+	return (void *) pos;
 }
 
 /* align is not del in this cache */
@@ -164,7 +167,7 @@ void *kmalloc_from_mem_cache(struct slab_mem_cache *smc)
 		return NULL;
 
 	if (!smc->nr_slab || (smc->objs_all == smc->objs_used))
-		alloc_slab(smc);
+		alloc_slab_cache(smc);
 
 	sc = smc->cur_cache;
 	if (!sc)
@@ -178,7 +181,7 @@ void *kmalloc_from_mem_cache(struct slab_mem_cache *smc)
 		sc = smc->cur_cache;
 	}
 
-	return alloc_from_slab(sc);
+	return alloc_from_slab_cache(sc);
 }
 
 
@@ -221,18 +224,19 @@ static int free_slab_cache(struct slab_cache *sc)
 	return 0;
 }
 
-static int free_from_slab(struct slab_cache *sc, void *addr) {
-
-	u32 idx ;
-	u32 obj_size = sc->owner->obj_size;
+static int free_from_slab(struct slab_cache *sc, void *addr)
+{
+	struct list_head *head;
 
 	if (!sc)
 		return -1;
 
-	idx = ((u32)addr - (u32)sc->objs_map)/obj_size;
+	head = (struct list_head *) addr;
+
+	list_init(head);
+	list_add(head, &sc->free_objs_list);
 	sc->objs_free ++;
 	sc->owner->objs_used --;
-	clear_bit(sc->bit_map, idx);
 
 	if (sc->objs_free == sc->objs_num)
 		free_slab_cache(sc);
@@ -243,8 +247,9 @@ static int free_from_slab(struct slab_cache *sc, void *addr) {
 static int free_addr_match_slab(struct slab_cache *sc, void *addr)
 {
 	/* current on slab one page */
-	if ((u32)addr > (u32) sc &&  (u32)addr < ((u32) sc + PAGE_SIZE));
-		return;
+	if (((u32)addr) > ((u32) sc) &&  ((u32)addr) < ((((u32) sc) + PAGE_SIZE)));
+		return 1;
+	return 0;
 }
 
 static int try_free_from(struct slab_mem_cache *smc, void *addr)

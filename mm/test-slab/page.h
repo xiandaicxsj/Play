@@ -38,7 +38,7 @@ struct page
 {
     struct list_head list;
     u32 count; // link count
-    u32 pfn;
+    void* pfn;
     u32 order;
 };
 #endif

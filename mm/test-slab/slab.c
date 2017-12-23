@@ -8,8 +8,8 @@
 #include<string.h>
 #endif
 #define NORMAL_MEM_CACHE_NR  11
-static struct slab_mem_cache normal_mem_caches[NORMAL_MEM_CACHE_NR];
-struct slab_mem_cache_head mem_caches;
+static struct slab_mem_cache *normal_mem_caches[NORMAL_MEM_CACHE_NR];
+static struct slab_mem_cache_head kmem_caches_head;
 
 static u32 obj_size[] = {
 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048
@@ -23,7 +23,7 @@ static u32 obj_size_to_idx(int size)
 	return _log(size)-1;
 }
 
-static u32 idx_to_size(int idx)
+static inline u32 idx_to_size(int idx)
 {
 	return obj_size[idx];
 }
@@ -45,7 +45,7 @@ static int init_slab_mem_cache(struct slab_mem_cache *smc, u32 obj_size)
 	list_init(&smc->sc_list);
 	list_init(&smc->page_list);
 	list_init(&smc->list);
-	list_add(&smc->list, &mem_caches.mem_cache_list);
+	list_add(&smc->list, &kmem_caches_head.mem_cache_list);
 	return 0;
 }
 static u32 slab_align(u32 offset)
@@ -188,14 +188,12 @@ void *kmalloc_from_mem_cache(struct slab_mem_cache *smc)
 void *kmalloc_from_normal_slab(u32 size, u32 align)
 {
 	struct slab_mem_cache *smc;
-	struct slab_cache *sc;
-	u32 order;
+	u32 idx;
 
-	order = 1;
-	while(size > (1 << order))
-		order ++;
-	/* order is what we want */
-	smc = &normal_mem_caches[order];
+	idx = 1;
+	while(size > idx_to_size(idx))
+		idx ++;
+	smc = normal_mem_caches[idx];
 	
 	return kmalloc_from_mem_cache(smc);
 }
@@ -269,7 +267,7 @@ static int try_free_from(struct slab_mem_cache *smc, void *addr)
 
 int free_from_mem_cache(void *addr)
 {
-	struct list_head *head = &mem_caches.mem_cache_list;
+	struct list_head *head = &kmem_caches_head.mem_cache_list;
 	struct list_head *pos = NULL;
 
 	struct slab_mem_cache *smc;
@@ -283,29 +281,50 @@ int free_from_mem_cache(void *addr)
 	return - 1;
 }
 
-static int init_normal_mem_cache(void)
+static int init_normal_kmem_cache(void)
 {
 	int idx = 0;
 	int ret = 0;
 
-	for(idx; idx< NORMAL_MEM_CACHE_NR; idx++) {
+	for(idx; idx < NORMAL_MEM_CACHE_NR; idx++) {
 
-		struct slab_mem_cache *smc = &normal_mem_caches[idx];
+		
+		struct slab_mem_cache *smc = kmalloc_from_mem_cache(&kmem_caches_head.slab_mem_cache_struct);
+		normal_mem_caches[idx] = smc;
 
 		ret = init_slab_mem_cache(smc, idx_to_size(idx));
 		if (ret < 0)
 			return ret;
 	}
+
+	return ret;
 }
 
-void create_mem_cache(char *name, u32 obj_size) {
-	/* one question how mem_cache struct should be a cache two ...*/
-
-}
-
-int init_mem_cache(void)
+static int init_kmem_cache_head_cache(char *name, u32 obj_size)
 {
-	list_init(&mem_caches.mem_cache_list);
-	init_normal_mem_cache();
+	
+	list_init(&kmem_caches_head.mem_cache_list);
+	if (init_slab_mem_cache(&kmem_caches_head.slab_mem_cache_struct, obj_size))
+		return -1;
+	return 0;
+}
+
+struct slab_mem_cache *create_kmem_cache(char *name, u32 obj_size)
+{
+	struct slab_mem_cache *smc = kmalloc_from_mem_cache(&kmem_caches_head.slab_mem_cache_struct);
+
+	if (!smc)
+		return NULL;
+
+	if (init_slab_mem_cache(smc, obj_size))
+		return NULL;
+
+	return smc;
+}
+
+int init_kmem_cache(void)
+{
+	init_kmem_cache_head_cache("mem_cache_head", sizeof(struct slab_mem_cache));
+	init_normal_kmem_cache();
 }
 

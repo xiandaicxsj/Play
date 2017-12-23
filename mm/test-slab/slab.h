@@ -2,7 +2,8 @@
 #define _H_SLAB
 #include"type.h"
 #include"list.h"
-int init_mem_cache(void);
+int init_kmem_cache(void);
+int free_from_mem_cache(void *addr);
 struct slab_cache {
 	u32 objs_free;/* free objs num */
 	u32 objs_num; /* total objs num in the slab */
@@ -24,13 +25,15 @@ struct slab_mem_cache{
 	struct slab_cache *cur_cache;
 	struct list_head page_list;/* why do i need this */
 	struct list_head list; /* this should be the list used to link all slab_mem_cache */
+	char name[20]; /* name is not used now */
 
 };
 
 struct slab_mem_cache_head {
-
+	struct slab_mem_cache slab_mem_cache_struct;
 	u32 mem_cache_num;
 	struct list_head mem_cache_list;
 
 };
+struct slab_mem_cache *create_kmem_cache(char *name, u32 obj_size);
 #endif

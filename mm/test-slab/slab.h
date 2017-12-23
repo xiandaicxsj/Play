@@ -2,6 +2,7 @@
 #define _H_SLAB
 #include"type.h"
 #include"list.h"
+#define TEST_SLAB
 int init_kmem_cache(void);
 int free_from_mem_cache(void *addr);
 struct slab_cache {
@@ -36,4 +37,8 @@ struct slab_mem_cache_head {
 
 };
 struct slab_mem_cache *create_kmem_cache(char *name, u32 obj_size);
+#ifdef TEST_SLAB
+int dump_smc(struct slab_mem_cache *smc);
+int dump_smc_all();
+#endif
 #endif

@@ -3,9 +3,9 @@
 #include"page.h"
 #include"mem.h"
 #include"bitop.h"
-#define TEST_SLAB
 #ifdef TEST_SLAB
 #include<string.h>
+#include<stdio.h>
 #endif
 #define NORMAL_MEM_CACHE_NR  11
 static struct slab_mem_cache *normal_mem_caches[NORMAL_MEM_CACHE_NR];
@@ -32,7 +32,70 @@ static u32 idx_to_order(int idx)
 {
 	return order_size[idx];
 }
+#ifdef TEST_SLAB
+int dump_objs(struct slab_cache *sc)
+{
+	struct list_head *head = &sc->free_objs_list;
+	struct list_head *pos = head;
 
+	int count = 0;
+
+	do {
+		count ++;
+		pos = pos->next;
+	} while(pos != head);
+
+	printf("\t\tsc: free_objs_list contain %d\n", count - 1);
+
+}
+
+int dump_sc(struct slab_cache *sc)
+{
+	printf("\t\t##########################\n");
+	printf("\t\tsc: addr %d\n", (u32)sc);
+	printf("\t\tsc: objs_free %d\n", sc->objs_free);
+	printf("\t\tsc: objs_num %d\n", sc->objs_num);
+	printf("\t\tsc: base addr %d\n", sc->objs_base_addr);
+	dump_objs(sc);
+	printf("\t\t##########################\n");
+}
+
+int dump_smc(struct slab_mem_cache *smc)
+{
+	printf("-------------------------\n");
+	printf("\tsmc: obj_size %d\n", smc->obj_size);
+	printf("\tsmc: objs_all %d\n", smc->objs_all);
+	printf("\tsmc: objs_used %d\n", smc->objs_used);
+	printf("\tsmc: nr_slab %d\n", smc->nr_slab);
+	printf("\tsmc: cur_cache %d\n", smc->cur_cache);
+
+	struct list_head *head = &smc->sc_list;
+	struct list_head *pos = NULL;
+	struct slab_cache *sc;
+
+	list_for_each(head, pos) {
+		sc = container_of(pos, struct slab_cache, list);
+		dump_sc(sc);
+	}
+	printf("-------------------------\n");
+}
+
+int dump_smc_all()
+{
+	struct list_head *head = &kmem_caches_head.mem_cache_list;
+	struct list_head *pos = NULL;
+
+	struct slab_mem_cache *smc;
+
+	list_for_each(head, pos) {
+		printf("New smc lab\n");
+		smc = container_of(pos, struct slab_mem_cache, list);
+		dump_smc(smc);
+		printf("END smc lab\n");
+	}
+	
+}
+#endif
 
 static int init_slab_mem_cache(struct slab_mem_cache *smc, u32 obj_size)
 {
@@ -136,10 +199,9 @@ static int update_slab_cache(struct slab_mem_cache *smc)
 		}
         }
 
-	if (!sc_update) {
-		smc->cur_cache = NULL;
-		return -1;
-	}
+	/* smc may run out of objs */
+	if (!sc_update)
+		return alloc_slab_cache(smc);
 
 	smc->cur_cache = sc_update;
 
@@ -170,14 +232,11 @@ void *kmalloc_from_mem_cache(struct slab_mem_cache *smc)
 		alloc_slab_cache(smc);
 
 	sc = smc->cur_cache;
-	if (!sc)
-		return NULL;
-
-	if (!sc->objs_free) {
-
+	if (!sc || !sc->objs_free) {
+		/* if sc == NULL, may be we forget to update the cur_cache */
+		/* if sc->objs_free == 0 this may need alloc slab cache */
 		if(update_slab_cache(smc) < 0)
 			return NULL;
-
 		sc = smc->cur_cache;
 	}
 
@@ -204,10 +263,10 @@ static int free_slab_cache(struct slab_cache *sc)
 	struct page * pg = sc->pg;
 
 	smc = sc->owner;
-	if (sc->objs_free != sc->objs_num)
+	if(sc->objs_free != sc->objs_num)
 		return -1;
 
-	if((smc->objs_all - smc->objs_used) - sc->objs_num < sc->objs_num)
+	if(smc->objs_all - smc->objs_used < 2 * sc->objs_num)
 		return 0;
 
 	list_del(&sc->list);
@@ -245,7 +304,7 @@ static int free_from_slab(struct slab_cache *sc, void *addr)
 static int free_addr_match_slab(struct slab_cache *sc, void *addr)
 {
 	/* current on slab one page */
-	if (((u32)addr) > ((u32) sc) &&  ((u32)addr) < ((((u32) sc) + PAGE_SIZE)));
+	if ((((u32)addr) > ((u32) sc)) && (((u32)addr) < (u32) sc + PAGE_SIZE))
 		return 1;
 	return 0;
 }

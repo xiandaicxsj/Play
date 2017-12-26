@@ -85,7 +85,6 @@ static void insert_task(struct task_struct *task)
 /* make sure param is passed by register eax, edx */
 __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {
-	while(1);
 	set_tss(TSS_VECTOR, &(next->task_reg));
 	/*
 	 * this is del with ioctl/interrupt which cause stack switch
@@ -101,7 +100,7 @@ __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct ta
 	set_task_status(next, TASK_RUNNING);
 }
 
-int switch_to(struct task_struct *prev, struct task_struct *next)
+int switch_to_pre(struct task_struct *prev, struct task_struct *next)
 {
 	if (!prev || !next)
 		return -1;
@@ -248,31 +247,8 @@ union task_frame {
 
 static union task_frame idle_task;
 
-void prepare_kernel_thread_stack(struct task_struct *task)
-{
-	return;
-}
-
-void init_idle_task(void) {
-	struct task_struct *task;
-
-	task = &idle_task.idle_task_struct;
-
-	task->pid = 0;
-	task->task_reg.ss0 = sys_ds;
-	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
-	task->task_reg.cr3 = virt_to_phy(get_global_page_dir());  
-	task->task_reg.eip =  idle_task_func; 
-	task->task_reg.cs = GDT_SEL_RING0(sys_cs);
-
-	set_task_status(task, TASK_WAITING);
-	list_init(&task->list);
-	list_init(&task->wait_list);
-	insert_task(task);
-}
-
 /* this is used to create kernel thread */
-int create_ktask(task_fn func)
+u32 create_ktask(task_fn func)
 {
 	struct task_struct *task;
 
@@ -281,6 +257,10 @@ int create_ktask(task_fn func)
 	return task->pid;
 }
 
+u32 create_idle_ktask()
+{
+	return create_ktask(idle_task_func);
+}
 /*
  * task
  * parent : parent task
@@ -291,17 +271,27 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 {
 	struct task_struct *task;
 	struct page *pg;
+	struct fork_frame *frame;
 	u32 pid = -1;
 
 	task = (struct task_strcut *)kmalloc(PAGE_SIZE, 0, MEM_KERN);
 	if (!task)
 		return NULL;
 
+	set_task_status(task, TASK_WAITING);
+	list_init(&task->list);
+	list_init(&task->wait_list);
+	insert_task(task);
+
 	pid = alloc_pid();
 	task->pid = pid;
 
 	task->task_reg.ss0 = sys_ds;
 	task->task_reg.esp0 = (u32) task + PAGE_SIZE - 1 ;
+	task->esp = task->task_reg.esp0; /* esp is the real stack size used by kernel */
+	task->esp = (u32) (task->task_reg.esp0 - sizeof(fork_frame)); 
+	frame = (struct fork_frame *) task->esp;
+	frame->ret_ip = (u32) iret_from_fork;
 
 	if (parent)
 		task->parent = parent;
@@ -314,7 +304,15 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 #else 
 	task->task_reg.cr3 = virt_to_phy(get_global_page_dir());  
 #endif
-	//task->task_reg.esp = (u32)task + PAGE_SIZE - 1;
+
+	if (flags & KERNEL_THREAD) {
+		frame->ebx = 1;
+		frame->ecx = (u32) func;
+		/* later will add parameter of this func */
+		return;
+	}
+
+	frame->ebx = 0;
 
 	if (func) {
 		/* 
@@ -341,11 +339,6 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 
 	/* init signal set */
 	//init_task_sig_set(task);
-
-	set_task_status(task, TASK_WAITING);
-	list_init(&task->list);
-	list_init(&task->wait_list);
-	insert_task(task);
 
 	return task;
 }

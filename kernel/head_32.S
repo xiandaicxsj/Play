@@ -5,6 +5,7 @@
 .equ IDT_ATTR, 0x8600
 .equ mem_size, 0x300000 /* 2M */
 .extern start_kernel
+.extern switch_to_sw
 
 .macro push_all
 	pushl %eax
@@ -162,6 +163,45 @@ _start:
 
 	ljmp $_kernel_cs, $_pa(setup_paging)
 
+
+.global switch_to_asm 
+switch_to_asm:
+	pushl %eax
+	pushl %ebx
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	movl %esp, task_esp(%eax)
+	movl task_esp(%edx), %esp /* this change the stack */
+	/* this need switch task stack	*/
+	call switch_to_sw
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+	ret
+.global kkk
+kkk:
+	jmp .
+
+.global iret_from_fork
+iret_from_fork:
+	cmp $1, %ebx
+	jne normal_thread
+	call %ecx
+
+normal_thread:
+	jmp .
+	/* not sure */
+	iret
+/*
+ * split kernel task and and normal task
+ */
+	
+	
 map_page:
 	pushl %ebp
 	movl %esp, %ebp

@@ -19,7 +19,9 @@ typedef u32 pid_t;
 #define CLONE_FS (1u << 0)
 #define KERNEL_THREAD (1u << 1)
 
+extern void __attribute__((regparm(2))) switch_to_asm(struct task_struct *prev, struct task_struct *next);
 /* */
+extern void iret_from_fork();
 
 typedef void(*task_fn)(void *);
 
@@ -64,11 +66,23 @@ typedef struct tss_reg
 	u32 io;
 	u32 tss;
 }tss_reg;
+
+typedef struct fork_frame
+{
+	u32 edi;
+	u32 esi;
+	u32 edx;
+	u32 ecx;
+	u32 ebx;
+     	u32 eax;
+	u32 ret_ip;
+}fork_frame;
 #pragma pack(push)
 
 struct task_struct
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
+	u32 esp;
 	struct seg_desc ldt[3];//这里对应的是任务的ldt需要重新进行处理
 	pid_t pid;
 	void *pgt;
@@ -95,9 +109,14 @@ int init_task(struct task_struct *);
 void pre_init_task(void );
 void test_switch_task(void);
 void switch_to_test(struct task_struct *t);
+#define switch_to(prev, next)  \
+	do{ \
+		switch_to_asm(prev, next);\
+	} while(0);
 int init_schduler(void);
 void switch_to_ring3(struct task_struct *task);
 void wait_on(struct list_head *wait_list, struct task_struct *next, u32 flags);
 void wake_up(struct list_head  *wait_list);
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
+u32 create_idle_ktask(void);
 #endif

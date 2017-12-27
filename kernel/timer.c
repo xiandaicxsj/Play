@@ -1,5 +1,11 @@
 #include"timer.h"
 #include"pit.h"
+struct jiffes;
+void register_timer_notifier();
+
+void timer_tick()
+{
+}
 
 void init_timer()
 {

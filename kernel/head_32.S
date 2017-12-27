@@ -602,8 +602,7 @@ hw15:
 hw32:
 	push_all
 	call timer_handler
-	pop_all
-	iret
+	jmp return_to_user_space
 
 .type hw33, @function
 hw33:
@@ -644,6 +643,10 @@ hw44:
 hw45:
 	iret
 
+return_to_user_space:
+	call prepare_to_user_space
+	pop_all
+	iret
 /*
 .type hw48, @function
 hw48:

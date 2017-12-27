@@ -72,7 +72,7 @@ void timer_handler()
 	local_irq_disable();
 //	print_str("timer\n");
 	//test_switch_task();
-	schdule();
+	timer_tick();
 	send_eoi(TIMER);
 	local_irq_enable();
 }

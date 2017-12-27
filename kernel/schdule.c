@@ -391,4 +391,8 @@ void wake_up(struct list_head  *wait_list)
 }
 #endif
 
+void prepare_to_user_space(void)
+{
+}
+
 

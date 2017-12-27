@@ -119,4 +119,5 @@ void wait_on(struct list_head *wait_list, struct task_struct *next, u32 flags);
 void wake_up(struct list_head  *wait_list);
 struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 flags);
 u32 create_idle_ktask(void);
+void prepare_to_user_space(void);
 #endif

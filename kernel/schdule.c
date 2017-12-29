@@ -10,6 +10,7 @@
 #include"mem.h"
 #include"processor.h"
 #include"bitop.h"
+#include"irq.h"
 #define ALLOC_COPY_CR3
 
 #ifndef TEST_KERNEL
@@ -236,6 +237,8 @@ static int copy_task_file_struct(struct task_struct *task, struct task_struct *p
 
 void idle_task_func(void *idle)
 {
+	/* FIXME, as when call from iret_from_fork, it irq may be disabled */ 
+	local_irq_enable();
 	while(1);
 }
 
@@ -393,6 +396,7 @@ void wake_up(struct list_head  *wait_list)
 
 void prepare_to_user_space(void)
 {
+	schdule();
 }
 
 

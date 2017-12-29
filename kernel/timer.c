@@ -5,6 +5,7 @@ void register_timer_notifier();
 
 void timer_tick()
 {
+
 }
 
 void init_timer()

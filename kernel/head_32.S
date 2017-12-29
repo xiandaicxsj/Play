@@ -183,9 +183,6 @@ switch_to_asm:
 	popl %ebx
 	popl %eax
 	ret
-.global kkk
-kkk:
-	jmp .
 
 .global iret_from_fork
 iret_from_fork:

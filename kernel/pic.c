@@ -43,7 +43,7 @@ void send_eoi(u32 vector)
 {
 	u8 cmd_port;
 
-	cmd_port = vector < SL_IRQ_BASE ? PIC_MASTER_DATA : PIC_SLAVER_DATA;
+	cmd_port = vector < SL_IRQ_BASE ? PIC_MASTER_CMD : PIC_SLAVER_CMD;
 	outb(cmd_port, PIC_EOI);
 }
 

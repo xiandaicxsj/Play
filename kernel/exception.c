@@ -76,8 +76,6 @@ void timer_handler()
 	timer_tick();
 	send_eoi(TIMER);
 	time_fire ++;
-	if (time_fire >= 10)
-		while(1);
 	//local_irq_enable();
 }
 

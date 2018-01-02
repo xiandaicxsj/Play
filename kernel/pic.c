@@ -51,6 +51,6 @@ void init_pic()
 {
 	_init_pic(PIC_MASTER, MS_IRQ_BASE);
 	_init_pic(PIC_SLAVER, SL_IRQ_BASE);
-	pic_set_irqmask(PIC_MASTER, 0x0);
-	pic_set_irqmask(PIC_SLAVER, 0x0);
+	pic_set_irqmask(PIC_MASTER, 0xfe);
+	pic_set_irqmask(PIC_SLAVER, 0xff);
 }

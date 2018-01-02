@@ -28,7 +28,7 @@ void start_kernel(void )
 	init_schduler();
 
 	init_timer();
-	create_idle_ktask();
+	//create_idle_ktask();
 	task0 = (struct task_struct *) create_task(NULL, test_process, 0);
 	switch_to_ring3(task0);
 	local_irq_disable();

@@ -188,6 +188,7 @@ switch_to_asm:
 iret_from_fork:
 	cmp $1, %ebx
 	jne normal_thread
+	sti
 	call %ecx
 
 normal_thread:
@@ -599,7 +600,7 @@ hw15:
 hw32:
 	push_all
 	call timer_handler
-	jmp return_to_user_space
+	jmp return_from_interrupt
 
 .type hw33, @function
 hw33:
@@ -638,6 +639,10 @@ hw44:
 
 .type hw45, @function
 hw45:
+	iret
+
+return_from_interrupt:
+	pop_all
 	iret
 
 return_to_user_space:

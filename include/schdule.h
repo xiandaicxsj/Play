@@ -6,6 +6,7 @@
 #include"fs.h"
 #include"inode.h"
 #include"test.h"
+#include"timer.h"
 extern struct task_struct *current;
 #define MAX_FILE_PROCESS 20
 typedef u32 pid_t;
@@ -19,6 +20,8 @@ typedef u32 pid_t;
 #define CLONE_FS (1u << 0)
 #define KERNEL_THREAD (1u << 1)
 
+/* pending flag */
+#define SCHEDULE_NEED (1u<<0)
 extern void __attribute__((regparm(2))) switch_to_asm(struct task_struct *prev, struct task_struct *next);
 /* */
 extern void iret_from_fork();
@@ -79,6 +82,10 @@ typedef struct fork_frame
 }fork_frame;
 #pragma pack(push)
 
+struct task_time {
+	struct jiffes jiffes;
+};
+
 struct task_struct
 {
 	struct tss_reg task_reg;//这样就可以直接对这里进行操作了
@@ -97,8 +104,11 @@ struct task_struct
 	struct file_struct *file[MAX_FILE_PROCESS];
 	u32 fd_count;
 	u32 sig_set;
+	u32 pending_flags;
 	struct m_inode *root;
 	struct m_inode *pwd;
+	struct task_time run_time;
+	struct task_time allow_time;
 	struct task_struct *next;
 	struct task_struct *parent;
 	struct list_head list;

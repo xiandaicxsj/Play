@@ -8,6 +8,14 @@ int test_bit(void *addr, int index)
 	return 1 & bit;   
 }
 
+int test_and_clear_bit(void *addr, int index) 
+{
+	u32 *bit_map = (u32 *)addr;
+	u32 bit = (bit_map[index/BIT_LONG] >> (index % BIT_LONG));  
+	bit_map[index/BIT_LONG]  &= ~(1 << (index % BIT_LONG));  
+	return 1 & bit;
+}
+
 void set_bit(void *addr, int index)
 { 	
 	u32 *bit_map = (u32 *)addr;

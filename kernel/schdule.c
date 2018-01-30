@@ -54,8 +54,43 @@ static void set_task_status(struct task_struct *task, u8 status) {
 	task->status = status;
 }
 
+static u32 task_need_schedule(struct task_struct *task)
+{
+	if (cmp_jiffes(task->run_time.jiffes, task->allow_time.jiffes) <= 0) 
+		return 1;
+	return 0;
+}
+
+static void set_need_schedule(struct task_struct *task) {
+	set_bit(task->pending_flags, SCHEDULE_NEED);
+}
+
+static void update_task_run_time(struct task_struct *task, u32 tick)
+{
+	struct jiffes tmp;
+	if (!tick)
+		return;
+	tmp.l = tick;
+	tmp.h = 0;
+	add_jiffes(&task->run_time.jiffes, &tmp);
+	if (task_need_schedule(task));
+		set_need_schedule(task);
+}
+
+void schedule_timer_callback(void *p, u32 tick) {
+	/* in this func, we need to check the task run jiffies */ 
+	if (!tick)
+		return 0;
+	update_task_run_time(current, tick);
+}
+
 /* first is not used */
 static struct task_struct task_run_list;
+static struct timer_notifier schedule_timer_notifier = {
+	.call_back = schedule_timer_callback,
+	.param = NULL
+};
+
 
 static struct task_struct *get_next_task(u32 status_mask)
 {
@@ -264,6 +299,10 @@ u32 create_idle_ktask()
 {
 	return create_ktask(idle_task_func);
 }
+void init_task_time_slice(struct task_struct *task) {
+	task->allow_time.jiffes.l = 4; 
+	task->allow_time.jiffes.h = 0; 
+}
 /*
  * task
  * parent : parent task
@@ -308,6 +347,7 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 	task->task_reg.cr3 = virt_to_phy(get_global_page_dir());  
 #endif
 
+	init_task_time_slice(task);
 	if (flags & KERNEL_THREAD) {
 		frame->ebx = 1;
 		frame->ecx = (u32) func;
@@ -349,6 +389,8 @@ struct task_struct *create_task(struct task_struct *parent, task_fn func, u32 fl
 int init_schduler(void)
 {
 	list_init(&task_run_list.list);
+	list_init(&schedule_timer_notifier.list);
+	register_timer_notifier(&schedule_timer_notifier);
 
 	if (init_pid_bitmap())
 		return -1;
@@ -396,7 +438,9 @@ void wake_up(struct list_head  *wait_list)
 
 void prepare_to_user_space(void)
 {
-	schdule();
+	if (test_and_clear_bit(&current->pending_flags, SCHEDULE_NEED))
+		schdule();
+	else return;
 }
 
 

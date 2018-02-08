@@ -479,8 +479,7 @@ _setup_idt:
 hw48:
 	push_all
 	call sys_call
-	pop_all
-	iret
+	jmp return_to_user_space
 
 .type hw0, @function
 hw0:
@@ -649,14 +648,4 @@ return_to_user_space:
 	call prepare_to_user_space
 	pop_all
 	iret
-/*
-.type hw48, @function
-hw48:
-	cli
-	push_all
-	call sys_call 
-	pop_all
-	sti
-	iret
-*/
 

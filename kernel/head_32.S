@@ -190,6 +190,7 @@ iret_from_fork:
 	jne normal_thread
 	sti
 	call %ecx
+	call clean_up_task 
 
 normal_thread:
 	jmp .

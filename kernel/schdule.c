@@ -118,6 +118,13 @@ static void insert_task(struct task_struct *task)
 	return; 
 }
 
+/* this we need to some baisc clean up of the task */
+void clean_up_task()
+{
+	/* we need to clean up basic data struct of task */
+	struct task_struct *task = current;
+}
+
 /* make sure param is passed by register eax, edx */
 __attribute__((regparm(2)))void switch_to_sw(struct task_struct *prev, struct task_struct *next)
 {

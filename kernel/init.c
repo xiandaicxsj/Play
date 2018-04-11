@@ -9,6 +9,7 @@
 #include"timer.h"
 #include"print.h"
 #include"irq.h"
+#include"pci.h"
 void start_kernel(void )
 {
 	struct task_struct * task0;
@@ -17,6 +18,9 @@ void start_kernel(void )
 	local_irq_disable();
 	setup_interrupt();
 
+	probe_pci_devices();
+	/* init_driver list */
+	/* probe_pci_list */
 	/*
 	 *init_vfs();
 	 *pre_init_devices();
